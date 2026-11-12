@@ -3,6 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
+  <meta name="app-build" content="20261112082806">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%234f6bed%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -369,7 +370,11 @@ body.report-open{overflow:hidden}
 .report-view{position:fixed;inset:0;z-index:2500;background:#e7ebf1;display:flex;flex-direction:column}
 .report-toolbar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 1px 4px rgba(15,23,42,.06)}
 .report-toolbar-title{font-weight:700;font-size:.95rem}
-.report-scroll{flex:1;overflow:auto;padding:16px 10px 48px;-webkit-overflow-scrolling:touch}
+.report-scroll{flex:1;overflow:auto;padding:16px 10px calc(110px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+/* ปุ่มบันทึกลายเซ็นติดขอบล่างเสมอ (ไม่ถูกแถบเครื่องมือ Safari บัง) */
+.sign-actions{display:flex;gap:8px;position:sticky;bottom:0;background:#fff;padding:10px 0 calc(10px + env(safe-area-inset-bottom));margin-bottom:-14px;z-index:2}
+.sg-ack{display:flex;gap:10px;align-items:flex-start;margin:6px 0 4px;font-size:.88rem;cursor:pointer}
+.sg-ack .form-check-input{width:1.35em;height:1.35em;margin:0;flex:none}
 .report-doc{position:relative;background:#fff;color:#111827;max-width:794px;margin:0 auto;padding:28px 32px;box-shadow:0 2px 14px rgba(15,23,42,.14);
   font-family:'Sarabun',sans-serif;font-size:13px;line-height:1.5}
 .rp-head{text-align:center;border-bottom:2px solid #111827;padding-bottom:8px;margin-bottom:12px}
@@ -1240,7 +1245,7 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261112082806";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -1556,6 +1561,7 @@ document.addEventListener('DOMContentLoaded', init);
 async function init() {
   $id('year').textContent = new Date().getFullYear();
   applyFontSize();
+  Updater.check();
   Gate.init();
   Feedback.init();
   bindUI();
@@ -1923,6 +1929,7 @@ async function poll(force) {
   } finally {
     App.syncing = false;
   }
+  if (Date.now() - Updater.lastCheck > 5 * 60000) Updater.check(); else Updater.tryReload();
 }
 
 async function manualSync() {
@@ -1944,6 +1951,34 @@ function setNet(state, err) {
   const upd = $id('dash-updated');
   if (upd && App.lastSync) upd.textContent = new Date(App.lastSync).toLocaleString('th-TH', { hour12: false });
 }
+
+/**
+ * อัปเดตอัตโนมัติ (เฉพาะหน้าเว็บบน GitHub Pages)
+ * เบราว์เซอร์มือถือ (โดยเฉพาะ iPhone) จำหน้าเก่าไว้ -> ตรวจเลขเวอร์ชัน (meta app-build) ของไฟล์บน GitHub
+ * ตอนเปิดแอป / กลับมาที่แอป / ทุก 5 นาที ถ้าไม่ตรงกับหน้านี้ จะโหลดหน้าใหม่ให้เอง (ข้อมูลที่รอส่งเก็บในเครื่อง ไม่หาย)
+ */
+const Updater = {
+  pending: '', lastCheck: 0,
+  async check() {
+    if (IS_GAS || !window.APP_BUILD || Date.now() - this.lastCheck < 20000) return;
+    this.lastCheck = Date.now();
+    try {
+      const res = await fetch(location.pathname + '?build-check=' + Date.now(), { cache: 'no-store', headers: { Range: 'bytes=0-4095' } });
+      const head = (await res.text()).slice(0, 8000);
+      const m = head.match(/name="app-build" content="(\d+)"/);
+      if (m && m[1] !== window.APP_BUILD && m[1] > window.APP_BUILD) { this.pending = m[1]; this.tryReload(); }
+    } catch (e) { /* ออฟไลน์ -> ตรวจรอบหน้า */ }
+  },
+  /** โหลดใหม่เมื่อไม่ได้ทำงานค้างอยู่ (ไม่ขัดตอนเซ็นชื่อ / มีหน้าต่างเปิดอยู่) */
+  tryReload() {
+    if (!this.pending || App.modalOpen || Report.key || App.syncing || flushing) return;
+    const k = 'sa_reloaded_' + this.pending;
+    try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); } catch (e) {}
+    toast('info', 'มีระบบเวอร์ชันใหม่', 'กำลังโหลดใหม่…');
+    const keep = /openExternalBrowser/.test(location.search) ? '&openExternalBrowser=1' : '';
+    setTimeout(() => location.replace(location.pathname + '?v=' + this.pending + keep), 900);
+  }
+};
 
 function renderRound() {
   $id('round-name').textContent = App.round.name || '-';
@@ -2074,7 +2109,7 @@ function bindUI() {
   $id('sidebar-backdrop').addEventListener('click', () => document.body.classList.remove('sidebar-open'));
   if (store(LS.SIDEBAR) === 'mini') document.body.classList.add('sidebar-collapsed');
 
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && App.token) poll(false); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { Updater.lastCheck = 0; Updater.check(); if (App.token) poll(false); } });
   window.addEventListener('online', () => { if (App.token) poll(false); });
   window.addEventListener('offline', () => setNet('offline'));
 
@@ -3418,6 +3453,7 @@ function closeReport() {
   Report.key = null;
   App.dirty.dash = true; App.dirty.scan = true;
   renderCurrent();
+  Updater.tryReload();
 }
 
 async function renderReport() {
@@ -3467,14 +3503,16 @@ function renderSignPanel(rep, sig) {
     <label class="form-label small mt-2 mb-1" for="sg-name">ชื่อผู้ลงนาม</label>
     <input id="sg-name" class="form-control" value="${esc(u.nameText === '-' ? '' : u.nameText)}" placeholder="ชื่อ-นามสกุล พนักงานหน่วยรถ">
     <div class="sig-pad-wrap"><canvas id="sig-pad" aria-label="กรอบลงลายมือชื่อ"></canvas><div class="sig-hint">เซ็นชื่อในกรอบนี้</div></div>
-    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="sg-ack">
-      <label class="form-check-label small" for="sg-ack">ข้าพเจ้ารับทราบผลการตรวจนับตามรายงานข้างต้น</label></div>
-    <div class="d-flex gap-2">
+    <label class="sg-ack" for="sg-ack"><input class="form-check-input" type="checkbox" id="sg-ack">
+      <span>ข้าพเจ้ารับทราบผลการตรวจนับตามรายงานข้างต้น</span></label>
+    <div class="sign-actions">
       <button class="btn btn-outline-secondary" id="sg-clear"><i class="bi bi-eraser"></i> ล้าง</button>
       ${sig ? '<button class="btn btn-outline-secondary" id="sg-cancel">ยกเลิก</button>' : ''}
       <button class="btn btn-success flex-grow-1" id="sg-save"><i class="bi bi-check2-circle"></i> บันทึกลายเซ็น</button>
     </div></div>`;
   SigPad.init($id('sig-pad'));
+  // เซ็นเสร็จ -> เลื่อนให้เห็นปุ่มบันทึก (iPhone: แถบเครื่องมือ Safari อาจบังด้านล่าง)
+  $id('sig-pad').addEventListener('pointerup', () => setTimeout(() => $id('sg-save').scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 150));
   $id('sg-clear').onclick = () => SigPad.clear();
   $id('sg-save').onclick = saveSignature;
   if (sig) $id('sg-cancel').onclick = () => { Report.resign = false; renderSignPanel(rep, sig); };
@@ -3485,23 +3523,34 @@ const SigPad = {
   c: null, g: null, empty: true, drawing: false,
   init(canvas) {
     this.c = canvas;
-    const r = canvas.getBoundingClientRect(), dpr = Math.max(1, window.devicePixelRatio || 1);
-    canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+    const r = canvas.getBoundingClientRect(), dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    canvas.width = Math.max(1, Math.round(r.width * dpr)); canvas.height = Math.max(1, Math.round(r.height * dpr));
     const g = this.g = canvas.getContext('2d');
     g.scale(dpr, dpr); g.lineWidth = 2.6; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#111827';
     this.empty = true; this.drawing = false;
-    const pt = (e) => { const b = canvas.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
-    canvas.onpointerdown = (e) => {
-      e.preventDefault(); try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
-      this.drawing = true; const p = pt(e); g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x + 0.1, p.y + 0.1); g.stroke(); this.empty = false;
-    };
-    canvas.onpointermove = (e) => { if (!this.drawing) return; e.preventDefault(); const p = pt(e); g.lineTo(p.x, p.y); g.stroke(); };
-    canvas.onpointerup = canvas.onpointercancel = canvas.onpointerleave = () => { this.drawing = false; };
+    const pt = (x, y) => { const b = canvas.getBoundingClientRect(); return { x: x - b.left, y: y - b.top }; };
+    const start = (x, y) => { this.drawing = true; const p = pt(x, y); g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x + 0.1, p.y + 0.1); g.stroke(); this.empty = false; };
+    const move = (x, y) => { if (!this.drawing) return; const p = pt(x, y); g.lineTo(p.x, p.y); g.stroke(); };
+    const end = () => { this.drawing = false; };
+    if (window.PointerEvent) {
+      canvas.onpointerdown = (e) => { e.preventDefault(); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} start(e.clientX, e.clientY); };
+      canvas.onpointermove = (e) => { if (this.drawing) { e.preventDefault(); move(e.clientX, e.clientY); } };
+      canvas.onpointerup = canvas.onpointercancel = end;
+    } else {   // iPhone รุ่นเก่า (ไม่มี Pointer Events)
+      canvas.ontouchstart = (e) => { e.preventDefault(); const t = e.touches[0]; start(t.clientX, t.clientY); };
+      canvas.ontouchmove = (e) => { e.preventDefault(); const t = e.touches[0]; move(t.clientX, t.clientY); };
+      canvas.ontouchend = canvas.ontouchcancel = end;
+    }
+    // กันหน้าจอเลื่อนขณะเซ็น (Safari บางเวอร์ชันไม่สน touch-action)
+    if (!canvas._noScroll) {
+      canvas._noScroll = true;
+      ['touchstart', 'touchmove'].forEach((ev) => canvas.addEventListener(ev, (e) => e.preventDefault(), { passive: false }));
+    }
   },
   clear() { if (!this.g) return; this.g.save(); this.g.setTransform(1, 0, 0, 1, 0, 0); this.g.clearRect(0, 0, this.c.width, this.c.height); this.g.restore(); this.empty = true; },
   /** PNG ขนาดเล็ก (ไม่เกิน ~45,000 ตัวอักษร ให้เก็บในเซลล์ Google Sheets ได้) */
   dataURL() {
-    const W = 480, H = Math.max(1, Math.round(W * this.c.height / this.c.width));
+    const W = 420, H = Math.max(1, Math.round(W * this.c.height / this.c.width));
     const o = document.createElement('canvas'); o.width = W; o.height = H;
     const g = o.getContext('2d'); g.drawImage(this.c, 0, 0, W, H);
     let url = o.toDataURL('image/png');
@@ -3534,7 +3583,12 @@ async function saveSignature() {
     toast('success', 'บันทึกลายเซ็นแล้ว', 'พิมพ์หรือบันทึกเป็น PDF ได้เลย');
   } catch (e) {
     if (isAuthErr(e)) return forceLogout(false);
-    notify({ icon: 'error', title: 'บันทึกลายเซ็นไม่สำเร็จ', text: errMsg(e) });
+    const offline = !navigator.onLine || /Failed to fetch|NetworkError|Load failed|network/i.test(errMsg(e));
+    notify({
+      icon: 'error', title: 'บันทึกลายเซ็นไม่สำเร็จ',
+      html: `${esc(offline ? 'เชื่อมต่ออินเทอร์เน็ตไม่ได้ — ลองใหม่เมื่อสัญญาณกลับมา (ลายเซ็นยังอยู่ในกรอบ)' : errMsg(e))}
+        <div class="small text-muted mt-2">ถ้ายังไม่ได้ กรุณาแคปหน้าจอนี้ส่งให้ผู้ดูแลระบบ</div>`
+    });
     btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2-circle"></i> บันทึกลายเซ็น';
   }
 }
@@ -3571,6 +3625,8 @@ function bindReportUI() {
   $id('btn-unit-report').addEventListener('click', () => { if (App.target !== 'ALL') openReport(App.target); });
   $id('btn-closed-reports').addEventListener('click', pickClosedUnit);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && Report.key && !App.modalOpen) closeReport(); });
+  // หมุนจอ / คีย์บอร์ดเปิด-ปิด -> ปรับขนาดกรอบเซ็นใหม่ (เฉพาะตอนยังไม่ได้เซ็น)
+  window.addEventListener('resize', () => { const c = $id('sig-pad'); if (Report.key && c && SigPad.empty && !SigPad.drawing) SigPad.init(c); });
 }
 
 /* ============================== Inventory page ============================== */
