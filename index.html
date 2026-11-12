@@ -1,0 +1,3413 @@
+<!DOCTYPE html>
+<html lang="th" class="fs-md">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%234f6bed%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#4f6bed">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <!-- Bootstrap 5 / DataTables / Tom Select / SweetAlert2 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css" rel="stylesheet">
+
+  <style>
+/* ==========================================================================
+   Stock Audit — Modern Clean UI (pastel + strong status colors for outdoor use)
+   ========================================================================== */
+:root{
+  --bg:#f3f6fb;
+  --surface:#ffffff;
+  --surface-2:#f8fafc;
+  --border:#e4e9f2;
+  --text:#1e293b;
+  --text-2:#475569;
+  --muted:#64748b;
+
+  --primary:#4f6bed;
+  --primary-600:#3f57d6;
+  --primary-soft:#e8edff;
+
+  /* Pastel group tones */
+  --tone-all:#e8edff;     --tone-all-ink:#3f57d6;
+  --tone-machine:#dff4ff; --tone-machine-ink:#0b6aa2;
+  --tone-media:#e9f8ef;   --tone-media-ink:#1b7a4b;
+
+  /* Status (high contrast for outdoor readability) */
+  --ok:#15803d;    --ok-soft:#dcfce7;   --ok-line:#86efac;
+  --warn:#c2410c;  --warn-soft:#ffedd5; --warn-line:#fdba74;
+  --bad:#b91c1c;   --bad-soft:#fee2e2;  --bad-line:#fca5a5;
+  --over:#6d28d9;  --over-soft:#ede9fe; --over-line:#c4b5fd;
+  --idle:#475569;  --idle-soft:#f1f5f9;
+
+  --radius:14px;
+  --radius-sm:10px;
+  --shadow:0 1px 2px rgba(15,23,42,.04), 0 4px 16px rgba(15,23,42,.06);
+
+  --topbar-h:62px;
+  --sidebar-w:252px;
+  --sidebar-mini:74px;
+  --bottomnav-h:64px;
+}
+
+html,body{height:100%}
+/* ขนาดตัวอักษรทั้งระบบ (ทุกอย่างใช้ rem จึงย่อ/ขยายตามกัน) — เลือกได้ที่เมนูผู้ใช้ */
+html.fs-sm{font-size:13px}
+html.fs-md{font-size:14px}
+html.fs-lg{font-size:15.5px}
+body{
+  font-family:'Sarabun',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:1rem;
+  line-height:1.55;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.02em}
+.btn{border-radius:var(--radius-sm);font-weight:600}
+.btn-xl{min-height:56px;font-size:1.08rem;padding:.6rem 1.1rem}
+.btn-primary{background:var(--primary);border-color:var(--primary)}
+.btn-primary:hover,.btn-primary:focus{background:var(--primary-600);border-color:var(--primary-600)}
+.form-control,.form-select{border-radius:var(--radius-sm);border-color:var(--border)}
+.input-group-text{background:var(--surface-2);border-color:var(--border)}
+.input-group>.form-control,.input-group>.input-group-text,.input-group>.btn{border-radius:0}
+.input-group>:first-child{border-top-left-radius:var(--radius-sm)!important;border-bottom-left-radius:var(--radius-sm)!important}
+.input-group>:last-child{border-top-right-radius:var(--radius-sm)!important;border-bottom-right-radius:var(--radius-sm)!important}
+
+/* ---------- Loader ---------- */
+.app-loader{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;
+  background:rgba(243,246,251,.92);backdrop-filter:blur(2px)}
+.app-loader.hide{display:none}
+.loader-card{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.loader-logo{width:64px;height:64px;border-radius:18px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:30px;box-shadow:0 10px 30px rgba(79,107,237,.35)}
+.loader-text{color:var(--text-2);font-weight:500}
+
+/* ---------- Login ---------- */
+.login-screen{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 16px;
+  background:radial-gradient(1200px 600px at 10% -10%,#dfe7ff 0,transparent 60%),
+             radial-gradient(900px 500px at 110% 110%,#dcf5ec 0,transparent 55%),var(--bg)}
+.login-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;box-shadow:var(--shadow)}
+.login-brand{text-align:center;margin-bottom:22px}
+.login-title{font-size:1.5rem;font-weight:800;margin:12px 0 2px}
+.login-sub{color:var(--muted);margin:0}
+.login-foot{font-size:.85rem;color:var(--muted);text-align:center;margin:16px 0 0}
+
+/* ---------- Brand ---------- */
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-icon{width:38px;height:38px;border-radius:11px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:19px;flex:none}
+.brand-icon.lg{width:64px;height:64px;border-radius:18px;font-size:30px;margin:0 auto;box-shadow:0 10px 30px rgba(79,107,237,.3)}
+.brand-text{min-width:0}
+.brand-title{font-weight:800;font-size:1.02rem;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-sub{font-size:.78rem;color:var(--muted);white-space:nowrap}
+
+/* ---------- Topbar ---------- */
+.topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar-h);z-index:1030;display:flex;align-items:center;gap:10px;
+  padding:0 14px;background:rgba(255,255,255,.92);backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--border)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.icon-btn{width:40px;height:40px;border-radius:11px;border:1px solid transparent;background:transparent;color:var(--text-2);
+  display:grid;place-items:center;font-size:20px;flex:none;transition:background .15s}
+.icon-btn:hover{background:var(--primary-soft);color:var(--primary)}
+.icon-btn.spinning i{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.net-status{display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);font-size:.8rem;font-weight:600;color:var(--text-2);white-space:nowrap}
+.net-dot{width:9px;height:9px;border-radius:50%;background:#94a3b8;position:relative;flex:none}
+.net-status.online .net-dot{background:#16a34a}
+.net-status.online .net-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #16a34a;opacity:.6;animation:pulse 1.8s ease-out infinite}
+.net-status.sync .net-dot{background:#f59e0b}
+.net-status.offline{background:var(--bad-soft);border-color:var(--bad-line);color:var(--bad)}
+.net-status.offline .net-dot{background:#dc2626}
+@keyframes pulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+
+.user-chip{display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:3px 10px 3px 3px;color:var(--text)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font-weight:800;font-size:.9rem}
+.user-meta{display:flex;flex-direction:column;line-height:1.1;text-align:left}
+.user-name{font-weight:700;font-size:.85rem;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:.72rem;color:var(--muted)}
+
+/* ---------- Sidebar ---------- */
+.sidebar{position:fixed;top:var(--topbar-h);bottom:0;left:0;width:var(--sidebar-w);z-index:1020;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between;padding:14px 12px;transition:width .2s,transform .25s;overflow:hidden}
+.side-label{font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;padding:4px 12px 8px}
+.side-link{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;color:var(--text-2);text-decoration:none;font-weight:600;margin-bottom:4px;white-space:nowrap}
+.side-link i{font-size:1.2rem;width:24px;text-align:center;flex:none}
+.side-link:hover{background:var(--surface-2);color:var(--text)}
+.side-link.active{background:var(--primary-soft);color:var(--primary)}
+.side-progress{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px}
+.progress-thin{height:8px;border-radius:99px}
+
+body.sidebar-collapsed .sidebar{width:var(--sidebar-mini)}
+body.sidebar-collapsed .side-link span,body.sidebar-collapsed .side-label,body.sidebar-collapsed .side-progress{display:none}
+body.sidebar-collapsed .side-link{justify-content:center}
+body.sidebar-collapsed .main{margin-left:var(--sidebar-mini)}
+
+.sidebar-backdrop{display:none}
+body.role-auditor .admin-only{display:none!important}
+
+/* ---------- Main ---------- */
+.main{margin-left:var(--sidebar-w);padding:calc(var(--topbar-h) + 18px) 22px 0;min-height:100vh;display:flex;flex-direction:column;transition:margin .2s}
+.page{flex:1 0 auto;padding-bottom:22px}
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px}
+.page-title{font-size:1.35rem;font-weight:800;margin:0;display:flex;align-items:center;gap:8px}
+.page-title i{color:var(--primary)}
+.page-sub{color:var(--muted);font-size:.9rem;margin-top:2px}
+.page-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+.panel{border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);background:var(--surface)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.panel-title{font-weight:700;display:flex;align-items:center;gap:8px}
+.panel-title i{color:var(--primary)}
+.panel-body{padding:16px}
+
+.app-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;padding:16px 4px 20px;border-top:1px solid var(--border);font-size:.82rem;color:var(--text-2)}
+
+/* ---------- KPI groups ---------- */
+.kpi-group{border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow);overflow:hidden;height:100%}
+.kpi-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;font-weight:800}
+.kpi-head .kpi-name{display:flex;align-items:center;gap:8px}
+.kpi-head .kpi-pct{font-size:1.5rem;font-weight:800;line-height:1}
+.kpi-head .kpi-pct small{font-size:.8rem;font-weight:600;color:var(--text-2);margin-left:4px}
+.kpi-group.tone-all .kpi-head{background:var(--tone-all);color:var(--tone-all-ink)}
+.kpi-group.tone-machine .kpi-head{background:var(--tone-machine);color:var(--tone-machine-ink)}
+.kpi-group.tone-media .kpi-head{background:var(--tone-media);color:var(--tone-media-ink)}
+.kpi-body{padding:14px 16px 16px}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kpi-tile{border-radius:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);min-width:0}
+.kpi-label{font-size:.8rem;color:var(--text-2);font-weight:600;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-value{font-size:1.65rem;font-weight:800;line-height:1.15;color:var(--text);font-variant-numeric:tabular-nums}
+.kpi-value small{font-size:.85rem;color:var(--muted);font-weight:600}
+.kpi-tile .dot{width:9px;height:9px;border-radius:3px;flex:none}
+.kpi-tile.ok .dot{background:var(--ok)} .kpi-tile.bad .dot{background:var(--bad)} .kpi-tile.warn .dot{background:var(--warn)} .kpi-tile.base .dot{background:var(--primary)}
+.kpi-foot{display:flex;justify-content:space-between;font-size:.8rem;color:var(--text-2);margin-top:6px}
+
+.progress-split{display:flex;height:12px;border-radius:99px;background:#e9eef6;overflow:hidden;gap:2px;margin-top:14px}
+.progress-split .seg{height:100%;transition:width .4s}
+.progress-split .seg.ok{background:var(--ok)}
+.progress-split .seg.warn{background:var(--warn)}
+.progress-split .seg:first-child{border-radius:99px 0 0 99px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.76rem;color:var(--text-2);margin-top:6px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
+/* ---------- Status badges ---------- */
+.st{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-weight:700;font-size:.8rem;white-space:nowrap;border:1px solid transparent}
+.st-ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
+.st-warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-line)}
+.st-idle{background:var(--idle-soft);color:var(--idle);border-color:#e2e8f0}
+.st-over{background:var(--over-soft);color:var(--over);border-color:var(--over-line)}
+.type-pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.78rem;font-weight:700;white-space:nowrap}
+.type-machine{background:var(--tone-machine);color:var(--tone-machine-ink)}
+.type-media{background:var(--tone-media);color:var(--tone-media-ink)}
+.type-other{background:#f1f5f9;color:#475569}
+.mini-bar{display:flex;align-items:center;gap:8px;min-width:110px}
+.mini-bar .track{flex:1;height:7px;border-radius:99px;background:#e9eef6;overflow:hidden;display:flex;gap:1px}
+.mini-bar .track span{height:100%}
+.mini-bar b{font-size:.82rem;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* ---------- Feed ---------- */
+.feed{list-style:none;margin:0;padding:0;max-height:520px;overflow:auto}
+.feed li{display:flex;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border)}
+.feed li:last-child{border-bottom:0}
+.feed .f-ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;font-size:1.05rem}
+.feed .f-main{flex:1;min-width:0}
+.feed .f-sn{font-weight:800}
+.feed .f-sub{font-size:.8rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed .f-time{font-size:.78rem;color:var(--muted);white-space:nowrap;text-align:right}
+.feed .empty{justify-content:center;color:var(--muted);padding:28px 16px}
+.k-ok .f-ico{background:var(--ok-soft);color:var(--ok)}
+.k-warn .f-ico{background:var(--warn-soft);color:var(--warn)}
+.k-bad .f-ico{background:var(--bad-soft);color:var(--bad)}
+.k-over .f-ico{background:var(--over-soft);color:var(--over)}
+.k-idle .f-ico{background:var(--idle-soft);color:var(--idle)}
+.feed li.undone{opacity:.5;text-decoration:line-through}
+.pending-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:6px;vertical-align:middle}
+
+/* ---------- Scanner ---------- */
+.ts-wrapper .ts-control{min-height:50px;font-size:1rem;border-radius:var(--radius-sm)!important;border-color:var(--border);padding:.6rem .9rem}
+.ts-dropdown{font-size:.98rem;border-radius:var(--radius-sm)}
+.ts-dropdown .option{padding:.55rem .9rem}
+.ts-dropdown .optgroup-header{font-weight:800;color:var(--primary);background:var(--surface-2)}
+.target-count{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.target-count b{font-size:1.5rem;color:var(--ok)}
+.target-progress .progress-split{margin-top:0}
+.remaining-list{max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:10px;margin-top:6px}
+.remaining-list .rm{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:.9rem}
+.remaining-list .rm:last-child{border-bottom:0}
+
+.scanner-box{position:relative;border-radius:14px;overflow:hidden;background:#0f172a;min-height:220px}
+#reader{width:100%}
+#reader video{width:100%!important;height:auto!important;display:block;object-fit:cover}
+#reader img[alt="Info icon"],#reader__dashboard_section_csr span{display:none!important}
+.scanner-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#cbd5e1;text-align:center;padding:16px;font-size:.95rem}
+.scanner-placeholder i{font-size:2.6rem;color:#94a3b8}
+.scanner-box.running .scanner-placeholder{display:none}
+.scanner-box.flash-ok{box-shadow:0 0 0 4px var(--ok) inset}
+.scan-actions{display:flex;gap:10px;margin-top:12px}
+.scan-actions .btn-outline-secondary{min-width:56px}
+.manual-entry{margin-top:16px}
+.sn-input{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:1.25rem!important}
+.sn-input::placeholder{font-weight:400;letter-spacing:0;text-transform:none;font-size:1rem}
+
+/* ---------- Result card ---------- */
+.result-card{display:flex;gap:14px;align-items:center;border-radius:16px;padding:18px;border:2px solid var(--border);background:var(--surface);box-shadow:var(--shadow)}
+.result-icon{width:62px;height:62px;border-radius:16px;display:grid;place-items:center;font-size:2rem;flex:none;background:var(--idle-soft);color:var(--idle)}
+.result-body{min-width:0;flex:1}
+.result-title{font-weight:800;font-size:1.25rem;line-height:1.2}
+.result-sn{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:800;font-size:1.35rem;letter-spacing:.04em;word-break:break-all}
+.result-detail{color:var(--text-2);font-size:.92rem}
+.result-card.ok{background:var(--ok-soft);border-color:var(--ok)} .result-card.ok .result-icon{background:var(--ok);color:#fff} .result-card.ok .result-title{color:var(--ok)}
+.result-card.warn{background:var(--warn-soft);border-color:var(--warn)} .result-card.warn .result-icon{background:var(--warn);color:#fff} .result-card.warn .result-title{color:var(--warn)}
+.result-card.bad{background:var(--bad-soft);border-color:var(--bad)} .result-card.bad .result-icon{background:var(--bad);color:#fff} .result-card.bad .result-title{color:var(--bad)}
+.result-card.over{background:var(--over-soft);border-color:var(--over)} .result-card.over .result-icon{background:var(--over);color:#fff} .result-card.over .result-title{color:var(--over)}
+.result-card.pop{animation:pop .25s ease-out}
+@keyframes pop{0%{transform:scale(.97)}60%{transform:scale(1.015)}100%{transform:scale(1)}}
+
+/* ---------- Upload ---------- */
+.dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;border:2px dashed #c7d2fe;background:var(--primary-soft);
+  border-radius:16px;padding:28px 16px;cursor:pointer;width:100%;transition:background .15s,border-color .15s}
+.dropzone i{font-size:2.6rem;color:var(--primary)}
+.dropzone.drag{background:#dbe3ff;border-color:var(--primary)}
+.dropzone .file-name{font-weight:700;color:var(--primary);word-break:break-all}
+.preview-wrap{max-height:460px;border:1px solid var(--border);border-radius:10px}
+.preview-wrap th{position:sticky;top:0;background:var(--surface-2);z-index:1;white-space:nowrap}
+.preview-wrap td{white-space:nowrap}
+.stat-box{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--surface-2)}
+.stat-box .v{font-size:1.35rem;font-weight:800;font-variant-numeric:tabular-nums}
+.stat-box .l{font-size:.8rem;color:var(--text-2)}
+
+/* ---------- DataTables ---------- */
+table.dataTable{border-collapse:collapse!important}
+table.dataTable thead th{background:var(--surface-2);font-weight:700;color:var(--text-2);font-size:.85rem;border-bottom:1px solid var(--border)!important;white-space:nowrap}
+table.dataTable td{font-size:.92rem;border-color:var(--border)}
+div.dataTables_wrapper div.dataTables_filter input{border-radius:10px;min-width:200px}
+div.dataTables_wrapper .dt-buttons .btn{border-radius:10px!important}
+.filter-row{margin-bottom:10px}
+.dt-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.dt-top .dataTables_filter{margin:0}
+.dt-bottom{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:10px}
+.nav-pills .nav-link{border-radius:10px;font-weight:700;color:var(--text-2);background:var(--surface);border:1px solid var(--border)}
+.nav-pills .nav-link.active{background:var(--primary);border-color:var(--primary)}
+
+/* ---------- SweetAlert2 ---------- */
+.swal2-popup{font-family:'Sarabun',sans-serif!important;border-radius:18px!important}
+.swal2-title{font-size:1.45rem!important}
+.swal2-html-container{font-size:1.02rem!important}
+.swal2-styled{border-radius:11px!important;font-weight:700!important;padding:.7rem 1.3rem!important;font-size:1.02rem!important}
+.swal2-toast{border-radius:14px!important}
+.swal2-toast .swal2-title{font-size:1.02rem!important}
+.swal-sn{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:800;font-size:1.3rem;background:#0f172a;color:#fff;padding:4px 14px;border-radius:10px;letter-spacing:.05em;margin-bottom:10px}
+.swal-info{text-align:left;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-top:6px;font-size:.95rem}
+.swal-info div{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+.swal-info div span:first-child{color:var(--muted)}
+.swal-info div span:last-child{font-weight:700;text-align:right}
+.swal-form{text-align:left;margin-top:8px}
+.swal-form label{font-weight:700;font-size:.9rem;margin:10px 0 4px;display:block}
+.type-choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type-choice input{display:none}
+.type-choice label{margin:0!important;border:2px solid var(--border);border-radius:12px;padding:12px;text-align:center;cursor:pointer;font-size:1rem!important}
+.type-choice input:checked+label{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+
+/* ---------- v2: rounds / units / missing ---------- */
+.round-chip{display:inline-flex;align-items:center;gap:4px;background:var(--primary-soft);color:var(--primary);border-radius:999px;padding:0 8px;font-weight:600}
+.round-title{font-size:1.7rem;font-weight:800;color:var(--primary)}
+.st-bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
+.u-closed{background:#e2e8f0;color:#334155;border-color:#cbd5e1}
+.u-open{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
+.target-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
+.target-stats .ts-item{border:1px solid var(--border);border-radius:10px;padding:6px 8px;background:var(--surface-2);min-width:0}
+.target-stats .ts-item b{display:block;font-size:1.15rem;line-height:1.2;font-variant-numeric:tabular-nums}
+.target-stats .ts-item span{font-size:.72rem;color:var(--text-2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-tile.over .dot{background:var(--over)}
+.kpi-tile.idle .dot{background:#94a3b8}
+.kpi-sub{font-size:.74rem;color:var(--muted);margin-top:2px}
+.ts-dropdown .create{padding:.6rem .9rem;color:var(--primary);font-weight:700}
+.ts-dropdown .opt-sub{font-size:.8rem;color:var(--muted)}
+.progress-split .seg.bad{background:var(--bad)}
+.note-cell{white-space:normal;min-width:180px;font-size:.85rem;color:var(--text-2)}
+.borrow-flow{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+.borrow-flow .bf-box{border:2px solid var(--border);border-radius:12px;padding:8px 12px;min-width:110px;background:var(--surface-2)}
+.borrow-flow .bf-box small{display:block;color:var(--muted);font-size:.75rem}
+.borrow-flow .bf-box b{font-size:1.02rem}
+.borrow-flow .bf-box.to{border-color:var(--warn);background:var(--warn-soft)}
+.borrow-flow i{font-size:1.4rem;color:var(--warn)}
+@media (max-width:575.98px){ .target-stats{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+/* ---------- v2.1: in-app banner / photo scan / sound ---------- */
+.inapp-banner{background:#fff7ed;border:2px solid #fb923c;color:#7c2d12;border-radius:var(--radius);padding:12px 14px}
+.inapp-banner i.fs-4{color:#ea580c}
+.reader-file{position:absolute;left:-9999px;top:0;width:600px;height:10px;overflow:hidden}
+.scan-actions #btn-camera{flex:1 1 auto}
+.scan-actions #btn-photo{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+body.cam-photo .scan-actions #btn-photo{flex:1 1 auto;background:var(--primary);border-color:var(--primary);color:#fff}
+body.cam-photo .scan-actions #btn-camera{flex:0 0 auto;background:transparent;color:var(--text-2);border:1px solid var(--border);font-size:.9rem;min-height:56px}
+body.cam-photo .scanner-box{min-height:150px}
+.sound-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:8px 12px;border:1px dashed var(--border);border-radius:10px}
+@media (max-width:575.98px){ .scan-actions .photo-txt{display:none} body.cam-photo .scan-actions .photo-txt{display:inline} }
+
+/* ---------- v2.2: equipment / per-type ---------- */
+:root{ --equip:#0f766e; --equip-soft:#ccfbf1; --equip-line:#5eead4; }
+.k-equip .f-ico{background:var(--equip-soft);color:var(--equip)}
+.result-card.equip{background:var(--equip-soft);border-color:var(--equip)} .result-card.equip .result-icon{background:var(--equip);color:#fff} .result-card.equip .result-title{color:var(--equip)}
+.type-equip{background:var(--equip-soft);color:var(--equip)}
+.equip-btn{min-height:50px;font-weight:700}
+.target-stats{grid-template-columns:repeat(auto-fit,minmax(88px,1fr))}
+.type-split{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:.84rem;color:var(--text-2)}
+.type-split b{color:var(--text)}
+.tcell{white-space:nowrap;font-variant-numeric:tabular-nums}
+.tcell small{color:var(--muted)}
+.choice-3{grid-template-columns:repeat(3,1fr)!important}
+.choice-3 label{padding:10px 4px!important;font-size:.92rem!important}
+#os-equip-wrap{display:none}
+#os-equip-wrap.show{display:block}
+
+/* ---------- Bottom nav (mobile) ---------- */
+.bottom-nav{display:none}
+
+/* ========================= Responsive ========================= */
+@media (max-width:991.98px){
+  .sidebar{transform:translateX(-105%);width:var(--sidebar-w)!important;box-shadow:0 10px 40px rgba(15,23,42,.18)}
+  body.sidebar-open .sidebar{transform:none}
+  body.sidebar-open .sidebar-backdrop{display:block;position:fixed;inset:var(--topbar-h) 0 0 0;background:rgba(15,23,42,.35);z-index:1015}
+  body.sidebar-collapsed .side-link span,body.sidebar-collapsed .side-label,body.sidebar-collapsed .side-progress{display:revert}
+  .main,body.sidebar-collapsed .main{margin-left:0;padding:calc(var(--topbar-h) + 14px) 14px calc(var(--bottomnav-h) + 10px)}
+  .brand-sub{display:none}
+  .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;height:var(--bottomnav-h);z-index:1025;background:rgba(255,255,255,.96);
+    backdrop-filter:blur(8px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom)}
+  .bottom-nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:var(--muted);font-size:.74rem;font-weight:700}
+  .bottom-nav a i{font-size:1.3rem}
+  .bottom-nav a.active{color:var(--primary)}
+  .bottom-nav a.bn-scan i{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:var(--primary);color:#fff;margin-top:-18px;box-shadow:0 8px 20px rgba(79,107,237,.4);font-size:1.4rem}
+}
+@media (max-width:575.98px){
+  .topbar{padding:0 8px;gap:6px}
+  .brand-title{font-size:.92rem;max-width:42vw}
+  .brand-icon{width:34px;height:34px;font-size:17px}
+  .net-text,.user-meta,.user-chip .bi-chevron-down{display:none}
+  .user-chip{padding:3px}
+  .net-status{padding:7px}
+  .page-title{font-size:1.15rem}
+  .kpi-value{font-size:1.4rem}
+  .result-card{padding:14px}
+  .result-icon{width:52px;height:52px;font-size:1.6rem}
+  .result-sn{font-size:1.15rem}
+  .app-footer{justify-content:center;text-align:center}
+  div.dataTables_wrapper div.dataTables_filter input{min-width:0;width:100%}
+  .dt-top>*{width:100%}
+  .dt-top .dataTables_filter label{width:100%}
+}
+
+/* ==========================================================================
+   v2.3 Density & polish — โปร่งขึ้น ตัวอักษรพอดี ไม่แน่น
+   ========================================================================== */
+:root{
+  --topbar-h:56px; --sidebar-w:236px; --sidebar-mini:68px; --bottomnav-h:60px;
+  --radius:12px; --radius-sm:9px; --bg:#f5f7fb;
+  --shadow:0 1px 2px rgba(15,23,42,.04), 0 2px 10px rgba(15,23,42,.045);
+}
+h1,h2,h3,h4,h5,h6{font-weight:700}
+.btn{font-weight:600}
+.btn-xl{min-height:48px;font-size:1rem;padding:.5rem 1rem}
+.btn-sm{font-size:.82rem}
+.form-control,.form-select{font-size:.95rem}
+.form-label{font-size:.86rem;color:var(--text-2)}
+.form-text{font-size:.78rem}
+.small,small{font-size:.82rem}
+.alert{font-size:.9rem}
+
+/* Topbar / sidebar */
+.brand-icon{width:34px;height:34px;border-radius:10px;font-size:17px}
+.brand-title{font-size:.95rem;font-weight:700}
+.brand-sub{font-size:.72rem}
+.round-chip{font-size:.7rem;padding:0 7px}
+.icon-btn{width:36px;height:36px;font-size:18px;border-radius:10px}
+.net-status{font-size:.74rem;padding:4px 10px}
+.avatar{width:28px;height:28px;font-size:.8rem}
+.user-name{font-size:.8rem;font-weight:600}
+.user-role{font-size:.68rem}
+.dropdown-menu{font-size:.9rem;min-width:240px}
+.side-link{padding:9px 12px;font-weight:500;font-size:.92rem;gap:10px;border-radius:9px;margin-bottom:2px}
+.side-link i{font-size:1.05rem}
+.side-link.active{font-weight:600}
+.side-label{font-size:.68rem;padding:4px 12px 6px}
+.side-progress{padding:10px 12px;font-size:.84rem}
+
+/* Page */
+.main{padding:calc(var(--topbar-h) + 20px) 24px 0}
+.page-head{margin-bottom:18px}
+.page-title{font-size:1.25rem;font-weight:700}
+.page-title i{font-size:1.1rem}
+.page-sub{font-size:.84rem}
+.panel-head{padding:12px 16px}
+.panel-title{font-weight:600;font-size:.95rem}
+.panel-body{padding:16px}
+.app-footer{font-size:.75rem;padding:14px 4px 18px}
+.nav-pills .nav-link{font-size:.88rem;font-weight:600;padding:.4rem .9rem}
+
+/* KPI */
+.kpi-head{padding:10px 14px;font-weight:700;font-size:.95rem}
+.kpi-head .kpi-pct{font-size:1.3rem;font-weight:700}
+.kpi-head .kpi-pct small{font-size:.72rem;font-weight:500}
+.kpi-body{padding:12px 14px 14px}
+.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#kpi-wrap>div>div{height:100%}
+.kpi-tile{padding:8px 10px;border-radius:10px;background:var(--surface)}
+.kpi-label{font-size:.76rem;font-weight:500;gap:5px;white-space:normal;line-height:1.3}
+.kpi-label i{display:none}
+.kpi-value{font-size:1.3rem;font-weight:700;line-height:1.25}
+.kpi-value small{font-size:.75rem}
+.kpi-sub{font-size:.68rem}
+.kpi-tile .dot{width:7px;height:7px;border-radius:2px}
+.progress-split{height:8px;margin-top:12px}
+.legend{font-size:.72rem;gap:4px 10px}
+.kpi-foot{font-size:.76rem;flex-wrap:wrap;gap:4px 14px;padding-top:8px;margin-top:10px;border-top:1px dashed var(--border)}
+
+/* Tables */
+table.dataTable thead th{font-size:.78rem;font-weight:600;padding:.55rem .6rem!important}
+table.dataTable tbody td{font-size:.86rem;padding:.5rem .6rem!important}
+table.dataTable>tbody>tr>td{border-color:#eef1f6}
+div.dataTables_wrapper div.dataTables_info,div.dataTables_wrapper div.dataTables_length,div.dataTables_wrapper div.dataTables_paginate{font-size:.8rem}
+div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
+.page-link{font-size:.8rem;padding:.3rem .62rem}
+.st{font-size:.74rem;padding:2px 8px;font-weight:600;gap:4px}
+.type-pill{font-size:.72rem;padding:1px 8px;font-weight:600}
+.mini-bar b{font-size:.76rem}
+.stat-box{padding:8px 10px}
+.stat-box .v{font-size:1.15rem;font-weight:700}
+.stat-box .l{font-size:.74rem}
+.round-title{font-size:1.4rem;font-weight:700}
+
+/* Feeds */
+.feed li{padding:9px 14px;gap:10px}
+.feed .f-ico{width:30px;height:30px;font-size:.9rem;border-radius:8px}
+.feed .f-sn{font-weight:700;font-size:.88rem}
+.feed .f-sub{font-size:.76rem}
+.feed .f-time{font-size:.72rem}
+
+/* Scanner */
+.ts-wrapper .ts-control{min-height:44px;font-size:.95rem;padding:.5rem .8rem}
+.ts-dropdown{font-size:.9rem}
+.ts-dropdown .option{padding:.45rem .8rem}
+.target-count{font-size:1rem}
+.target-count b{font-size:1.3rem}
+.target-stats{gap:6px}
+.target-stats .ts-item{padding:6px 8px;border-radius:9px}
+.target-stats .ts-item b{font-size:1.05rem;font-weight:700}
+.target-stats .ts-item span{font-size:.7rem}
+.type-split{font-size:.78rem}
+.remaining-list .rm{font-size:.82rem;padding:6px 10px}
+.scanner-box{min-height:190px;border-radius:12px}
+.scanner-placeholder{font-size:.86rem}
+.scanner-placeholder i{font-size:2rem}
+.sn-input{font-size:1.1rem!important}
+.sound-row{font-size:.86rem}
+.result-card{padding:14px;gap:12px;border-radius:14px}
+.result-icon{width:48px;height:48px;font-size:1.5rem;border-radius:12px}
+.result-title{font-size:1.05rem;font-weight:700}
+.result-sn{font-size:1.15rem;font-weight:700}
+.result-detail{font-size:.84rem}
+.inapp-banner{font-size:.88rem}
+
+/* SweetAlert2 (ใช้ em อิงขนาดตัวอักษรของ popup) */
+.swal2-popup{font-size:.92rem!important;padding:1.1rem 1rem 1.2rem!important;width:min(30em,94vw)!important}
+.swal2-title{font-size:1.2rem!important;padding-top:.3em!important}
+.swal2-html-container{font-size:.92rem!important;margin:.6em .6em 0!important}
+.swal2-styled{font-size:.92rem!important;padding:.55rem 1.1rem!important}
+.swal2-actions{margin-top:1em!important}
+.swal2-toast{font-size:.9rem!important}
+.swal2-toast .swal2-title{font-size:.9rem!important}
+.swal2-toast .swal2-html-container{font-size:.8rem!important}
+.swal-sn{font-size:1.05rem;padding:3px 12px;margin-bottom:6px}
+.swal-info{font-size:.86rem;padding:8px 12px}
+.swal-form label{font-size:.82rem;margin:8px 0 3px}
+.type-choice label{padding:9px!important;font-size:.9rem!important}
+.borrow-flow .bf-box{padding:6px 10px;min-width:96px}
+.borrow-flow .bf-box b{font-size:.95rem}
+
+/* Login */
+.login-card{padding:26px 22px}
+.login-title{font-size:1.35rem;font-weight:700}
+
+/* In-app browser gate (LINE / Facebook) */
+.inapp-gate{position:fixed;inset:0;z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px 16px;overflow:auto;
+  background:radial-gradient(900px 500px at 0% 0%,#e3e9ff 0,transparent 60%),radial-gradient(700px 400px at 100% 100%,#ffedd5 0,transparent 55%),#f8fafc}
+.gate-card{width:100%;max-width:400px;background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 12px 40px rgba(15,23,42,.12);padding:24px 20px;text-align:center}
+.gate-icon{width:60px;height:60px;border-radius:16px;margin:0 auto 12px;display:grid;place-items:center;background:var(--warn-soft);color:var(--warn);font-size:1.8rem}
+.gate-title{font-size:1.25rem;font-weight:700;line-height:1.35;margin:0 0 6px}
+.gate-sub{color:var(--text-2);font-size:.9rem;margin-bottom:16px}
+.gate-steps{text-align:left;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-top:14px;font-size:.86rem}
+.gate-steps-title{font-weight:600;margin-bottom:4px;color:var(--text-2)}
+.gate-steps ol{margin:0;padding-left:1.2em}
+.gate-links{display:flex;flex-direction:column;align-items:center;margin-top:8px}
+.live-banner{background:var(--ok-soft);border:2px solid var(--ok-line);color:#14532d;border-radius:var(--radius);padding:12px 14px;font-size:.88rem}
+.live-banner i.fs-4{color:var(--ok)}
+#font-size-group .btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+@media (max-width:991.98px){
+  .main,body.sidebar-collapsed .main{padding:calc(var(--topbar-h) + 14px) 12px calc(var(--bottomnav-h) + 12px)}
+  .bottom-nav a{font-size:.68rem;font-weight:600}
+  .bottom-nav a i{font-size:1.15rem}
+  .bottom-nav a.bn-scan i{width:42px;height:42px;border-radius:13px;font-size:1.25rem;margin-top:-16px}
+}
+@media (max-width:575.98px){
+  .page-title{font-size:1.1rem}
+  .page-sub{font-size:.8rem}
+  .kpi-value{font-size:1.15rem}
+  .panel-body{padding:12px}
+  .panel-head{padding:10px 12px}
+  .result-sn{font-size:1.05rem}
+  .brand-title{font-size:.88rem}
+}
+</style>
+
+</head>
+<body class="is-loading">
+
+  <!-- ===================== Loader ===================== -->
+  <div id="app-loader" class="app-loader">
+    <div class="loader-card">
+      <div class="loader-logo"><i class="bi bi-upc-scan"></i></div>
+      <div class="spinner-border text-primary" role="status"></div>
+      <div class="loader-text" id="loader-text">กำลังโหลดข้อมูลสต๊อก…</div>
+    </div>
+  </div>
+
+  <!-- ===================== In-app browser gate (LINE / Facebook) ===================== -->
+  <div id="inapp-gate" class="inapp-gate d-none" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <div class="gate-card">
+      <div class="gate-icon"><i class="bi bi-camera-video-off"></i></div>
+      <h2 class="gate-title" id="gate-title">เปิดใน Chrome / Safari<br>เพื่อใช้กล้องสแกน</h2>
+      <p class="gate-sub">แอป <b id="gate-app">LINE</b> ไม่อนุญาตให้หน้าเว็บใช้กล้อง</p>
+      <a id="gate-open" class="btn btn-primary btn-xl w-100" target="_top" href="#"><i class="bi bi-box-arrow-up-right"></i> เปิดใน Chrome / Safari</a>
+      <a id="gate-chrome" class="btn btn-outline-primary w-100 mt-2 d-none" target="_top" href="#"><i class="bi bi-browser-chrome"></i> เปิดด้วย Chrome</a>
+      <div class="gate-steps">
+        <div class="gate-steps-title">ถ้ากดแล้วยังไม่เปิด</div>
+        <ol>
+          <li>แตะปุ่ม <b>⋮</b> หรือ <b>⋯</b> ที่มุมขวาบนของจอ</li>
+          <li>เลือก <b>เปิดในเบราว์เซอร์อื่น</b> / <b>Open in browser</b></li>
+        </ol>
+      </div>
+      <div class="gate-links">
+        <button class="btn btn-link btn-sm" id="gate-copy"><i class="bi bi-link-45deg"></i> คัดลอกลิงก์</button>
+        <button class="btn btn-link btn-sm text-muted" id="gate-skip">ใช้ต่อในแอปนี้ (สแกนด้วยการถ่ายภาพ)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== Login ===================== -->
+  <section id="login-screen" class="login-screen d-none">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-icon lg"><i class="bi bi-upc-scan"></i></div>
+        <h1 class="login-title">ระบบตรวจนับสต๊อก</h1>
+        <p class="login-sub">หน่วยรถบริการ · เครื่องกรองและสารกรอง</p>
+      </div>
+      <form id="login-form" autocomplete="on" novalidate>
+        <div class="mb-3">
+          <label class="form-label" for="login-user">Username / Email</label>
+          <div class="input-group input-group-lg">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input id="login-user" class="form-control" autocomplete="username" autocapitalize="none" required>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="login-pin">PIN <span class="text-muted small">(ถ้ามี)</span></label>
+          <div class="input-group input-group-lg">
+            <span class="input-group-text"><i class="bi bi-key"></i></span>
+            <input id="login-pin" type="password" inputmode="numeric" class="form-control" autocomplete="current-password">
+          </div>
+        </div>
+        <div id="login-error" class="alert alert-danger py-2 d-none"></div>
+        <button id="login-btn" type="submit" class="btn btn-primary btn-lg w-100 btn-xl">
+          <i class="bi bi-box-arrow-in-right me-1"></i> เข้าสู่ระบบ
+        </button>
+      </form>
+      <p class="login-foot">ผู้ใช้งานกำหนดโดยผู้ดูแลระบบในชีต <b>Users</b></p>
+    </div>
+  </section>
+
+  <!-- ===================== App Shell ===================== -->
+  <div id="app-shell" class="app-shell d-none">
+
+    <!-- Top header -->
+    <header class="topbar">
+      <button class="icon-btn" id="btn-menu" aria-label="สลับเมนู"><i class="bi bi-list"></i></button>
+      <div class="brand">
+        <div class="brand-icon"><i class="bi bi-upc-scan"></i></div>
+        <div class="brand-text">
+          <div class="brand-title">ระบบตรวจนับสต๊อกหน่วยรถบริการ</div>
+          <div class="brand-sub">เครื่องกรอง & สารกรอง · <span class="round-chip"><i class="bi bi-calendar3"></i> รอบ <b id="round-name">-</b></span></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="net-status" id="net-status" title="สถานะการเชื่อมต่อ">
+          <span class="net-dot"></span><span class="net-text" id="net-text">กำลังเชื่อมต่อ</span>
+        </div>
+        <span class="badge rounded-pill text-bg-warning d-none" id="pending-badge" title="รายการที่รอส่งขึ้นระบบ">
+          <i class="bi bi-cloud-arrow-up"></i> <span id="pending-count">0</span>
+        </span>
+        <button class="icon-btn" id="btn-sync" title="ซิงก์ข้อมูลทันที" aria-label="ซิงก์ข้อมูล"><i class="bi bi-arrow-repeat"></i></button>
+        <div class="dropdown">
+          <button class="user-chip" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="avatar" id="user-avatar">?</span>
+            <span class="user-meta">
+              <span class="user-name" id="user-name">-</span>
+              <span class="user-role" id="user-role">-</span>
+            </span>
+            <i class="bi bi-chevron-down small"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li><h6 class="dropdown-header" id="user-dd-name">-</h6></li>
+            <li><button class="dropdown-item" id="btn-share-line"><i class="bi bi-chat-dots me-2"></i>คัดลอกลิงก์สำหรับส่ง LINE</button></li>
+            <li><hr class="dropdown-divider"></li>
+            <li class="px-3 py-1">
+              <div class="small text-muted mb-1"><i class="bi bi-fonts me-1"></i>ขนาดตัวอักษร (เครื่องนี้)</div>
+              <div class="btn-group btn-group-sm w-100" role="group" id="font-size-group">
+                <button type="button" class="btn btn-outline-secondary" data-fs="sm">เล็ก</button>
+                <button type="button" class="btn btn-outline-secondary" data-fs="md">กลาง</button>
+                <button type="button" class="btn btn-outline-secondary" data-fs="lg">ใหญ่</button>
+              </div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button class="dropdown-item" id="btn-logout"><i class="bi bi-box-arrow-right me-2"></i>ออกจากระบบ</button></li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <nav class="side-nav">
+        <div class="side-label">เมนูหลัก</div>
+        <a href="#" class="side-link" data-page="dashboard"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+        <a href="#" class="side-link" data-page="scan"><i class="bi bi-upc-scan"></i><span>สแกนนับสต๊อก</span></a>
+        <a href="#" class="side-link" data-page="inventory"><i class="bi bi-table"></i><span>รายการสต๊อกทั้งหมด</span></a>
+        <div class="side-label admin-only mt-2">ผู้ดูแลระบบ</div>
+        <a href="#" class="side-link admin-only" data-page="upload"><i class="bi bi-cloud-upload"></i><span>อัปโหลดไฟล์ Onhand</span></a>
+        <a href="#" class="side-link admin-only" data-page="rounds"><i class="bi bi-calendar3"></i><span>รอบการนับ (Q1–Q4)</span></a>
+      </nav>
+      <div class="side-progress">
+        <div class="d-flex justify-content-between small mb-1">
+          <span>ความคืบหน้า · รอบ <b class="round-name-txt">-</b></span><b id="side-pct">0%</b>
+        </div>
+        <div class="progress progress-thin"><div class="progress-bar bg-success" id="side-bar" style="width:0%"></div></div>
+        <div class="small text-muted mt-1" id="side-count">0 / 0 รายการ</div>
+      </div>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- ============ Dashboard ============ -->
+      <section class="page" id="page-dashboard">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title"><i class="bi bi-speedometer2"></i> Dashboard ภาพรวมการตรวจนับ</h2>
+            <div class="page-sub">อัปเดตล่าสุด <span id="dash-updated">-</span></div>
+          </div>
+          <div class="page-actions">
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" id="auto-refresh" checked>
+              <label class="form-check-label small" for="auto-refresh">Auto-refresh 10 วิ</label>
+            </div>
+            <button class="btn btn-primary btn-sm" id="btn-sync-dash"><i class="bi bi-arrow-repeat"></i> Sync ทันที</button>
+          </div>
+        </div>
+
+        <div class="row g-3" id="kpi-wrap">
+          <div class="col-12 col-xl-4"><div id="kpi-all"></div></div>
+          <div class="col-12 col-md-6 col-xl-4"><div id="kpi-machine"></div></div>
+          <div class="col-12 col-md-6 col-xl-4"><div id="kpi-media"></div></div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-12 col-xxl-8">
+            <div class="card panel">
+              <div class="panel-head">
+                <div class="panel-title"><i class="bi bi-truck"></i> ความคืบหน้ารายหน่วยรถ / พนักงาน</div>
+                <select class="form-select form-select-sm w-auto" id="unit-filter">
+                  <option value="all">ทุกคัน</option>
+                  <option value="open" selected>เฉพาะคันที่ยังไม่ปิด</option>
+                  <option value="closed">เฉพาะคันที่ปิดแล้ว</option>
+                  <option value="missing">มีรายการไม่พบ / ค้าง</option>
+                </select>
+              </div>
+              <div class="panel-body">
+                <table id="unitTable" class="table table-hover align-middle w-100 nowrap"></table>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-xxl-4">
+            <div class="card panel h-100">
+              <div class="panel-head">
+                <div class="panel-title"><i class="bi bi-activity"></i> การสแกนล่าสุด (ทุกเครื่อง)</div>
+              </div>
+              <div class="panel-body p-0">
+                <ul class="feed" id="activity-feed"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Scanner ============ -->
+      <section class="page d-none" id="page-scan">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title"><i class="bi bi-upc-scan"></i> สแกนนับสต๊อก</h2>
+            <div class="page-sub">เลือกหน่วยรถ/พนักงานเป้าหมาย แล้วสแกน SN ต่อเนื่องได้ทันที</div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-lg-7">
+            <!-- Target -->
+            <div class="card panel">
+              <div class="panel-body">
+                <label class="form-label fw-semibold mb-1" for="target-select"><i class="bi bi-truck"></i> เลือกทะเบียนรถที่จะนับ</label>
+                <select id="target-select" placeholder="พิมพ์ค้นหาทะเบียนรถ / ชื่อ / รหัสพนักงาน"></select>
+                <div class="form-text">คันที่ปิดการนับแล้วจะไม่แสดงในรายการ · พิมพ์ทะเบียนที่ไม่มีในระบบเพื่อเพิ่มคันใหม่</div>
+                <div class="target-progress mt-3">
+                  <div class="d-flex justify-content-between align-items-end mb-1">
+                    <div class="small text-muted text-truncate me-2" id="target-label">ตรวจนับทั้งหมด</div>
+                    <div class="target-count text-nowrap"><b id="target-done">0</b> / <span id="target-total">0</span></div>
+                  </div>
+                  <div class="progress progress-split" id="target-bar"></div>
+                  <div class="target-stats" id="target-stats"></div>
+                  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2">
+                    <button class="btn btn-link btn-sm px-0" id="btn-remaining" data-bs-toggle="collapse" data-bs-target="#remaining-wrap">
+                      <i class="bi bi-list-check"></i> รายการที่ยังไม่นับ (<span id="remaining-count">0</span>)
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm d-none" id="btn-close-unit">
+                      <i class="bi bi-lock"></i> ปิดการนับคันนี้
+                    </button>
+                  </div>
+                  <div class="collapse" id="remaining-wrap">
+                    <div class="remaining-list" id="remaining-list"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Apps Script page: live camera not permitted -> link to hosted live-camera version -->
+            <div class="live-banner d-none mt-3" id="live-banner">
+              <div class="d-flex gap-2 align-items-start">
+                <i class="bi bi-camera-video fs-4"></i>
+                <div>
+                  <div class="fw-bold">ต้องการสแกนด้วยกล้องสด (ต่อเนื่อง)?</div>
+                  <div class="small">หน้านี้สแกนได้ด้วยการถ่ายภาพ — เปิดเวอร์ชันกล้องสดเพื่อสแกนต่อเนื่องได้เร็วกว่า</div>
+                </div>
+              </div>
+              <a class="btn btn-success fw-bold mt-2 w-100" id="btn-open-live" href="#" target="_top"><i class="bi bi-camera-video"></i> เปิดหน้าเว็บเวอร์ชันกล้องสด</a>
+            </div>
+
+            <!-- In-app browser warning (LINE / Facebook ...) -->
+            <div class="inapp-banner d-none mt-3" id="inapp-banner">
+              <div class="d-flex gap-2">
+                <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                <div>
+                  <div class="fw-bold">กำลังเปิดผ่านแอป <span id="inapp-name">LINE</span> — กล้องสดใช้ไม่ได้</div>
+                  <div class="small">กดปุ่มด้านล่างเพื่อเปิดใน Chrome / Safari หรือใช้ปุ่ม <b>ถ่ายภาพสแกน</b> แทนได้เลย</div>
+                </div>
+              </div>
+              <div class="d-flex flex-wrap gap-2 mt-2">
+                <a class="btn btn-warning fw-bold" id="btn-open-external" href="#" target="_top"><i class="bi bi-box-arrow-up-right"></i> เปิดใน Chrome / Safari</a>
+                <button class="btn btn-outline-dark" id="btn-copy-link"><i class="bi bi-link-45deg"></i> คัดลอกลิงก์</button>
+              </div>
+            </div>
+
+            <!-- Camera -->
+            <div class="card panel mt-3">
+              <div class="panel-body">
+                <div class="scanner-box" id="scanner-box">
+                  <div id="reader"></div>
+                  <div class="scanner-placeholder" id="scanner-placeholder">
+                    <i class="bi bi-camera"></i>
+                    <div id="scanner-hint">กดปุ่มด้านล่างเพื่อเปิดกล้องสแกนบาร์โค้ด / QR</div>
+                  </div>
+                </div>
+                <div id="reader-file" class="reader-file"></div>
+                <div class="scan-actions" id="scan-actions">
+                  <button class="btn btn-primary btn-xl" id="btn-camera">
+                    <i class="bi bi-camera-video"></i> <span>เปิดกล้องสแกน</span>
+                  </button>
+                  <label class="btn btn-outline-primary btn-xl mb-0" id="btn-photo" title="ถ่ายภาพบาร์โค้ดด้วยแอปกล้อง">
+                    <i class="bi bi-camera-fill"></i> <span class="photo-txt">ถ่ายภาพ</span>
+                    <input type="file" accept="image/*" capture="environment" id="scan-image" hidden>
+                  </label>
+                  <button class="btn btn-outline-secondary btn-xl d-none" id="btn-torch" title="ไฟฉาย"><i class="bi bi-lightbulb"></i></button>
+                </div>
+
+                <div class="sound-row">
+                  <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="sound-on" checked>
+                    <label class="form-check-label small" for="sound-on"><i class="bi bi-volume-up"></i> เสียงสแกน</label>
+                  </div>
+                  <button class="btn btn-sm btn-outline-secondary" id="btn-test-sound"><i class="bi bi-music-note-beamed"></i> ทดสอบเสียง</button>
+                </div>
+
+                <div class="manual-entry">
+                  <label class="form-label small text-muted mb-1" for="sn-input">ยิงด้วยปืนบาร์โค้ด หรือพิมพ์ SN แล้วกด Enter</label>
+                  <div class="input-group input-group-lg">
+                    <span class="input-group-text"><i class="bi bi-upc"></i></span>
+                    <input id="sn-input" class="form-control sn-input" placeholder="เช่น RY01670102" autocomplete="off"
+                           autocapitalize="characters" spellcheck="false" enterkeyhint="go">
+                    <button class="btn btn-dark px-4" id="btn-check">ตรวจสอบ</button>
+                  </div>
+                  <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" id="gun-mode">
+                    <label class="form-check-label small" for="gun-mode">โหมดปืนยิง Bluetooth (ซ่อนคีย์บอร์ดบนมือถือ)</label>
+                  </div>
+                </div>
+
+                <button class="btn btn-outline-success w-100 mt-3 equip-btn" id="btn-add-equip">
+                  <i class="bi bi-tools"></i> บันทึกอุปกรณ์ติดตั้ง (สว่าน ฯลฯ) — คีย์ SN เอง
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-5">
+            <!-- Last result -->
+            <div class="result-card idle" id="result-card">
+              <div class="result-icon"><i class="bi bi-upc-scan"></i></div>
+              <div class="result-body">
+                <div class="result-title">พร้อมสแกน</div>
+                <div class="result-sn">-</div>
+                <div class="result-detail">ผลการสแกนล่าสุดจะแสดงที่นี่</div>
+              </div>
+            </div>
+
+            <!-- Recent -->
+            <div class="card panel mt-3">
+              <div class="panel-head">
+                <div class="panel-title"><i class="bi bi-clock-history"></i> ประวัติการสแกนของฉัน</div>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-clear-recent">ล้างรายการ</button>
+              </div>
+              <div class="panel-body p-0">
+                <ul class="feed" id="recent-list"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Inventory ============ -->
+      <section class="page d-none" id="page-inventory">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title"><i class="bi bi-table"></i> รายการสต๊อกทั้งหมด</h2>
+            <div class="page-sub">กรองรายการที่ยังไม่พบรายหน่วยรถ แล้ว Export ส่งหัวหน้างานติดตามได้ทันที</div>
+          </div>
+        </div>
+
+        <ul class="nav nav-pills mb-3 gap-2" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-onhand" type="button" id="tab-onhand-btn">
+            <i class="bi bi-box-seam"></i> Onhand <span class="badge text-bg-light ms-1" id="cnt-onhand">0</span></button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-over" type="button" id="tab-over-btn">
+            <i class="bi bi-exclamation-diamond"></i> OverStock <span class="badge text-bg-light ms-1" id="cnt-over">0</span></button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-equip" type="button" id="tab-equip-btn">
+            <i class="bi bi-tools"></i> อุปกรณ์ติดตั้ง <span class="badge text-bg-light ms-1" id="cnt-equip">0</span></button></li>
+        </ul>
+
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="tab-onhand">
+            <div class="card panel">
+              <div class="panel-body">
+                <div class="row g-2 filter-row">
+                  <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small mb-1">ประเภท</label>
+                    <select class="form-select form-select-sm" id="f-type"><option value="">ทั้งหมด</option></select>
+                  </div>
+                  <div class="col-6 col-md-3 col-xl-2">
+                    <label class="form-label small mb-1">สถานะ</label>
+                    <select class="form-select form-select-sm" id="f-status"><option value="">ทั้งหมด</option></select>
+                  </div>
+                  <div class="col-12 col-md-6 col-xl-3">
+                    <label class="form-label small mb-1">แผนก-หน่วยงาน</label>
+                    <select class="form-select form-select-sm" id="f-dept"><option value="">ทั้งหมด</option></select>
+                  </div>
+                  <div class="col-12 col-md-8 col-xl-3">
+                    <label class="form-label small mb-1">หน่วยรถ / พนักงาน</label>
+                    <select class="form-select form-select-sm" id="f-unit"><option value="">ทั้งหมด</option></select>
+                  </div>
+                  <div class="col-12 col-md-4 col-xl-2 d-flex align-items-end gap-2">
+                    <button class="btn btn-sm btn-outline-danger flex-grow-1" id="btn-only-missing"><i class="bi bi-search"></i> ยังไม่พบ</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="btn-clear-filter" title="ล้างตัวกรอง"><i class="bi bi-x-lg"></i></button>
+                  </div>
+                </div>
+                <table id="invTable" class="table table-hover align-middle w-100"></table>
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="tab-over">
+            <div class="card panel">
+              <div class="panel-body">
+                <table id="overTable" class="table table-hover align-middle w-100"></table>
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="tab-equip">
+            <div class="card panel">
+              <div class="panel-body">
+                <table id="equipTable" class="table table-hover align-middle w-100"></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Upload ============ -->
+      <section class="page d-none" id="page-upload">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title"><i class="bi bi-cloud-upload"></i> อัปโหลดไฟล์ Onhand</h2>
+            <div class="page-sub">รองรับ .xlsx / .xls / .csv — แปลงไฟล์บนเครื่องแล้วเขียนลงชีต Onhand แบบ Batch ครั้งเดียว</div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-lg-5">
+            <div class="card panel">
+              <div class="panel-body">
+                <label class="dropzone" id="dropzone">
+                  <input type="file" id="upload-file" accept=".xlsx,.xls,.csv" hidden>
+                  <i class="bi bi-file-earmark-spreadsheet"></i>
+                  <div class="fw-semibold">แตะเพื่อเลือกไฟล์ หรือ ลากไฟล์มาวาง</div>
+                  <div class="small text-muted">ระบบจะเลือกชีต "จัดไฟล์รวม" ให้อัตโนมัติ (ถ้ามี)</div>
+                  <div class="file-name" id="upload-name"></div>
+                </label>
+
+                <div class="mt-3 d-none" id="upload-options">
+                  <label class="form-label small mb-1" for="upload-sheet">ชีตที่ใช้</label>
+                  <select class="form-select mb-3" id="upload-sheet"></select>
+
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="opt-keep" checked>
+                    <label class="form-check-label" for="opt-keep">คงสถานะการนับเดิมของ SN ที่มีอยู่แล้ว</label>
+                  </div>
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="opt-clear-over">
+                    <label class="form-check-label" for="opt-clear-over">ล้างรายการ OverStock และอุปกรณ์ติดตั้งเดิม (เริ่มรอบตรวจนับใหม่)</label>
+                  </div>
+                  <button class="btn btn-success btn-xl w-100" id="btn-upload" disabled>
+                    <i class="bi bi-cloud-arrow-up"></i> อัปโหลดเข้า Google Sheets
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card panel mt-3 border-danger-subtle">
+              <div class="panel-body">
+                <div class="fw-semibold text-danger mb-1"><i class="bi bi-arrow-counterclockwise"></i> รีเซ็ตผลการตรวจนับ</div>
+                <div class="small text-muted mb-2">ตั้งสถานะทุกรายการกลับเป็น "ยังไม่นับ" โดยไม่เปลี่ยนรายการ Onhand</div>
+                <button class="btn btn-outline-danger btn-sm" id="btn-reset-audit">รีเซ็ตผลการนับทั้งหมด</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-7">
+            <div class="card panel">
+              <div class="panel-head">
+                <div class="panel-title"><i class="bi bi-eye"></i> ตัวอย่างข้อมูล</div>
+                <div class="small text-muted" id="preview-note"></div>
+              </div>
+              <div class="panel-body">
+                <div class="row g-2 mb-3" id="upload-stats"></div>
+                <div class="table-responsive preview-wrap">
+                  <table class="table table-sm table-striped mb-0" id="preview-table">
+                    <tbody><tr><td class="text-muted text-center py-4">ยังไม่ได้เลือกไฟล์</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Rounds (Q1–Q4) ============ -->
+      <section class="page d-none" id="page-rounds">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title"><i class="bi bi-calendar3"></i> รอบการนับ (Q1–Q4)</h2>
+            <div class="page-sub">ใช้ไฟล์เดิมนับได้ทุกรอบ — ปิดรอบแล้วระบบเก็บสำรองข้อมูลรอบเก่าและสรุปยอดไว้ในชีต History</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-outline-secondary btn-sm" id="btn-reload-rounds"><i class="bi bi-arrow-repeat"></i> โหลดใหม่</button>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-lg-5">
+            <div class="card panel">
+              <div class="panel-body">
+                <div class="small text-muted">รอบปัจจุบัน</div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <div class="round-title" id="cur-round">-</div>
+                  <button class="btn btn-sm btn-outline-secondary" id="btn-rename-round" title="แก้ชื่อรอบ"><i class="bi bi-pencil"></i></button>
+                </div>
+                <div class="small text-muted mb-3">เริ่มเมื่อ <span id="cur-round-start">-</span></div>
+                <div class="row g-2 mb-3" id="round-summary"></div>
+                <button class="btn btn-primary btn-xl w-100" id="btn-new-round">
+                  <i class="bi bi-flag"></i> ปิดรอบนี้ & เริ่มรอบใหม่
+                </button>
+                <div class="small text-muted mt-2">
+                  ขั้นตอนแนะนำแต่ละไตรมาส: ปิดรอบเดิม → อัปโหลดไฟล์ Onhand ใหม่ → เริ่มนับ
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-7">
+            <div class="card panel">
+              <div class="panel-head">
+                <div class="panel-title"><i class="bi bi-clock-history"></i> ประวัติรอบการนับ</div>
+              </div>
+              <div class="panel-body">
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0" id="history-table">
+                    <tbody><tr><td class="text-muted text-center py-4">กำลังโหลด…</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <span>© <span id="year"></span> ระบบตรวจนับสต๊อกหน่วยรถบริการ (เครื่องกรองและสารกรอง)</span>
+        <span class="text-muted">Google Apps Script · Google Sheets · v2.0</span>
+      </footer>
+    </main>
+
+    <!-- Mobile bottom nav (ใช้งานมือเดียว) -->
+    <nav class="bottom-nav">
+      <a href="#" data-page="dashboard"><i class="bi bi-speedometer2"></i><span>ภาพรวม</span></a>
+      <a href="#" data-page="scan" class="bn-scan"><i class="bi bi-upc-scan"></i><span>สแกน</span></a>
+      <a href="#" data-page="inventory"><i class="bi bi-table"></i><span>รายการ</span></a>
+      <a href="#" id="bn-more"><i class="bi bi-grid"></i><span>เมนู</span></a>
+    </nav>
+  </div>
+
+  <!-- ===================== Scripts ===================== -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec";</script>
+  <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"appUrl":"","hostedUrl":"","auto":null};</script>
+  <script>
+/* ==========================================================================
+   Stock Audit — Client App (v2)
+   - ข้อมูล Onhand ทั้งหมดอยู่ในหน่วยความจำ (Map SN -> แถว) ตรวจสอบได้ทันที
+   - บันทึกแบบ Optimistic + คิวส่งข้อมูล (localStorage) รองรับเน็ตไม่เสถียรหน้างาน
+   - Poll Delta ทุก 10 วินาที / ปุ่ม Sync โหลดใหม่ทั้งชุด
+   - v2: ยืมข้ามคัน (หมายเหตุอัตโนมัติ), ปิดการนับรายคัน, เพิ่มทะเบียนใหม่, รอบการนับ Q1–Q4
+   ========================================================================== */
+'use strict';
+
+const S = BOOT.status;                    // {UNSCANNED, MATCHED, MISPLACED, MISSING}
+const US = BOOT.unitStatus;               // {OPEN, CLOSED}
+const USRC = BOOT.unitSrc;                // {ONHAND, ADDED}
+const TYPES = BOOT.types;                 // ['เครื่องกรอง','สารกรอง']
+const C = { NO:0, EMP:1, NAME:2, PLATE:3, DEPT:4, SN:5, TYPE:6, ST:7, FOUND:8, AT:9, BY:10, NOTE:11 };
+const O = { TS:0, SN:1, TYPE:2, FOUND:3, BY:4, REMARK:5 };
+const U = { KEY:0, ID:1, NAME:2, SRC:3, ST:4, AT:5, BY:6, TOTAL:7, M:8, W:9, MISS:10 };
+const E = { TS:0, SN:1, NAME:2, FOUND:3, BY:4, REMARK:5 };       // อุปกรณ์ติดตั้ง
+const EQUIP_LABEL = 'อุปกรณ์ติดตั้ง';
+const EQUIP_PRESETS = ['สว่าน', 'สว่านไร้สาย', 'ไขควงไฟฟ้า', 'เครื่องเจียร', 'เครื่องตัดท่อ', 'ปั๊มทดสอบแรงดัน', 'เครื่องวัด TDS'];
+const POLL_MS = 10000;
+const LS = { TOKEN:'sa_token', QUEUE:'sa_queue_v2', TARGET:'sa_target', NOAUTO:'sa_noauto', GUN:'sa_gun', SIDEBAR:'sa_sidebar' };
+const LABEL_MISPLACED = 'พบต่างหน่วย (ยืม)';
+
+const App = {
+  token: null, user: null,
+  rows: [], idx: new Map(), over: [], overIdx: new Map(), equip: [], equipIdx: new Map(),
+  units: new Map(), unitMeta: new Map(), targets: new Map(), prefixType: new Map(),
+  round: { name: '-', started: '' },
+  v: 0, page: 'dashboard', target: 'ALL',
+  lastSync: 0, syncing: false, pollTimer: null, autoRefresh: true,
+  queue: [], inflight: null, recent: [], promptedClose: new Set(),
+  modalOpen: false, alertQueue: [],
+  dirty: { dash: true, inv: true, over: true, equip: true, scan: true, invFull: true },
+  invChanged: new Set(),
+  tables: {}, ts: null,
+  invFilter: { type: '', status: '', dept: '', unit: '' },
+  upload: { wb: null, rows: [] }
+};
+
+/* ============================== Utilities ============================== */
+const $id = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const normSN = (s) => String(s == null ? '' : s).replace(/[\s\u0000-\u001f​]+/g, '').toUpperCase();
+const normPlate = (s) => String(s == null ? '' : s).replace(/[\s\-.]+/g, '').toUpperCase();
+const blank = (s) => !s || s === '-';
+const fmtN = (n) => Number(n || 0).toLocaleString('th-TH');
+const pct = (a, b) => (b ? (a / b) * 100 : 0);
+const fmtPct = (p) => (p >= 99.95 || p === 0 ? p.toFixed(0) : p.toFixed(1)) + '%';
+const isTouch = () => window.matchMedia('(pointer:coarse)').matches;
+const pad = (n) => String(n).padStart(2, '0');
+const scannable = (st) => !st || st === S.UNSCANNED || st === S.MISSING;
+const isAdmin = () => App.user && App.user.role === 'Admin';
+function nowStr() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
+function hhmm(s) { const m = String(s || '').match(/(\d{1,2}):(\d{2})/); return m ? `${pad(m[1])}:${m[2]}` : '-'; }
+function dateTh(s) { const m = String(s || '').match(/(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; }
+function store(k, v) {
+  try {
+    if (v === undefined) return localStorage.getItem(k);
+    if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v);
+  } catch (e) { return null; }
+}
+function isAuthErr(e) { return /AUTH_REQUIRED/.test(String((e && e.message) || e)); }
+function errMsg(e) { return String((e && e.message) || e || 'เกิดข้อผิดพลาด').replace(/^(Error:\s*)?(AUTH_REQUIRED|FORBIDDEN):\s*/, ''); }
+
+/**
+ * เรียกฟังก์ชันฝั่งเซิร์ฟเวอร์
+ *  - เปิดผ่าน Apps Script  -> google.script.run
+ *  - เปิดผ่านหน้าเว็บภายนอก (GitHub Pages) -> POST ไปที่ window.API_URL (doPost ใน Code.gs)
+ */
+const IS_GAS = !!(window.google && google.script && google.script.run);
+if (!IS_GAS && !BOOT.appUrl) BOOT.appUrl = location.origin + location.pathname;
+function gs(fn, ...args) {
+  if (IS_GAS) {
+    return new Promise((resolve, reject) => {
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args);
+    });
+  }
+  if (!window.API_URL) return Promise.reject(new Error('ยังไม่ได้ตั้งค่า API_URL ในหน้าเว็บ'));
+  return fetch(window.API_URL, {
+    method: 'POST', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request: ไม่ติด CORS preflight
+    body: JSON.stringify({ fn, args })
+  }).then((r) => r.text()).then((t) => {
+    let j;
+    try { j = JSON.parse(t); }
+    catch (e) { throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง — ตรวจว่า Deploy เวอร์ชันล่าสุดแล้ว และตั้ง Who has access = Anyone'); }
+    if (!j.ok) throw new Error(j.error || 'เกิดข้อผิดพลาด');
+    return j.result;
+  });
+}
+
+/** หน่วยรถ: ใช้ทะเบียนรถเป็นหลัก ถ้าไม่มีทะเบียนใช้รหัสพนักงาน (ตรงกับ unitKey_ ฝั่งเซิร์ฟเวอร์) */
+function unitKey(r) { return !blank(r[C.PLATE]) ? 'CAR|' + r[C.PLATE] : 'EMP|' + (r[C.EMP] || '-'); }
+function unitOf(r) { return App.units.get(unitKey(r)); }
+function foundId(s) { return String(s || '').split(' / ')[0].trim(); }
+function ownerLabel(r) {
+  const parts = [r[C.PLATE], r[C.NAME]].filter((x) => !blank(x));
+  return parts.join(' / ') || r[C.EMP] || '-';
+}
+function typeClass(t) { return t === TYPES[0] ? 'type-machine' : t === TYPES[1] ? 'type-media' : t === 'อุปกรณ์ติดตั้ง' ? 'type-equip' : 'type-other'; }
+function typePill(t) { return `<span class="type-pill ${typeClass(t)}">${esc(t || 'ไม่ระบุ')}</span>`; }
+function statusText(st) { return st === S.MISPLACED ? LABEL_MISPLACED : (st || S.UNSCANNED); }
+function statusBadge(st) {
+  if (st === S.MATCHED) return `<span class="st st-ok"><i class="bi bi-check-circle-fill"></i>${esc(st)}</span>`;
+  if (st === S.MISPLACED) return `<span class="st st-warn"><i class="bi bi-arrow-left-right"></i>${LABEL_MISPLACED}</span>`;
+  if (st === S.MISSING) return `<span class="st st-bad"><i class="bi bi-x-octagon-fill"></i>${esc(st)}</span>`;
+  return `<span class="st st-idle"><i class="bi bi-circle"></i>${esc(st || S.UNSCANNED)}</span>`;
+}
+
+/* ============================== SweetAlert2 ============================== */
+const Modal = Swal.mixin({ heightAuto: false, confirmButtonColor: '#4f6bed', cancelButtonColor: '#64748b', reverseButtons: true });
+const Toast = Swal.mixin({ toast: true, position: 'top', timer: 1800, timerProgressBar: true, showConfirmButton: false, heightAuto: false });
+
+async function modal(opts) {
+  App.modalOpen = true;
+  try { return await Modal.fire(opts); }
+  finally {
+    App.modalOpen = false;
+    refocusInput();
+    if (App.alertQueue.length) setTimeout(() => { if (!App.modalOpen && App.alertQueue.length) modal(App.alertQueue.shift()); }, 50);
+  }
+}
+function notify(opts) { if (App.modalOpen) App.alertQueue.push(opts); else modal(opts); }
+function toast(icon, title, text) { if (!App.modalOpen) Toast.fire({ icon, title, text }); }
+
+/* ============================== Feedback (เสียง/สั่น) ==============================
+   ใช้ไฟล์เสียง WAV ที่สร้างในเครื่อง + <audio> (ดังได้บน iPhone แม้เปิดโหมดเงียบ และในแอป LINE)
+   ปลดล็อกเสียงด้วยการแตะหน้าจอครั้งแรก (ข้อกำหนดของเบราว์เซอร์มือถือ) — สำรองด้วย Web Audio */
+const Feedback = {
+  enabled: true, unlocked: false, ctx: null, pool: {},
+  // [ความถี่ Hz (0 = เงียบ), วินาที, รูปคลื่น]
+  defs: {
+    ok:   [[2700, 0.09, 'sq']],                                                           // ปี๊บ! สั้นแหลม (เหมือนเครื่องยิงบาร์โค้ด)
+    dup:  [[440, 0.13, 'sq'], [0, 0.06], [440, 0.13, 'sq'], [0, 0.06], [330, 0.32, 'sq']], // ตื๊ด ตื๊ด ตื้ดดด (สแกนซ้ำ)
+    warn: [[1175, 0.13, 'sq'], [0, 0.04], [784, 0.22, 'sq']],                             // ยืมข้ามคัน
+    over: [[523, 0.12, 'tri'], [659, 0.12, 'tri'], [784, 0.12, 'tri'], [1047, 0.2, 'tri']], // ไม่พบใน Onhand
+    err:  [[180, 0.5, 'saw']],                                                            // ผิดพลาด
+    done: [[1047, 0.11, 'sq'], [1319, 0.11, 'sq'], [1568, 0.11, 'sq'], [2093, 0.28, 'sq']] // ครบ/ปิดคัน
+  },
+  vib: { ok: 80, dup: [250, 90, 250, 90, 400], warn: [150, 70, 150], over: [90, 50, 90, 50, 90], err: [400, 120, 400], done: [60, 40, 60, 40, 200] },
+
+  init() {
+    this.enabled = store('sa_sound') !== '0';
+    for (const k in this.defs) {
+      const url = this.wav(this.defs[k]);
+      this.pool[k] = [0, 1, 2].map(() => { const a = new Audio(url); a.preload = 'auto'; return a; });
+    }
+    const unlock = () => this.unlock();
+    ['touchend', 'click', 'keydown'].forEach((ev) => document.addEventListener(ev, unlock, true));
+  },
+
+  /** ต้องถูกเรียกจากการแตะ/คลิกของผู้ใช้ (iOS/Android บล็อกเสียงจนกว่าจะมีการแตะ) */
+  unlock() {
+    try {
+      if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const b = this.ctx.createBuffer(1, 1, 22050), s = this.ctx.createBufferSource();
+      s.buffer = b; s.connect(this.ctx.destination); s.start(0);
+    } catch (e) { /* no web audio */ }
+    if (this.unlocked) return;
+    this.unlocked = true;
+    Object.values(this.pool).flat().forEach((a) => {
+      a._prime = true; a.muted = true;
+      const p = a.play();
+      if (p && p.then) p.then(() => { if (a._prime) { a.pause(); a.currentTime = 0; } a._prime = false; a.muted = false; })
+                      .catch(() => { a._prime = false; a.muted = false; this.unlocked = false; });
+      else { a.pause(); a._prime = false; a.muted = false; }
+    });
+  },
+
+  signal(kind) {
+    if (!this.defs[kind]) kind = 'err';
+    try { navigator.vibrate && navigator.vibrate(this.vib[kind]); } catch (e) {}
+    if (!this.enabled) return;
+    const list = this.pool[kind] || [];
+    const a = list.find((x) => (x.paused || x.ended) && !x._prime) || list.find((x) => x._prime) || list[0];
+    if (!a) return this.webAudio(kind);
+    try {
+      a._prime = false; a.muted = false;
+      a.currentTime = 0;
+      const p = a.play();
+      if (p && p.catch) p.catch(() => this.webAudio(kind));
+    } catch (e) { this.webAudio(kind); }
+  },
+
+  /** สำรอง: เล่นด้วย Web Audio */
+  webAudio(kind) {
+    const ctx = this.ctx; if (!ctx) return;
+    let t = ctx.currentTime;
+    for (const [f, d, w] of this.defs[kind]) {
+      if (f) {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = w === 'tri' ? 'triangle' : w === 'saw' ? 'sawtooth' : 'square'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.005);
+        g.gain.setValueAtTime(0.3, t + d - 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + d + 0.02);
+      }
+      t += d;
+    }
+  },
+
+  /** สร้างไฟล์ WAV (PCM 16-bit mono) เป็น data URI */
+  wav(seq) {
+    const rate = 22050, amp = 0.55;
+    const total = Math.ceil(seq.reduce((s, x) => s + x[1], 0) * rate) + 400;
+    const buf = new ArrayBuffer(44 + total * 2), v = new DataView(buf);
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    str(0, 'RIFF'); v.setUint32(4, 36 + total * 2, true); str(8, 'WAVE'); str(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    str(36, 'data'); v.setUint32(40, total * 2, true);
+    let n = 0;
+    for (const [f, d, w] of seq) {
+      const len = Math.floor(d * rate), fade = Math.min(Math.floor(rate * 0.006), len / 2);
+      for (let i = 0; i < len && n < total; i++, n++) {
+        let s = 0;
+        if (f) {
+          const ph = (i * f / rate) % 1;
+          s = w === 'sq' ? (ph < 0.5 ? 1 : -1) * 0.7 : w === 'tri' ? 1 - 4 * Math.abs(ph - 0.5) : w === 'saw' ? 2 * ph - 1 : Math.sin(2 * Math.PI * ph);
+          s *= Math.min(1, i / fade, (len - i) / fade);
+        }
+        v.setInt16(44 + n * 2, Math.round(s * amp * 32767), true);
+      }
+    }
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return 'data:audio/wav;base64,' + btoa(bin);
+  }
+};
+
+/* ============================== In-app browser (LINE / Facebook ...) ============================== */
+const InApp = (() => {
+  const ua = navigator.userAgent || '';
+  const name = /\bLine\//i.test(ua) ? 'LINE' : /FBAN|FBAV|FB_IAB|FBIOS/i.test(ua) ? 'Facebook' : /Instagram/i.test(ua) ? 'Instagram'
+    : /MicroMessenger/i.test(ua) ? 'WeChat' : /musical_ly|TikTok|BytedanceWebview/i.test(ua) ? 'TikTok' : '';
+  const isAndroid = /Android/i.test(ua), isIOS = /iPhone|iPad|iPod/i.test(ua);
+  return {
+    name, isAndroid, isIOS, any: !!name,
+    /** ลิงก์เปิดนอกแอป: LINE ใช้ ?openExternalBrowser=1, Android อื่น ๆ ใช้ intent ไป Chrome */
+    externalUrl() {
+      const base = BOOT.appUrl || '';
+      if (!base) return '';
+      if (this.name === 'LINE') return base + (base.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
+      if (this.isAndroid) return 'intent://' + base.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(base) + ';end';
+      return base;
+    },
+    /** ลิงก์ Chrome สำหรับ Android (ใช้ได้ทั้งใน LINE และแอปอื่น) */
+    chromeIntentUrl() {
+      const base = BOOT.appUrl || '';
+      return base && this.isAndroid
+        ? 'intent://' + base.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(base) + ';end'
+        : '';
+    }
+  };
+})();
+
+/** ลิงก์สำหรับส่งในกลุ่ม LINE: LINE จะเปิดใน Chrome/Safari อัตโนมัติ (กล้องใช้ได้) */
+function lineShareUrl() {
+  const base = BOOT.appUrl || '';
+  return base ? base + (base.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1' : '';
+}
+
+async function copyText(text, okTitle) {
+  if (!text) return toast('info', 'ยังไม่ได้ Deploy เป็น Web App');
+  try { await navigator.clipboard.writeText(text); toast('success', okTitle || 'คัดลอกแล้ว'); }
+  catch (e) {
+    modal({ title: 'คัดลอกลิงก์นี้', html: '<div class="small text-muted">กดค้างที่ข้อความเพื่อคัดลอก</div>', input: 'textarea', inputValue: text,
+      didOpen: () => { const i = Swal.getInput(); i.select(); } });
+  }
+}
+
+/**
+ * ด่านเปิดผ่านแอป LINE / Facebook: เต็มจอ กดปุ่มเดียวเพื่อไปเปิดใน Chrome/Safari
+ * (ข้ามได้ด้วย "ใช้ต่อในแอปนี้" ซึ่งจะสแกนด้วยการถ่ายภาพแทนกล้องสด)
+ */
+const Gate = {
+  SKIP: 'sa_inapp_skip',
+  init() {
+    if (!InApp.any) return;
+    let skipped = false;
+    try { skipped = sessionStorage.getItem(this.SKIP) === '1'; } catch (e) {}
+    $id('gate-app').textContent = InApp.name;
+    const ext = InApp.externalUrl();
+    const chrome = InApp.chromeIntentUrl();
+    if (ext) $id('gate-open').href = ext; else $id('gate-open').classList.add('d-none');
+    if (chrome && chrome !== ext) { $id('gate-chrome').href = chrome; $id('gate-chrome').classList.remove('d-none'); }
+    $id('gate-copy').addEventListener('click', () => copyText(BOOT.appUrl, 'คัดลอกลิงก์แล้ว — นำไปวางใน Chrome / Safari'));
+    $id('gate-skip').addEventListener('click', () => {
+      try { sessionStorage.setItem(this.SKIP, '1'); } catch (e) {}
+      $id('inapp-gate').classList.add('d-none');
+    });
+    if (!skipped) $id('inapp-gate').classList.remove('d-none');
+  }
+};
+
+/** ขนาดตัวอักษร (เก็บแยกแต่ละเครื่อง): sm / md / lg */
+function applyFontSize(fs) {
+  fs = ['sm', 'md', 'lg'].indexOf(fs) > -1 ? fs : (store('sa_fs') || 'md');
+  document.documentElement.classList.remove('fs-sm', 'fs-md', 'fs-lg');
+  document.documentElement.classList.add('fs-' + fs);
+  store('sa_fs', fs === 'md' ? null : fs);
+  document.querySelectorAll('#font-size-group [data-fs]').forEach((b) => b.classList.toggle('active', b.dataset.fs === fs));
+  setTimeout(adjustTables, 50);
+}
+
+/* ============================== Init / Auth ============================== */
+document.addEventListener('DOMContentLoaded', init);
+
+async function init() {
+  $id('year').textContent = new Date().getFullYear();
+  applyFontSize();
+  Gate.init();
+  Feedback.init();
+  bindUI();
+  try { App.queue = JSON.parse(store(LS.QUEUE) || '[]'); } catch (e) { App.queue = []; }
+
+  const candidates = [];
+  const saved = store(LS.TOKEN);
+  if (saved) candidates.push(saved);
+  if (BOOT.auto && BOOT.auto.token && store(LS.NOAUTO) !== '1') candidates.push(BOOT.auto.token);
+
+  for (const t of candidates) {
+    try {
+      const res = await gs('getBootstrap', t);
+      return startSession(t, res);
+    } catch (e) {
+      if (!isAuthErr(e)) { showLogin(); return showLoadError(e); }
+    }
+  }
+  store(LS.TOKEN, null);
+  showLogin();
+}
+
+function showLoader(text) { $id('loader-text').textContent = text || 'กำลังโหลดข้อมูล…'; $id('app-loader').classList.remove('hide'); }
+function hideLoader() { $id('app-loader').classList.add('hide'); document.body.classList.remove('is-loading'); }
+
+function showLogin() {
+  hideLoader();
+  $id('app-shell').classList.add('d-none');
+  $id('login-screen').classList.remove('d-none');
+  setTimeout(() => $id('login-user').focus(), 50);
+}
+
+function showLoadError(e) {
+  modal({ icon: 'error', title: 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ', text: errMsg(e), confirmButtonText: 'ลองใหม่' })
+    .then(() => { showLoader(); init(); });
+}
+
+async function doLogin(ev) {
+  ev.preventDefault();
+  const user = $id('login-user').value.trim();
+  const pin = $id('login-pin').value.trim();
+  const btn = $id('login-btn'), err = $id('login-error');
+  err.classList.add('d-none');
+  if (!user) { err.textContent = 'กรุณาระบุ Username / Email'; err.classList.remove('d-none'); return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังตรวจสอบ…';
+  try {
+    const r = await gs('login', user, pin);
+    if (!r.ok) throw new Error(r.message);
+    showLoader('กำลังโหลดข้อมูลสต๊อก…');
+    const res = await gs('getBootstrap', r.token);
+    store(LS.NOAUTO, null);
+    startSession(r.token, res);
+  } catch (e) {
+    hideLoader();
+    err.textContent = errMsg(e); err.classList.remove('d-none');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> เข้าสู่ระบบ';
+  }
+}
+
+function startSession(token, res) {
+  App.token = token; App.user = res.user;
+  store(LS.TOKEN, token);
+  App.queue = App.queue.filter((j) => j.user === App.user.username);
+  saveQueue();
+  try { App.recent = JSON.parse(store('sa_recent_' + App.user.username) || '[]'); } catch (e) { App.recent = []; }
+
+  document.body.classList.toggle('role-admin', isAdmin());
+  document.body.classList.toggle('role-auditor', !isAdmin());
+  $id('user-name').textContent = App.user.name;
+  $id('user-role').textContent = App.user.role;
+  $id('user-dd-name').textContent = `${App.user.name} (${App.user.username})`;
+  $id('user-avatar').textContent = (App.user.name || '?').trim().charAt(0).toUpperCase();
+
+  App.target = store(LS.TARGET) || 'ALL';
+  setData(res.data);
+  App.lastSync = Date.now();
+  setNet('online');
+
+  $id('login-screen').classList.add('d-none');
+  $id('app-shell').classList.remove('d-none');
+  hideLoader();
+  navigate(isTouch() ? 'scan' : 'dashboard');
+  renderRecent();
+  updatePending();
+  flushQueue();
+  schedulePoll();
+}
+
+async function doLogout() {
+  const pending = App.queue.length;
+  const r = await modal({
+    icon: pending ? 'warning' : 'question',
+    title: 'ออกจากระบบ?',
+    html: pending ? `ยังมี <b>${pending}</b> รายการที่ยังไม่ได้ส่งขึ้นระบบ<br>รายการเหล่านี้จะถูกส่งเมื่อคุณเข้าสู่ระบบอีกครั้ง` : '',
+    showCancelButton: true, confirmButtonText: 'ออกจากระบบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#b91c1c'
+  });
+  if (!r.isConfirmed) return;
+  gs('logout', App.token).catch(() => {});
+  forceLogout(true);
+}
+
+function forceLogout(manual) {
+  clearTimeout(App.pollTimer);
+  Scanner.stop();
+  store(LS.TOKEN, null);
+  if (manual) store(LS.NOAUTO, '1');
+  App.token = null; App.user = null;
+  $id('login-pin').value = '';
+  showLogin();
+  if (!manual) toast('warning', 'Session หมดอายุ', 'กรุณาเข้าสู่ระบบใหม่');
+}
+
+/* ============================== Data model ============================== */
+function setData(full) {
+  App.v = full.v;
+  App.rows = full.rows || [];
+  App.over = full.over || [];
+  App.equip = full.equip || [];
+  App.unitMeta = new Map((full.units || []).map((u) => [u[U.KEY], u]));
+  if (full.round) App.round = full.round;
+  rebuildIndexes();
+  applyQueueOverlay();
+  buildTargetOptions();
+  buildInventoryFilters();
+  renderRound();
+  App.dirty = { dash: true, inv: true, over: true, equip: true, scan: true, invFull: true };
+  App.invChanged.clear();
+  renderCurrent();
+}
+
+function rebuildIndexes() {
+  App.idx = new Map();
+  const pre = new Map();
+  App.rows.forEach((r, i) => {
+    r[C.SN] = normSN(r[C.SN]);
+    if (!r[C.ST]) r[C.ST] = S.UNSCANNED;
+    if (r[C.NOTE] == null) r[C.NOTE] = '';
+    App.idx.set(r[C.SN], i);
+    const p = r[C.SN].slice(0, 2);
+    const m = pre.get(p) || {}; m[r[C.TYPE]] = (m[r[C.TYPE]] || 0) + 1; pre.set(p, m);
+  });
+  App.prefixType = new Map();
+  pre.forEach((m, p) => App.prefixType.set(p, Object.keys(m).sort((a, b) => m[b] - m[a])[0]));
+  rebuildUnits();
+  rebuildOverIndex();
+  rebuildEquipIndex();
+}
+
+/** รวมหน่วยรถจาก Onhand (ทะเบียนเป็นหลัก) + ทะเบียนที่เพิ่มหน้างาน + สถานะปิดคันจากชีต Units */
+function rebuildUnits() {
+  const units = new Map();
+  const get = (key, id) => {
+    let u = units.get(key);
+    if (!u) { u = { key, id, kind: key.slice(0, 3), names: new Set(), emps: new Set(), depts: new Set(), rows: [] }; units.set(key, u); }
+    return u;
+  };
+  for (const r of App.rows) {
+    const key = unitKey(r);
+    const u = get(key, key.slice(4));
+    u.rows.push(r);
+    if (!blank(r[C.NAME])) u.names.add(r[C.NAME]);
+    if (!blank(r[C.EMP])) u.emps.add(r[C.EMP]);
+    if (!blank(r[C.DEPT])) u.depts.add(r[C.DEPT]);
+  }
+  App.unitMeta.forEach((m, key) => {
+    const u = get(key, m[U.ID] || key.slice(4));
+    if (!u.rows.length && !blank(m[U.NAME])) m[U.NAME].split(',').forEach((n) => n.trim() && u.names.add(n.trim()));
+  });
+  units.forEach((u) => {
+    u.meta = App.unitMeta.get(u.key) || null;
+    u.closed = !!(u.meta && u.meta[U.ST] === US.CLOSED);
+    u.added = !!(u.meta && u.meta[U.SRC] === USRC.ADDED);
+    const names = [...u.names].join(', ');
+    u.nameText = names || '-';
+    u.empText = [...u.emps].join(', ');
+    u.dept = [...u.depts].join(', ') || '-';
+    u.foundAt = u.id + (names ? ' / ' + names : '');
+    u.label = [u.id, names, u.kind === 'CAR' && u.empText ? `(${u.empText})` : ''].filter(Boolean).join(' · ') + (u.added ? ' · เพิ่มหน้างาน' : '');
+  });
+  App.units = units;
+}
+
+function rebuildOverIndex() {
+  App.overIdx = new Map();
+  App.over.forEach((r, i) => { r[O.SN] = normSN(r[O.SN]); App.overIdx.set(r[O.SN], i); });
+}
+function rebuildEquipIndex() {
+  App.equipIdx = new Map();
+  App.equip.forEach((r, i) => { r[E.SN] = normSN(r[E.SN]); App.equipIdx.set(r[E.SN], i); });
+}
+function upsertEquipLocal(rec) {
+  const sn = normSN(rec[E.SN]);
+  const i = App.equipIdx.get(sn);
+  if (i === undefined) { App.equip.push(rec.slice()); App.equipIdx.set(sn, App.equip.length - 1); }
+  else App.equip[i] = rec.slice();
+}
+function removeEquipLocal(sn) {
+  if (!App.equipIdx.has(sn)) return;
+  App.equip = App.equip.filter((r) => r[E.SN] !== sn);
+  rebuildEquipIndex();
+}
+
+/** นับรายการที่ "พบที่คันนี้" แต่ไม่ได้เป็นของคันนี้: ยืมมา / สต๊อกเกิน / อุปกรณ์ติดตั้ง (แยกตามประเภท/ชื่อ) */
+function unitCounters() {
+  const bump = (m, id, k) => { let o = m.get(id); if (!o) { o = { n: 0, t: {} }; m.set(id, o); } o.n++; if (k) o.t[k] = (o.t[k] || 0) + 1; };
+  const bin = new Map(), overAt = new Map(), equipAt = new Map();
+  for (const r of App.rows) if (r[C.ST] === S.MISPLACED) bump(bin, foundId(r[C.FOUND]), r[C.TYPE]);
+  for (const o of App.over) bump(overAt, foundId(o[O.FOUND]), o[O.TYPE]);
+  for (const e of App.equip) bump(equipAt, foundId(e[E.FOUND]), e[E.NAME]);
+  return { bin, overAt, equipAt };
+}
+/**
+ * สถิติของหน่วยรถ (รวม + แยกตามประเภทใน s.byType)
+ *  total=Onhand, m=นับพบในคัน, w=ยืมไปคันอื่น, miss=ไม่พบ, un=ยังไม่นับ, bin=ยืมมา, over=สต๊อกเกิน
+ *  hold = ครอบครองจริง = นับพบในคัน + ยืมมา + สต๊อกเกินที่พบในคัน
+ */
+function unitStat(u, counters) {
+  const c = counters || unitCounters();
+  const mk = () => ({ total: 0, m: 0, w: 0, miss: 0, un: 0, bin: 0, over: 0, hold: 0 });
+  const s = mk();
+  s.byType = {};
+  TYPES.forEach((t) => (s.byType[t] = mk()));
+  for (const r of u.rows) {
+    for (const g of [s, s.byType[r[C.TYPE]]]) {
+      if (!g) continue;
+      g.total++;
+      if (r[C.ST] === S.MATCHED) g.m++;
+      else if (r[C.ST] === S.MISPLACED) g.w++;
+      else if (r[C.ST] === S.MISSING) g.miss++;
+      else g.un++;
+    }
+  }
+  const bi = c.bin.get(u.id), ov = c.overAt.get(u.id), eq = c.equipAt.get(u.id);
+  s.bin = bi ? bi.n : 0;
+  s.over = ov ? ov.n : 0;
+  TYPES.forEach((t) => { const g = s.byType[t]; g.bin = (bi && bi.t[t]) || 0; g.over = (ov && ov.t[t]) || 0; g.hold = g.m + g.bin + g.over; });
+  s.hold = s.m + s.bin + s.over;
+  s.equip = eq ? eq.n : 0;
+  s.equipNames = eq ? Object.entries(eq.t).map(([k, v]) => `${k} ${v}`).join(', ') : '';
+  return s;
+}
+
+function applyChanges(changes) {
+  let needFull = false, overChanged = false;
+  const changed = [];
+  for (const c of changes) {
+    if (c.k === 'S') {
+      const i = App.idx.get(c.sn);
+      if (i === undefined) { needFull = true; continue; }
+      setRowStatus(App.rows[i], c.d);
+      changed.push(i);
+    } else if (c.k === 'O') {
+      upsertOverLocal(c.d); overChanged = true;
+    } else if (c.k === 'OD') {
+      removeOverLocal(c.sn); overChanged = true;
+    } else if (c.k === 'E') {
+      upsertEquipLocal(c.d); overChanged = true;
+    } else if (c.k === 'ED') {
+      removeEquipLocal(c.sn); overChanged = true;
+    } else if (c.k === 'U') {
+      applyUnitChange(c, true);
+    }
+  }
+  applyQueueOverlay();
+  markChanged(changed, overChanged);
+  return needFull;
+}
+
+function setRowStatus(r, d) { r[C.ST] = d[0]; r[C.FOUND] = d[1]; r[C.AT] = d[2]; r[C.BY] = d[3]; r[C.NOTE] = d[4] || ''; }
+
+/** การเปลี่ยนสถานะคัน (ปิด/เปิด/เพิ่ม) จากเครื่องนี้หรือเครื่องอื่น */
+function applyUnitChange(c, fromPoll) {
+  const row = c.d;
+  App.unitMeta.set(row[U.KEY], row);
+  const changed = [];
+  (c.sns || []).forEach((sn) => {
+    const i = App.idx.get(sn); if (i === undefined) return;
+    const r = App.rows[i];
+    if (c.st === S.MISSING && r[C.ST] === S.UNSCANNED) { r[C.ST] = S.MISSING; changed.push(i); }
+    else if (c.st === S.UNSCANNED && r[C.ST] === S.MISSING) { r[C.ST] = S.UNSCANNED; changed.push(i); }
+  });
+  const prevTarget = App.target;
+  rebuildUnits();
+  buildTargetOptions();
+  buildInventoryFilters();
+  if (fromPoll && prevTarget !== 'ALL' && App.target === 'ALL' && row[U.KEY] === prevTarget) {
+    notify({ icon: 'info', title: 'คันนี้ถูกปิดการนับแล้ว', html: `<b>${esc(row[U.ID])}</b> ถูกปิดโดย ${esc(row[U.BY])}<br>กรุณาเลือกทะเบียนคันถัดไป` });
+  }
+  markChanged(changed, false);
+}
+
+function upsertOverLocal(rec) {
+  const sn = normSN(rec[O.SN]);
+  const i = App.overIdx.get(sn);
+  if (i === undefined) { App.over.push(rec.slice()); App.overIdx.set(sn, App.over.length - 1); }
+  else App.over[i] = rec.slice();
+}
+function removeOverLocal(sn) {
+  if (!App.overIdx.has(sn)) return;
+  App.over = App.over.filter((r) => r[O.SN] !== sn);
+  rebuildOverIndex();
+}
+
+/** ทับสถานะด้วยรายการที่ยังรอส่ง (กันข้อมูลที่เพิ่งสแกนหายเมื่อโหลดข้อมูลชุดใหม่) */
+function applyQueueOverlay() {
+  for (const j of App.queue) {
+    if (j.fn === 'saveScan') {
+      const i = App.idx.get(j.payload.sn);
+      if (i === undefined) continue;
+      const r = App.rows[i];
+      if (scannable(r[C.ST])) { setRowStatus(r, j.local); App.invChanged.add(i); }
+    } else if (j.fn === 'addOverStock' && !App.overIdx.has(j.payload.sn)) {
+      upsertOverLocal(j.local);
+    } else if (j.fn === 'addEquipment' && !App.equipIdx.has(j.payload.sn)) {
+      upsertEquipLocal(j.local);
+    }
+  }
+}
+
+function markChanged(indices, overChanged) {
+  indices.forEach((i) => App.invChanged.add(i));
+  App.dirty.dash = true; App.dirty.scan = true;
+  if (indices.length) App.dirty.inv = true;
+  if (overChanged) { App.dirty.over = true; App.dirty.equip = true; App.dirty.dash = true; }
+  renderCurrent();
+}
+
+/* ============================== Sync / Polling ============================== */
+function schedulePoll(delay) {
+  clearTimeout(App.pollTimer);
+  if (!App.token) return;
+  App.pollTimer = setTimeout(async () => {
+    if (App.autoRefresh && !document.hidden) await poll(false);
+    schedulePoll();
+  }, delay == null ? POLL_MS : delay);
+}
+
+async function poll(force) {
+  if (!App.token || App.syncing) return;
+  App.syncing = true;
+  setNet('sync');
+  try {
+    await flushQueue();
+    if (force) {
+      setData(await gs('syncAll', App.token));
+    } else {
+      const res = await gs('getUpdates', App.token, App.v);
+      if (res.full) setData(res.full);
+      else {
+        const needFull = res.changes && res.changes.length ? applyChanges(res.changes) : false;
+        App.v = res.v;
+        if (needFull) setData(await gs('syncAll', App.token));
+      }
+    }
+    App.lastSync = Date.now();
+    setNet('online');
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    setNet('offline', e);
+  } finally {
+    App.syncing = false;
+  }
+}
+
+async function manualSync() {
+  const btn = $id('btn-sync');
+  btn.classList.add('spinning');
+  await poll(true);
+  btn.classList.remove('spinning');
+  if (App.lastSync && Date.now() - App.lastSync < 3000) toast('success', 'ซิงก์ข้อมูลล่าสุดจาก Google Sheets แล้ว');
+}
+
+function setNet(state, err) {
+  const el = $id('net-status'), txt = $id('net-text');
+  el.classList.remove('online', 'sync', 'offline');
+  el.classList.add(state);
+  if (state === 'online') txt.textContent = 'ออนไลน์ · ' + new Date(App.lastSync || Date.now()).toLocaleTimeString('th-TH', { hour12: false });
+  else if (state === 'sync') txt.textContent = 'กำลังซิงก์…';
+  else txt.textContent = navigator.onLine ? 'เชื่อมต่อไม่ได้' : 'ออฟไลน์';
+  el.title = err ? 'ข้อผิดพลาด: ' + errMsg(err) : 'สถานะการเชื่อมต่อแบบ Real-time';
+  const upd = $id('dash-updated');
+  if (upd && App.lastSync) upd.textContent = new Date(App.lastSync).toLocaleString('th-TH', { hour12: false });
+}
+
+function renderRound() {
+  $id('round-name').textContent = App.round.name || '-';
+  document.querySelectorAll('.round-name-txt').forEach((el) => (el.textContent = App.round.name || '-'));
+}
+
+/* ============================== Write queue ============================== */
+function saveQueue() { store(LS.QUEUE, JSON.stringify(App.queue)); }
+function updatePending() {
+  const n = App.queue.length;
+  $id('pending-count').textContent = n;
+  $id('pending-badge').classList.toggle('d-none', !n);
+}
+function enqueue(job) {
+  job.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  job.user = App.user.username;
+  job.tries = 0;
+  App.queue.push(job);
+  saveQueue(); updatePending();
+  flushQueue();
+}
+
+let flushing = null;
+function flushQueue() {
+  if (!flushing) flushing = runQueue().finally(() => { flushing = null; App.inflight = null; updatePending(); renderRecent(); });
+  return flushing;
+}
+async function runQueue() {
+  while (App.queue.length && App.token) {
+    const job = App.queue[0];
+    App.inflight = job.id;
+    let res;
+    try {
+      res = await gs(job.fn, App.token, job.payload);
+    } catch (e) {
+      if (isAuthErr(e)) { forceLogout(false); return; }
+      job.tries++; saveQueue();
+      if (job.tries >= 6) { App.queue.shift(); saveQueue(); jobFailed(job, e); continue; }
+      setNet('offline', e);
+      return;
+    }
+    if (res && res.code === 'BUSY') { job.tries++; saveQueue(); return; }
+    App.queue.shift(); saveQueue();
+    jobDone(job, res || {});
+  }
+}
+
+function jobDone(job, res) {
+  if (res.ok && res.v === App.v + 1) App.v = res.v;
+  const sn = job.payload.sn;
+  if (job.fn === 'saveScan') {
+    const i = App.idx.get(sn);
+    if (res.ok || res.code === 'DUPLICATE') {
+      if (i !== undefined && res.record) {
+        const d = res.record;
+        setRowStatus(App.rows[i], [d[C.ST], d[C.FOUND], d[C.AT], d[C.BY], d[C.NOTE]]);
+        markChanged([i], false);
+      }
+      markRecent(sn, { pending: false });
+      if (res.code === 'DUPLICATE') {
+        markRecent(sn, { conflict: true });
+        Feedback.signal('dup');
+        notify({ icon: 'warning', title: 'มีผู้อื่นสแกนไปก่อนแล้ว',
+          html: `<div class="swal-sn">${esc(sn)}</div><br>ถูกสแกนโดย <b>${esc(res.record[C.BY])}</b> เมื่อเวลา <b>${hhmm(res.record[C.AT])} น.</b><br><span class="small text-muted">ระบบไม่นับซ้ำให้</span>`,
+          confirmButtonText: 'รับทราบ' });
+      }
+    } else {
+      if (i !== undefined) revertRow(i);
+      markRecent(sn, { pending: false, conflict: true });
+      notify({ icon: 'error', title: 'บันทึกไม่สำเร็จ', html: `<div class="swal-sn">${esc(sn)}</div><br>${esc(res.message || res.code)}` });
+      if (res.code === 'NOT_FOUND') poll(true);
+    }
+  } else if (job.fn === 'addOverStock') {
+    if (res.ok || res.code === 'DUPLICATE') {
+      if (res.record) upsertOverLocal(res.record);
+      markRecent(sn, { pending: false });
+      markChanged([], true);
+    } else {
+      removeOverLocal(sn); markChanged([], true);
+      markRecent(sn, { pending: false, conflict: true });
+      notify({ icon: 'error', title: 'บันทึก OverStock ไม่สำเร็จ', html: `<div class="swal-sn">${esc(sn)}</div><br>${esc(res.message || res.code)}` });
+      if (res.code === 'IN_ONHAND' || res.code === 'IN_EQUIP') poll(true);
+    }
+  } else if (job.fn === 'addEquipment') {
+    if (res.ok || res.code === 'DUPLICATE') {
+      if (res.record) upsertEquipLocal(res.record);
+      markRecent(sn, { pending: false });
+      markChanged([], true);
+    } else {
+      removeEquipLocal(sn); markChanged([], true);
+      markRecent(sn, { pending: false, conflict: true });
+      notify({ icon: 'error', title: 'บันทึกอุปกรณ์ติดตั้งไม่สำเร็จ', html: `<div class="swal-sn">${esc(sn)}</div><br>${esc(res.message || res.code)}` });
+      if (res.code === 'IN_ONHAND' || res.code === 'IN_OVER') poll(true);
+    }
+  }
+}
+
+function jobFailed(job, e) {
+  const sn = job.payload.sn;
+  if (job.fn === 'saveScan') { const i = App.idx.get(sn); if (i !== undefined) revertRow(i); }
+  else if (job.fn === 'addEquipment') { removeEquipLocal(sn); markChanged([], true); }
+  else { removeOverLocal(sn); markChanged([], true); }
+  markRecent(sn, { pending: false, conflict: true });
+  notify({ icon: 'error', title: 'ส่งข้อมูลไม่สำเร็จ', html: `<div class="swal-sn">${esc(sn)}</div><br>${esc(errMsg(e))}<br>กรุณาสแกนใหม่อีกครั้ง` });
+}
+
+/** คืนสถานะเดิม: ถ้าคันเจ้าของปิดแล้ว -> ไม่พบ, ไม่งั้น -> ยังไม่นับ */
+function revertRow(i) {
+  const r = App.rows[i];
+  const u = unitOf(r);
+  setRowStatus(r, [u && u.closed ? S.MISSING : S.UNSCANNED, '', '', '', '']);
+  markChanged([i], false);
+}
+
+/* ============================== Navigation / Shell ============================== */
+function bindUI() {
+  $id('login-form').addEventListener('submit', doLogin);
+  $id('btn-logout').addEventListener('click', doLogout);
+  $id('btn-share-line').addEventListener('click', () => copyText(lineShareUrl(), 'คัดลอกลิงก์แล้ว — ส่งในกลุ่ม LINE ได้เลย (เปิดใน Chrome/Safari อัตโนมัติ)'));
+  document.querySelectorAll('#font-size-group [data-fs]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); applyFontSize(b.dataset.fs); }));
+  $id('btn-sync').addEventListener('click', manualSync);
+  $id('btn-sync-dash').addEventListener('click', manualSync);
+  $id('auto-refresh').addEventListener('change', (e) => { App.autoRefresh = e.target.checked; if (App.autoRefresh) poll(false); });
+
+  document.querySelectorAll('[data-page]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); navigate(a.dataset.page); }));
+  $id('btn-menu').addEventListener('click', toggleSidebar);
+  $id('bn-more').addEventListener('click', (e) => { e.preventDefault(); document.body.classList.toggle('sidebar-open'); });
+  $id('sidebar-backdrop').addEventListener('click', () => document.body.classList.remove('sidebar-open'));
+  if (store(LS.SIDEBAR) === 'mini') document.body.classList.add('sidebar-collapsed');
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && App.token) poll(false); });
+  window.addEventListener('online', () => { if (App.token) poll(false); });
+  window.addEventListener('offline', () => setNet('offline'));
+
+  bindScanUI();
+  bindInventoryUI();
+  bindUploadUI();
+  bindRoundsUI();
+  $id('unit-filter').addEventListener('change', () => { App.dirty.dash = true; renderDashboard(); });
+}
+
+function toggleSidebar() {
+  if (window.innerWidth < 992) { document.body.classList.toggle('sidebar-open'); return; }
+  document.body.classList.toggle('sidebar-collapsed');
+  store(LS.SIDEBAR, document.body.classList.contains('sidebar-collapsed') ? 'mini' : null);
+  setTimeout(adjustTables, 250);
+}
+
+function navigate(page) {
+  if ((page === 'upload' || page === 'rounds') && !isAdmin()) page = 'dashboard';
+  App.page = page;
+  document.querySelectorAll('.page').forEach((p) => p.classList.toggle('d-none', p.id !== 'page-' + page));
+  document.querySelectorAll('[data-page]').forEach((a) => a.classList.toggle('active', a.dataset.page === page));
+  document.body.classList.remove('sidebar-open');
+  if (page !== 'scan') Scanner.stop();
+  if (page === 'rounds') loadRounds();
+  renderCurrent();
+  window.scrollTo(0, 0);
+  if (page === 'scan') refocusInput();
+  setTimeout(adjustTables, 30);
+}
+
+function adjustTables() {
+  Object.values(App.tables).forEach((t) => { try { t.columns.adjust(); t.responsive && t.responsive.recalc(); } catch (e) {} });
+}
+
+function renderCurrent() {
+  renderSideProgress();
+  if (App.page === 'dashboard' && App.dirty.dash) renderDashboard();
+  if (App.page === 'scan' && App.dirty.scan) renderScanTarget();
+  if (App.page === 'inventory') renderInventory();
+}
+
+/* ============================== Stats / Dashboard ============================== */
+function computeStats() {
+  const mk = () => ({ total: 0, matched: 0, misplaced: 0, missing: 0, unscanned: 0, over: 0 });
+  const s = { all: mk() };
+  TYPES.forEach((t) => (s[t] = mk()));
+  for (const r of App.rows) {
+    for (const g of [s.all, s[r[C.TYPE]]]) {
+      if (!g) continue;
+      g.total++;
+      if (r[C.ST] === S.MATCHED) g.matched++;
+      else if (r[C.ST] === S.MISPLACED) g.misplaced++;
+      else if (r[C.ST] === S.MISSING) g.missing++;
+      else g.unscanned++;
+    }
+  }
+  for (const o of App.over) { s.all.over++; if (s[o[O.TYPE]]) s[o[O.TYPE]].over++; }
+  return s;
+}
+
+function renderSideProgress() {
+  let done = 0;
+  for (const r of App.rows) if (r[C.ST] === S.MATCHED || r[C.ST] === S.MISPLACED) done++;
+  const p = pct(done, App.rows.length);
+  $id('side-pct').textContent = fmtPct(p);
+  $id('side-bar').style.width = p + '%';
+  $id('side-count').textContent = `${fmtN(done)} / ${fmtN(App.rows.length)} รายการ`;
+  $id('cnt-onhand').textContent = fmtN(App.rows.length);
+  $id('cnt-over').textContent = fmtN(App.over.length);
+  $id('cnt-equip').textContent = fmtN(App.equip.length);
+}
+
+/** แถบความคืบหน้า: เขียว = นับพบ, ส้ม = ยืมข้ามคัน, แดง = ไม่พบ, เทา = ยังไม่นับ */
+function splitBar(g) {
+  const a = pct(g.matched, g.total), b = pct(g.misplaced, g.total), c = pct(g.missing || 0, g.total);
+  return `<div class="progress-split" role="img" aria-label="นับพบ ${fmtPct(a)} ยืมข้ามคัน ${fmtPct(b)} ไม่พบ ${fmtPct(c)}">
+      ${a ? `<div class="seg ok" style="width:${a}%" title="นับพบ ${fmtN(g.matched)}"></div>` : ''}
+      ${b ? `<div class="seg warn" style="width:${b}%" title="ยืมข้ามคัน ${fmtN(g.misplaced)}"></div>` : ''}
+      ${c ? `<div class="seg bad" style="width:${c}%" title="ไม่พบ ${fmtN(g.missing)}"></div>` : ''}
+    </div>`;
+}
+
+function kpiGroup(title, icon, tone, g, foot) {
+  const p = pct(g.matched + g.misplaced, g.total);
+  const tile = (cls, ico, label, val, sub) => `<div class="kpi-tile ${cls}"><div class="kpi-label"><span class="dot"></span>${ico ? `<i class="bi ${ico}"></i>` : ''}${label}</div><div class="kpi-value">${val}</div>${sub ? `<div class="kpi-sub">${sub}</div>` : ''}</div>`;
+  return `<div class="kpi-group tone-${tone}">
+    <div class="kpi-head">
+      <span class="kpi-name"><i class="bi ${icon}"></i> ${title}</span>
+      <span class="kpi-pct">${fmtPct(p)}<small>ตรวจพบ</small></span>
+    </div>
+    <div class="kpi-body">
+      <div class="kpi-grid">
+        ${tile('base', '', 'ยอดตั้งต้น (Onhand)', fmtN(g.total))}
+        ${tile('ok', 'bi-check-circle', 'นับพบในคัน', fmtN(g.matched))}
+        ${tile('warn', 'bi-arrow-left-right', 'ยืมข้ามคัน', fmtN(g.misplaced))}
+        ${tile('idle', 'bi-hourglass-split', 'ยังไม่นับ', fmtN(g.unscanned))}
+        ${tile('bad', 'bi-x-octagon', 'ไม่พบ (ปิดคันแล้ว)', fmtN(g.missing))}
+        ${tile('over', 'bi-exclamation-diamond', 'สต๊อกเกิน', fmtN(g.over))}
+      </div>
+      ${splitBar(g)}
+      <div class="legend"><span><i style="background:var(--ok)"></i>นับพบ ${fmtPct(pct(g.matched, g.total))}</span><span><i style="background:var(--warn)"></i>ยืมข้ามคัน ${fmtPct(pct(g.misplaced, g.total))}</span><span><i style="background:var(--bad)"></i>ไม่พบ ${fmtPct(pct(g.missing, g.total))}</span><span><i style="background:#e9eef6"></i>ยังไม่นับ ${fmtPct(pct(g.unscanned, g.total))}</span></div>
+      ${foot ? `<div class="kpi-foot">${foot}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderDashboard() {
+  App.dirty.dash = false;
+  const s = computeStats();
+  let closed = 0; App.units.forEach((u) => { if (u.closed) closed++; });
+  const foot = `<span><i class="bi bi-truck"></i> ปิดการนับแล้ว <b>${fmtN(closed)}</b> / ${fmtN(App.units.size)} คัน</span><span><i class="bi bi-tools"></i> ${EQUIP_LABEL} <b>${fmtN(App.equip.length)}</b></span><span>รอบ ${esc(App.round.name)}</span>`;
+  $id('kpi-all').innerHTML = kpiGroup('ภาพรวมทั้งหมด', 'bi-grid-3x3-gap', 'all', s.all, foot);
+  $id('kpi-machine').innerHTML = kpiGroup(TYPES[0], 'bi-cpu', 'machine', s[TYPES[0]]);
+  $id('kpi-media').innerHTML = kpiGroup(TYPES[1], 'bi-droplet-half', 'media', s[TYPES[1]]);
+  renderUnitTable();
+  renderActivity();
+}
+
+/** ข้อมูลตารางความคืบหน้ารายคัน (แยกเครื่องกรอง / สารกรอง / อุปกรณ์ติดตั้ง) */
+function unitTableData() {
+  const f = $id('unit-filter').value;
+  const counters = unitCounters();
+  const out = [];
+  App.units.forEach((u) => {
+    const s = unitStat(u, counters);
+    const left = s.un + s.miss;
+    if (f === 'open' && u.closed) return;
+    if (f === 'closed' && !u.closed) return;
+    if (f === 'missing' && !left) return;
+    out.push({
+      id: u.id, name: u.nameText + (u.kind === 'CAR' && u.empText ? ` (${u.empText})` : ''), dept: u.dept,
+      total: s.total, m: s.m, w: s.w, bin: s.bin, over: s.over, hold: s.hold, left,
+      pct: s.total ? pct(s.m + s.w, s.total) : -1, closed: u.closed ? 1 : 0, key: u.key,
+      equip: s.equip, equipNames: s.equipNames,
+      ty: TYPES.map((t) => { const g = s.byType[t]; return { total: g.total, m: g.m, w: g.w, bin: g.bin, over: g.over, hold: g.hold, left: g.un + g.miss }; })
+    });
+  });
+  return out;
+}
+
+/** คอลัมน์แยกประเภท: บนจอแสดงแบบย่อ "ครอบครอง/Onhand", ไฟล์ Export ได้ตัวเลขครบทุกช่อง */
+function typeColumns() {
+  const cols = [];
+  TYPES.forEach((t, k) => cols.push({
+    title: `${t}<div class="small fw-normal text-muted">ครอบครอง/Onhand</div>`, className: 'text-end no-export', responsivePriority: 6 + k,
+    data: (row) => row.ty[k].hold,
+    render: (d, typ, row) => {
+      if (typ !== 'display') return d;
+      const g = row.ty[k];
+      return `<span class="tcell"><b>${fmtN(g.hold)}</b><small>/${fmtN(g.total)}</small></span>${g.left ? `<div class="small text-danger">ค้าง ${fmtN(g.left)}</div>` : ''}`;
+    }
+  }));
+  return cols;
+}
+function typeExportColumns() {
+  const defs = [['total', 'Onhand'], ['m', 'นับพบในคัน'], ['w', 'ยืมไปคันอื่น'], ['bin', 'ยืมมาจากคันอื่น'], ['over', 'สต๊อกเกิน'], ['hold', 'ครอบครองจริง'], ['left', 'ไม่พบ/ค้าง']];
+  const cols = [];
+  TYPES.forEach((t, k) => defs.forEach(([f, l]) => cols.push({ title: `${t}: ${l}`, data: (row) => row.ty[k][f], visible: false, className: 'text-end' })));
+  cols.push({ title: `${EQUIP_LABEL}: รายการ`, data: 'equipNames', visible: false });
+  return cols;
+}
+
+function renderUnitTable() {
+  const data = unitTableData();
+  if (!App.tables.unit) {
+    const nType = TYPES.length;
+    const cStatus = 12 + nType;   // id,name,dept,total,m,w,bin,left,over,hold,[types],equip,pct,status
+    App.tables.unit = $('#unitTable').DataTable({
+      data, deferRender: true, responsive: true, pageLength: 10, lengthMenu: [10, 25, 50, 100],
+      order: [[cStatus, 'asc'], [7, 'desc']], language: dtLang(), autoWidth: false,
+      dom: "<'dt-top'Bf>rt<'dt-bottom'ip>",
+      buttons: exportBtns('ความคืบหน้ารายหน่วยรถ แยกประเภท', 'unit-progress'),
+      columns: [
+        { title: 'ทะเบียนรถ', data: 'id', className: 'fw-bold', responsivePriority: 1 },
+        { title: 'พนักงาน', data: 'name', responsivePriority: 3 },
+        { title: 'แผนก', data: 'dept', responsivePriority: 12 },
+        { title: 'Onhand รวม', data: 'total', className: 'text-end', responsivePriority: 9 },
+        { title: 'นับพบในคัน', data: 'm', className: 'text-end', responsivePriority: 10 },
+        { title: 'ยืมไปคันอื่น', data: 'w', className: 'text-end', responsivePriority: 11 },
+        { title: 'ยืมมา', data: 'bin', className: 'text-end', responsivePriority: 11 },
+        { title: 'ไม่พบ/ค้าง', data: 'left', className: 'text-end fw-bold', responsivePriority: 4,
+          render: (d, t) => (t === 'display' ? `<span class="${d ? 'text-danger' : 'text-success'}">${fmtN(d)}</span>` : d) },
+        { title: 'สต๊อกเกิน', data: 'over', className: 'text-end', responsivePriority: 13 },
+        { title: 'ครอบครองจริง รวม', data: 'hold', className: 'text-end', responsivePriority: 13 },
+        ...typeColumns(),
+        { title: EQUIP_LABEL, data: 'equip', className: 'text-end', responsivePriority: 8,
+          render: (d, t, row) => (t === 'display' ? (d ? `<span class="type-pill type-equip" title="${esc(row.equipNames)}"><i class="bi bi-tools"></i> ${fmtN(d)}</span>` : '<span class="text-muted">-</span>') : d) },
+        { title: 'ความคืบหน้า', data: 'pct', responsivePriority: 5,
+          render: (d, t, row) => {
+            if (t === 'export') return d < 0 ? '-' : d.toFixed(1) + '%';
+            if (t !== 'display') return d;
+            if (d < 0) return '<span class="text-muted small">ไม่มีใน Onhand</span>';
+            return `<div class="mini-bar"><div class="track"><span style="width:${pct(row.m, row.total)}%;background:var(--ok)"></span><span style="width:${pct(row.w, row.total)}%;background:var(--warn)"></span></div><b>${fmtPct(d)}</b></div>`;
+          } },
+        { title: 'สถานะ', data: 'closed', responsivePriority: 2,
+          render: (d, t, row) => {
+            const u = App.units.get(row.key);
+            if (t === 'export') return d ? `ปิดแล้ว (${u && u.meta ? u.meta[U.BY] + ' ' + u.meta[U.AT] : ''})` : 'เปิด';
+            if (t !== 'display') return d;
+            return d ? `<span class="st u-closed"><i class="bi bi-lock-fill"></i>ปิดแล้ว</span><div class="small text-muted">${esc(u && u.meta ? u.meta[U.BY] + ' · ' + hhmm(u.meta[U.AT]) : '')}</div>`
+                     : `<span class="st u-open"><i class="bi bi-unlock"></i>กำลังนับ</span>`;
+          } },
+        { title: '', data: 'key', orderable: false, className: 'text-end no-export', responsivePriority: 2,
+          render: (key, t, row) => {
+            if (t !== 'display') return '';
+            const u = App.units.get(key);
+            const canReopen = u && u.closed && (isAdmin() || (u.meta && u.meta[U.BY] === App.user.name));
+            return `<div class="btn-group btn-group-sm">
+              ${row.total ? `<button class="btn btn-outline-danger" data-act="missing" data-unit="${esc(key)}" title="ดูรายการที่ยังไม่พบ"><i class="bi bi-search"></i> ค้าง</button>` : ''}
+              ${u && !u.closed ? `<button class="btn btn-outline-primary" data-act="scan" data-unit="${esc(key)}" title="สแกนคันนี้"><i class="bi bi-upc-scan"></i></button>
+                <button class="btn btn-outline-secondary" data-act="close" data-unit="${esc(key)}" title="ปิดการนับคันนี้"><i class="bi bi-lock"></i></button>` : ''}
+              ${canReopen ? `<button class="btn btn-outline-secondary" data-act="reopen" data-unit="${esc(key)}" title="เปิดกลับมานับใหม่"><i class="bi bi-unlock"></i> เปิดใหม่</button>` : ''}
+            </div>`;
+          } },
+        ...typeExportColumns()
+      ]
+    });
+    $('#unitTable').on('click', 'button[data-act]', function () {
+      const key = this.dataset.unit, act = this.dataset.act;
+      if (act === 'scan') { setTarget(key); navigate('scan'); }
+      else if (act === 'close') closeUnit(key, false);
+      else if (act === 'reopen') reopenUnit(key);
+      else { setInvFilter({ type: '', status: '', dept: '', unit: key, onlyLeft: true }); navigate('inventory'); }
+    });
+  } else {
+    App.tables.unit.clear().rows.add(data).draw(false);
+  }
+}
+
+function renderActivity() {
+  const items = [];
+  for (const r of App.rows) if (r[C.AT]) items.push({ at: r[C.AT], r });
+  for (const o of App.over) items.push({ at: o[O.TS], o });
+  for (const e of App.equip) items.push({ at: e[E.TS], e });
+  items.sort((a, b) => (a.at < b.at ? 1 : -1));
+  const top = items.slice(0, 12);
+  $id('activity-feed').innerHTML = top.length ? top.map((it) => {
+    if (it.e) {
+      return `<li class="k-equip"><div class="f-ico"><i class="bi bi-tools"></i></div>
+        <div class="f-main"><div class="f-sn mono">${esc(it.e[E.SN])}</div><div class="f-sub">${EQUIP_LABEL} · ${esc(it.e[E.NAME])} · พบที่ ${esc(it.e[E.FOUND])}</div></div>
+        <div class="f-time">${hhmm(it.at)}<br>${esc(it.e[E.BY])}</div></li>`;
+    }
+    if (it.o) {
+      return `<li class="k-over"><div class="f-ico"><i class="bi bi-exclamation-diamond"></i></div>
+        <div class="f-main"><div class="f-sn mono">${esc(it.o[O.SN])}</div><div class="f-sub">สต๊อกเกิน · ${esc(it.o[O.TYPE])} · พบที่ ${esc(it.o[O.FOUND])}</div></div>
+        <div class="f-time">${hhmm(it.at)}<br>${esc(it.o[O.BY])}</div></li>`;
+    }
+    const r = it.r, ok = r[C.ST] === S.MATCHED;
+    return `<li class="${ok ? 'k-ok' : 'k-warn'}"><div class="f-ico"><i class="bi ${ok ? 'bi-check-lg' : 'bi-arrow-left-right'}"></i></div>
+      <div class="f-main"><div class="f-sn mono">${esc(r[C.SN])}</div><div class="f-sub">${esc(statusText(r[C.ST]))} · ${esc(r[C.TYPE])} · ${esc(ok ? ownerLabel(r) : (r[C.NOTE] || 'พบที่ ' + r[C.FOUND]))}</div></div>
+      <div class="f-time">${hhmm(it.at)}<br>${esc(r[C.BY])}</div></li>`;
+  }).join('') : '<li class="empty">ยังไม่มีการสแกน</li>';
+}
+
+/* ============================== Scanner page: target (ทะเบียนรถ) ============================== */
+function buildTargetOptions() {
+  App.targets = new Map();
+  App.targets.set('ALL', { label: 'ตรวจนับทั้งหมด (ไม่ระบุคัน)' });
+  const cars = [], emps = [];
+  App.units.forEach((u) => {
+    if (u.closed) return;                                   // คันที่ปิดแล้วไม่แสดง
+    App.targets.set(u.key, { label: u.label });
+    (u.kind === 'CAR' ? cars : emps).push({ value: u.key, text: u.label, optgroup: u.kind });
+  });
+  cars.sort((a, b) => a.text.localeCompare(b.text, 'th'));
+  emps.sort((a, b) => a.text.localeCompare(b.text, 'th'));
+  if (!App.targets.has(App.target)) { App.target = 'ALL'; store(LS.TARGET, 'ALL'); }
+
+  const all = [{ value: 'ALL', text: App.targets.get('ALL').label, optgroup: 'ALLG' }, ...cars, ...emps];
+  const sel = $id('target-select');
+  if (window.TomSelect) {
+    if (!App.ts) {
+      App.ts = new TomSelect(sel, {
+        valueField: 'value', labelField: 'text', searchField: ['text'], optgroupField: 'optgroup',
+        maxOptions: 5000, allowEmptyOption: false, persist: false,
+        create: (input, cb) => { addVehicle(input).then(cb, () => cb()); },
+        createFilter: (input) => input.trim().length >= 2,
+        onChange: (v) => { if (v) setTarget(v, true); },
+        render: {
+          option_create: (d, e) => `<div class="create"><i class="bi bi-plus-circle"></i> เพิ่มทะเบียนรถใหม่: <b>${e(d.input)}</b></div>`,
+          no_results: () => '<div class="no-results p-2 text-muted">ไม่พบทะเบียนนี้ (หรือปิดการนับไปแล้ว)</div>'
+        }
+      });
+      App.ts.addOptionGroup('ALLG', { label: 'ทั้งหมด' });
+      App.ts.addOptionGroup('CAR', { label: 'ทะเบียนรถ (ยังไม่ปิด)' });
+      App.ts.addOptionGroup('EMP', { label: 'พนักงาน (ไม่มีทะเบียนรถ)' });
+    }
+    App.ts.clearOptions();
+    App.ts.addOptions(all);
+    App.ts.setValue(App.target, true);
+  } else {
+    sel.innerHTML = all.map((o) => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('');
+    sel.value = App.target;
+    sel.onchange = () => setTarget(sel.value, true);
+  }
+}
+
+function setTarget(v, fromSelect) {
+  App.target = App.targets.has(v) ? v : 'ALL';
+  store(LS.TARGET, App.target);
+  if (!fromSelect || App.target !== v) { if (App.ts) App.ts.setValue(App.target, true); else $id('target-select').value = App.target; }
+  App.dirty.scan = true;
+  if (App.page === 'scan') renderScanTarget();
+  refocusInput();
+}
+
+function targetUnit() { return App.target === 'ALL' ? null : App.units.get(App.target); }
+function matchesTarget(r) { return App.target === 'ALL' || unitKey(r) === App.target; }
+
+/** เพิ่มทะเบียนรถที่ยังไม่มีในระบบ (เรียกจากช่องค้นหา Combobox) */
+async function addVehicle(input) {
+  const plate = String(input || '').trim();
+  const np = normPlate(plate);
+  for (const u of App.units.values()) {
+    if (u.kind === 'CAR' && normPlate(u.id) === np) {
+      if (u.closed) {
+        notify({ icon: 'info', title: 'คันนี้ปิดการนับแล้ว', html: `<b>${esc(u.id)}</b> ปิดโดย ${esc(u.meta[U.BY])}<br>${isAdmin() ? 'เปิดกลับมานับใหม่ได้ที่ Dashboard' : 'ติดต่อ Admin หากต้องการนับใหม่'}` });
+      } else setTimeout(() => setTarget(u.key), 0);
+      return undefined;
+    }
+  }
+  const res = await modal({
+    icon: 'question', title: 'เพิ่มทะเบียนรถใหม่',
+    html: `<div class="small text-muted">ทะเบียนนี้ยังไม่มีในไฟล์ Onhand — เพิ่มเพื่อใช้เป็นจุดตรวจนับ</div>
+      <div class="swal-form">
+        <label for="nv-plate">ทะเบียนรถ</label>
+        <input id="nv-plate" class="form-control form-control-lg" value="${esc(plate)}">
+        <label for="nv-name">ชื่อพนักงาน/ผู้ขับ (ไม่บังคับ)</label>
+        <input id="nv-name" class="form-control" placeholder="เช่น สมชาย ใจดี">
+      </div>`,
+    showCancelButton: true, confirmButtonText: 'เพิ่มและเริ่มนับ', cancelButtonText: 'ยกเลิก',
+    preConfirm: () => {
+      const p = document.getElementById('nv-plate').value.trim();
+      if (p.length < 2) { Swal.showValidationMessage('กรุณาระบุทะเบียนรถ'); return false; }
+      return { plate: p, name: document.getElementById('nv-name').value.trim() };
+    }
+  });
+  if (!res.isConfirmed) return undefined;
+  try {
+    const r = await gs('addUnit', App.token, res.value);
+    if (r.code === 'EXISTS' && r.key) {
+      if (r.unit) App.unitMeta.set(r.key, r.unit);
+      rebuildUnits(); buildTargetOptions();
+      setTimeout(() => setTarget(r.key), 0);
+      toast('info', r.message);
+      return undefined;
+    }
+    if (!r.ok) throw new Error(r.message || r.code);
+    if (r.v === App.v + 1) App.v = r.v;
+    App.unitMeta.set(r.unit[U.KEY], r.unit);
+    rebuildUnits();
+    const u = App.units.get(r.unit[U.KEY]);
+    App.targets.set(u.key, { label: u.label });
+    buildInventoryFilters();
+    App.dirty.dash = true;
+    toast('success', `เพิ่มทะเบียน ${u.id} แล้ว`);
+    return { value: u.key, text: u.label, optgroup: 'CAR' };
+  } catch (e) {
+    if (isAuthErr(e)) { forceLogout(false); return undefined; }
+    notify({ icon: 'error', title: 'เพิ่มทะเบียนไม่สำเร็จ', text: errMsg(e) });
+    return undefined;
+  }
+}
+
+function renderScanTarget() {
+  App.dirty.scan = false;
+  const u = targetUnit();
+  const rows = u ? u.rows : App.rows;
+  const s = u ? unitStat(u) : null;
+  let m = 0, w = 0, miss = 0;
+  const remaining = [];
+  rows.forEach((r) => {
+    if (r[C.ST] === S.MATCHED) m++; else if (r[C.ST] === S.MISPLACED) w++;
+    else { if (r[C.ST] === S.MISSING) miss++; remaining.push(r); }
+  });
+  $id('target-label').textContent = u ? u.label : App.targets.get('ALL').label;
+  $id('target-done').textContent = fmtN(m + w);
+  $id('target-total').textContent = fmtN(rows.length);
+  $id('target-bar').outerHTML = splitBar({ matched: m, misplaced: w, missing: miss, total: rows.length }).replace('class="progress-split"', 'class="progress-split" id="target-bar"');
+  $id('target-stats').innerHTML = u
+    ? [['text-success', s.m, 'นับพบในคัน'], ['text-warning', s.w, 'อยู่คันอื่น (ถูกยืม)'], ['text-primary', s.bin, 'ยืมมาจากคันอื่น'], ['', s.over, 'สต๊อกเกินในคันนี้'], ['', s.equip, EQUIP_LABEL]]
+        .map(([cls, v, l]) => `<div class="ts-item"><b class="${cls}">${fmtN(v)}</b><span>${l}</span></div>`).join('')
+      + `<div class="type-split" style="grid-column:1/-1">${TYPES.map((t) => { const g = s.byType[t]; return `<span>${typePill(t)} ครอบครอง <b>${fmtN(g.hold)}</b> / Onhand ${fmtN(g.total)}${g.un + g.miss ? ` · <span class="text-danger">ค้าง ${fmtN(g.un + g.miss)}</span>` : ''}</span>`; }).join('')}${s.equip ? `<span>${typePill(EQUIP_LABEL).replace('type-other', 'type-equip')} ${esc(s.equipNames)}</span>` : ''}</div>`
+    : '';
+  $id('btn-close-unit').classList.toggle('d-none', !u);
+  $id('remaining-count').textContent = fmtN(remaining.length);
+  const LIMIT = 300;
+  $id('remaining-list').innerHTML = remaining.length
+    ? remaining.slice(0, LIMIT).map((r) => `<div class="rm"><span class="mono fw-bold">${esc(r[C.SN])}</span><span class="text-truncate small text-muted">${esc(ownerLabel(r))}</span>${typePill(r[C.TYPE])}</div>`).join('')
+      + (remaining.length > LIMIT ? `<div class="rm text-muted small">…และอีก ${fmtN(remaining.length - LIMIT)} รายการ (ดูทั้งหมดที่เมนูรายการสต๊อก)</div>` : '')
+    : `<div class="rm text-success fw-bold"><span><i class="bi bi-check2-all"></i> ${rows.length ? 'นับครบทุกรายการแล้ว' : 'คันนี้ไม่มีรายการใน Onhand'}</span></div>`;
+}
+
+/** ปิดการนับคัน: รายการที่ยังไม่พบ -> "ไม่พบ" และซ่อนคันนี้จากตัวเลือก */
+async function closeUnit(key, auto) {
+  const u = App.units.get(key);
+  if (!u || u.closed) return;
+  const s = unitStat(u);
+  const left = u.rows.filter((r) => scannable(r[C.ST]));
+  const res = await modal({
+    icon: auto ? 'success' : 'question',
+    title: auto ? 'นับครบทุกรายการแล้ว!' : 'ปิดการนับคันนี้?',
+    html: `<div class="swal-sn">${esc(u.id)}</div><div class="small text-muted">${esc(u.nameText)}</div>
+      <div class="swal-info">
+        <div><span>ยอด Onhand</span><span>${fmtN(s.total)}</span></div>
+        <div><span>นับพบในคัน</span><span class="text-success">${fmtN(s.m)}</span></div>
+        <div><span>อยู่คันอื่น (ถูกยืมไป)</span><span class="text-warning">${fmtN(s.w)}</span></div>
+        <div><span>ยืมมาจากคันอื่น</span><span>${fmtN(s.bin)}</span></div>
+        <div><span>สต๊อกเกินที่พบในคันนี้</span><span>${fmtN(s.over)}</span></div>
+        ${TYPES.map((t) => { const g = s.byType[t]; return `<div><span>${esc(t)}: ครอบครอง / Onhand</span><span>${fmtN(g.hold)} / ${fmtN(g.total)}</span></div>`; }).join('')}
+        <div><span>${EQUIP_LABEL}</span><span>${fmtN(s.equip)}${s.equipNames ? ` <small class="text-muted">(${esc(s.equipNames)})</small>` : ''}</span></div>
+        <div><span>ยังไม่พบ</span><span class="text-danger">${fmtN(left.length)}</span></div>
+      </div>
+      ${left.length ? `<div class="small text-danger mt-2 text-start">รายการที่ยังไม่พบ ${fmtN(left.length)} รายการจะถูกบันทึกเป็น "ไม่พบ"</div>
+        <div class="remaining-list text-start">${left.slice(0, 20).map((r) => `<div class="rm"><span class="mono fw-bold">${esc(r[C.SN])}</span>${typePill(r[C.TYPE])}</div>`).join('')}${left.length > 20 ? `<div class="rm small text-muted">…และอีก ${left.length - 20} รายการ</div>` : ''}</div>` : ''}
+      <div class="small text-muted mt-2">คันที่ปิดแล้วจะไม่แสดงในรายการให้เลือก (Admin เปิดใหม่ได้)</div>`,
+    showCancelButton: true, confirmButtonText: '<i class="bi bi-lock-fill"></i> ปิดการนับคันนี้',
+    cancelButtonText: auto ? 'ยังไม่ปิด' : 'ยกเลิก', confirmButtonColor: '#b91c1c'
+  });
+  if (!res.isConfirmed) return;
+  showLoader('กำลังปิดการนับ ' + u.id + '…');
+  try {
+    await flushQueue();
+    if (App.queue.some((j) => j.fn === 'saveScan')) throw new Error('ยังมีรายการสแกนที่รอส่งขึ้นระบบ กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่');
+    const r = await gs('setUnitStatus', App.token, key, true);
+    if (!r.ok && r.code !== 'ALREADY') throw new Error(r.message || r.code);
+    if (r.v === App.v + 1) App.v = r.v;
+    if (r.unit) applyUnitChange({ d: r.unit, sns: r.sns, st: r.st }, false);
+    hideLoader();
+    if (App.target === key || App.target === 'ALL') setTarget('ALL');
+    Feedback.signal('done');
+    toast('success', `ปิดการนับ ${u.id} แล้ว`, 'เลือกทะเบียนคันถัดไปได้เลย');
+  } catch (e) {
+    hideLoader();
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'ปิดการนับไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+
+async function reopenUnit(key) {
+  const u = App.units.get(key);
+  if (!u || !u.closed) return;
+  const c = await modal({
+    icon: 'question', title: 'เปิดคันนี้กลับมานับใหม่?',
+    html: `<div class="swal-sn">${esc(u.id)}</div><br>รายการ "ไม่พบ" ของคันนี้จะกลับเป็น "ยังไม่นับ"`,
+    showCancelButton: true, confirmButtonText: 'เปิดนับใหม่', cancelButtonText: 'ยกเลิก'
+  });
+  if (!c.isConfirmed) return;
+  try {
+    const r = await gs('setUnitStatus', App.token, key, false);
+    if (!r.ok) throw new Error(r.message || r.code);
+    if (r.v === App.v + 1) App.v = r.v;
+    App.promptedClose.delete(key);
+    applyUnitChange({ d: r.unit, sns: r.sns, st: r.st }, false);
+    toast('success', `เปิด ${u.id} กลับมานับแล้ว`);
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'เปิดคันไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+
+/* ============================== Scanner page: scanning ============================== */
+function bindScanUI() {
+  const input = $id('sn-input');
+  const submit = () => { const v = input.value; input.value = ''; processScan(v, 'input'); };
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+  $id('btn-check').addEventListener('click', submit);
+  $id('btn-camera').addEventListener('click', () => (Scanner.running ? Scanner.stop() : Scanner.start()));
+  $id('btn-torch').addEventListener('click', () => Scanner.toggleTorch());
+  $id('btn-close-unit').addEventListener('click', () => { if (App.target !== 'ALL') closeUnit(App.target, false); });
+  $id('btn-add-equip').addEventListener('click', addEquipManual);
+  $id('scan-image').addEventListener('change', (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) Scanner.scanImage(f); });
+
+  // หน้า Apps Script: Google ไม่ให้สิทธิ์กล้องสด -> ใช้โหมดถ่ายภาพ + ชี้ไปหน้าเว็บกล้องสด (ถ้าตั้ง HOSTED_URL ไว้)
+  if (IS_GAS && Scanner.liveBlockedReason()) {
+    Scanner.setPhotoMode(true);
+    if (BOOT.hostedUrl) {
+      $id('live-banner').classList.remove('d-none');
+      $id('btn-open-live').href = BOOT.hostedUrl;
+    }
+  }
+
+  // เปิดผ่านแอป LINE / Facebook -> แนะนำเปิดใน Chrome/Safari และใช้โหมดถ่ายภาพเป็นหลัก
+  if (InApp.any) {
+    $id('inapp-banner').classList.remove('d-none');
+    $id('inapp-name').textContent = InApp.name;
+    const ext = InApp.externalUrl();
+    if (ext) $id('btn-open-external').href = ext; else $id('btn-open-external').classList.add('d-none');
+    Scanner.setPhotoMode(true);
+  }
+  $id('btn-copy-link').addEventListener('click', async () => {
+    const url = BOOT.appUrl || '';
+    if (!url) return toast('info', 'ยังไม่ได้ Deploy เป็น Web App');
+    try { await navigator.clipboard.writeText(url); toast('success', 'คัดลอกลิงก์แล้ว', 'นำไปวางใน Chrome / Safari'); }
+    catch (e) { modal({ title: 'คัดลอกลิงก์นี้', input: 'text', inputValue: url, didOpen: () => { const i = Swal.getInput(); i.select(); } }); }
+  });
+
+  // เสียงสแกน
+  const snd = $id('sound-on');
+  snd.checked = Feedback.enabled;
+  snd.addEventListener('change', () => { Feedback.enabled = snd.checked; store('sa_sound', snd.checked ? null : '0'); if (snd.checked) Feedback.signal('ok'); });
+  $id('btn-test-sound').addEventListener('click', () => {
+    Feedback.unlock();
+    Feedback.enabled = true; snd.checked = true; store('sa_sound', null);
+    Feedback.signal('ok');
+    setTimeout(() => Feedback.signal('dup'), 700);
+    toast('info', 'เสียงสแกนปกติ → เสียงสแกนซ้ำ', 'ถ้าไม่ได้ยิน ให้เพิ่มระดับเสียงสื่อ/ปิดโหมดเงียบ');
+  });
+
+  $id('btn-clear-recent').addEventListener('click', () => { App.recent = []; saveRecent(); renderRecent(); });
+  $id('recent-list').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-undo]'); if (b) undoRecent(b.dataset.undo, b.dataset.kind);
+  });
+
+  const gun = $id('gun-mode');
+  gun.checked = store(LS.GUN) === '1';
+  gun.addEventListener('change', () => {
+    store(LS.GUN, gun.checked ? '1' : null);
+    if (gun.checked) { input.setAttribute('inputmode', 'none'); input.focus(); }
+    else input.removeAttribute('inputmode');
+  });
+  if (gun.checked) input.setAttribute('inputmode', 'none');
+
+  // ปืนยิงบาร์โค้ด (Keyboard wedge) ที่พิมพ์เข้ามาโดยไม่ได้โฟกัสช่องใด ๆ
+  const wedge = { buf: '', start: 0, last: 0 };
+  document.addEventListener('keydown', (e) => {
+    if (App.page !== 'scan' || App.modalOpen || !App.token) return;
+    const ae = document.activeElement;
+    if (ae && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable)) return;
+    const now = performance.now();
+    if (e.key === 'Enter') {
+      if (wedge.buf.length >= 4 && (now - wedge.start) / wedge.buf.length < 60) { e.preventDefault(); processScan(wedge.buf, 'gun'); }
+      wedge.buf = ''; return;
+    }
+    if (e.key.length !== 1) return;
+    if (now - wedge.last > 120) { wedge.buf = ''; wedge.start = now; }
+    wedge.buf += e.key; wedge.last = now;
+  });
+}
+
+function refocusInput() {
+  if (App.page !== 'scan' || App.modalOpen) return;
+  if (!isTouch() || $id('gun-mode').checked) setTimeout(() => { if (!App.modalOpen && !(App.ts && App.ts.isOpen)) $id('sn-input').focus({ preventScroll: true }); }, 60);
+}
+
+/** หัวใจหลัก: ตรวจ SN ในหน่วยความจำทันที */
+function processScan(raw, source) {
+  const sn = normSN(raw);
+  if (sn.length < 3 || App.modalOpen || !App.token) return;
+  const i = App.idx.get(sn);
+  if (i === undefined) {
+    const oi = App.overIdx.get(sn);
+    if (oi !== undefined) return onOverDuplicate(App.over[oi]);
+    const ei = App.equipIdx.get(sn);
+    if (ei !== undefined) return onEquipDuplicate(App.equip[ei]);
+    return onNotFound(sn);
+  }
+  const r = App.rows[i];
+  if (!scannable(r[C.ST])) return onDuplicate(r);
+  if (matchesTarget(r)) {
+    const here = targetUnit() || unitOf(r);
+    return commitScan(r, S.MATCHED, here ? here.foundAt : ownerLabel(r), r[C.ST] === S.MISSING ? 'พบภายหลังปิดการนับคัน' : '');
+  }
+  return onMisplaced(r);
+}
+
+function commitScan(r, status, foundAt, note) {
+  const i = App.idx.get(r[C.SN]);
+  setRowStatus(r, [status, foundAt, nowStr(), App.user.name, note || '']);
+  const ok = status === S.MATCHED;
+  pushRecent({ sn: r[C.SN], kind: ok ? 'MATCH' : 'MISPLACED', title: statusText(status),
+    sub: `${r[C.TYPE]} · ${ok ? ownerLabel(r) : note}`, at: r[C.AT], pending: true });
+  enqueue({ fn: 'saveScan', payload: { sn: r[C.SN], status, foundAt, note: note || '' }, local: [status, foundAt, r[C.AT], r[C.BY], note || ''] });
+  markChanged([i], false);
+  if (ok) {
+    Feedback.signal('ok');
+    Scanner.flash();
+    setResult('ok', 'นับแล้ว ✓', r[C.SN], `${typePill(r[C.TYPE])} <b>${esc(r[C.NAME])}</b> · ${esc(r[C.PLATE])}`, 'bi-check-lg');
+    toast('success', `นับแล้ว: ${r[C.SN]}`, `${r[C.TYPE]} · ${ownerLabel(r)}`);
+  } else {
+    setResult('warn', 'บันทึก: ยืมข้ามคัน', r[C.SN], `${typePill(r[C.TYPE])} ${esc(note)}`, 'bi-arrow-left-right');
+    toast('warning', `บันทึกยืมข้ามคัน: ${r[C.SN]}`);
+  }
+  checkTargetComplete();
+}
+
+/** นับครบทุกรายการของคันที่เลือก -> ถามปิดการนับ (ครั้งเดียวต่อคัน) */
+function checkTargetComplete() {
+  const u = targetUnit();
+  if (!u || u.closed || !u.rows.length || App.promptedClose.has(u.key)) return;
+  if (u.rows.some((r) => scannable(r[C.ST]))) return;
+  App.promptedClose.add(u.key);
+  Feedback.signal('done');
+  setTimeout(() => closeUnit(u.key, true), 700);
+}
+
+function recordInfo(r) {
+  return `<div class="swal-info">
+    <div><span>ชื่อพนักงาน</span><span>${esc(r[C.NAME])}</span></div>
+    <div><span>รหัสพนักงาน</span><span>${esc(r[C.EMP])}</span></div>
+    <div><span>ทะเบียนรถ</span><span>${esc(r[C.PLATE])}</span></div>
+    <div><span>แผนก</span><span>${esc(r[C.DEPT])}</span></div>
+    <div><span>ประเภท</span><span>${typePill(r[C.TYPE])}</span></div>
+  </div>`;
+}
+
+async function onDuplicate(r) {
+  Feedback.signal('dup');
+  setResult('bad', 'สแกนซ้ำ!', r[C.SN], `ถูกสแกนแล้วเมื่อ ${hhmm(r[C.AT])} น. โดย ${esc(r[C.BY])}`, 'bi-exclamation-octagon');
+  await modal({
+    icon: 'error', title: 'สแกนซ้ำ!',
+    html: `<div class="swal-sn">${esc(r[C.SN])}</div><br>SN นี้ถูกสแกนไปแล้วเมื่อเวลา <b>${hhmm(r[C.AT])} น.</b>
+      <div class="swal-info mt-2">
+        <div><span>สถานะ</span><span>${statusBadge(r[C.ST])}</span></div>
+        <div><span>ผู้สแกน</span><span>${esc(r[C.BY])}</span></div>
+        <div><span>พบที่</span><span>${esc(r[C.FOUND])}</span></div>
+        ${r[C.NOTE] ? `<div><span>หมายเหตุ</span><span>${esc(r[C.NOTE])}</span></div>` : ''}
+        <div><span>วันที่</span><span>${dateTh(r[C.AT])}</span></div>
+      </div>`,
+    confirmButtonText: 'รับทราบ', confirmButtonColor: '#b91c1c', timer: 4000, timerProgressBar: true
+  });
+}
+
+async function onOverDuplicate(o) {
+  Feedback.signal('dup');
+  setResult('bad', 'สแกนซ้ำ (OverStock)', o[O.SN], `บันทึกเป็นสต๊อกเกินแล้วเมื่อ ${hhmm(o[O.TS])} น.`, 'bi-exclamation-octagon');
+  await modal({
+    icon: 'error', title: 'สแกนซ้ำ!',
+    html: `<div class="swal-sn">${esc(o[O.SN])}</div><br>SN นี้ถูกบันทึกเป็น <b>สต๊อกเกิน (OverStock)</b> แล้ว เมื่อเวลา <b>${hhmm(o[O.TS])} น.</b>
+      <div class="swal-info mt-2"><div><span>ผู้บันทึก</span><span>${esc(o[O.BY])}</span></div><div><span>พบที่</span><span>${esc(o[O.FOUND])}</span></div></div>`,
+    confirmButtonText: 'รับทราบ', confirmButtonColor: '#b91c1c', timer: 4000, timerProgressBar: true
+  });
+}
+
+/** พบในระบบแต่อยู่คนละคัน = ยืมข้ามคัน (ไม่ถือว่าของหาย) */
+async function onMisplaced(r) {
+  const owner = unitOf(r);
+  const here = targetUnit();
+  const ownerTxt = owner ? owner.id + (owner.nameText !== '-' ? ' (' + owner.nameText + ')' : '') : ownerLabel(r);
+  const hereTxt = here ? here.id : '-';
+  const note0 = `คัน ${hereTxt} ยืมจาก ${ownerTxt}` + (r[C.ST] === S.MISSING ? ' · เดิมบันทึกไม่พบ' : '');
+  Feedback.signal('warn');
+  setResult('warn', 'พบข้ามหน่วยรถ!', r[C.SN], `ในระบบเป็นของ <b>${esc(ownerTxt)}</b>`, 'bi-arrow-left-right');
+  const res = await modal({
+    icon: 'warning', iconColor: '#c2410c', title: 'พบข้ามหน่วยรถ!',
+    html: `<div class="swal-sn">${esc(r[C.SN])}</div>
+      <div>SN นี้ในระบบเป็นของ <b>${esc(r[C.NAME])} / ${esc(r[C.PLATE])}</b></div>
+      <div class="borrow-flow">
+        <div class="bf-box"><small>อยู่ใน Onhand ของ</small><b>${esc(owner ? owner.id : r[C.PLATE])}</b></div>
+        <i class="bi bi-arrow-right-circle-fill"></i>
+        <div class="bf-box to"><small>พบจริงที่ (ยืมไปใช้)</small><b>${esc(hereTxt)}</b></div>
+      </div>
+      <div class="small text-success fw-bold"><i class="bi bi-shield-check"></i> ไม่ถือว่าของหาย — บันทึกเป็นการยืมข้ามคัน</div>
+      ${recordInfo(r)}
+      <div class="swal-form"><label for="mp-note">หมายเหตุ (บันทึกลงชีต)</label>
+      <textarea id="mp-note" class="form-control" rows="2">${esc(note0)}</textarea></div>`,
+    showCancelButton: true, confirmButtonText: 'ยืนยัน บันทึกเป็นการยืม', cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#c2410c',
+    preConfirm: () => document.getElementById('mp-note').value.trim() || note0
+  });
+  if (!res.isConfirmed) { setResult('idle', 'ยกเลิกการบันทึก', r[C.SN], 'ยังไม่ได้นับรายการนี้', 'bi-x-lg'); return; }
+  if (!scannable(r[C.ST])) return onDuplicate(r);
+  commitScan(r, S.MISPLACED, here ? here.foundAt : '-', res.value);
+}
+
+function guessType(sn) { return App.prefixType.get(sn.slice(0, 2)) || ''; }
+
+async function onNotFound(sn) {
+  Feedback.signal('over');
+  setResult('bad', 'ไม่พบในไฟล์ Onhand', sn, 'บันทึกเป็นสต๊อกเกิน (OverStock) ได้', 'bi-question-octagon');
+  const g = guessType(sn);
+  const here = targetUnit();
+  const found = here ? here.foundAt : '';
+  const res = await modal({
+    icon: 'error', title: 'ไม่พบในไฟล์ Onhand',
+    html: `<div class="swal-sn">${esc(sn)}</div><div class="small text-muted">เลือกประเภทเพื่อบันทึก: สต๊อกเกิน (OverStock) หรือ อุปกรณ์ติดตั้ง</div>
+      <div class="swal-form">
+        <label>ประเภท</label>
+        <div class="type-choice choice-3">
+          ${TYPES.map((t, k) => `<input type="radio" name="os-type" id="os-t${k}" value="${esc(t)}" ${g === t ? 'checked' : ''}><label for="os-t${k}">${esc(t)}</label>`).join('')}
+          <input type="radio" name="os-type" id="os-teq" value="${EQUIP_LABEL}"><label for="os-teq"><i class="bi bi-tools"></i> ${EQUIP_LABEL}</label>
+        </div>
+        <div id="os-equip-wrap">${equipNameField('')}</div>
+        <label for="os-found">ทะเบียนรถ/พนักงานที่พบ</label>
+        <input id="os-found" class="form-control form-control-lg" value="${esc(found)}" placeholder="เช่น 1กข-1234 / สมชาย">
+        <label for="os-remark">หมายเหตุ</label>
+        <textarea id="os-remark" class="form-control" rows="2" placeholder="(ไม่บังคับ)"></textarea>
+      </div>`,
+    showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ไม่บันทึก',
+    confirmButtonColor: '#6d28d9',
+    didOpen: () => {
+      const f = document.getElementById('os-found'); if (!found && !isTouch()) f.focus();
+      const wrap = document.getElementById('os-equip-wrap');
+      const btn = Swal.getConfirmButton();
+      const sync = () => {
+        const eq = document.getElementById('os-teq').checked;
+        wrap.classList.toggle('show', eq);
+        btn.textContent = eq ? `บันทึกเป็น${EQUIP_LABEL}` : 'บันทึกเข้า OverStock';
+        btn.style.backgroundColor = eq ? '#0f766e' : '#6d28d9';
+      };
+      document.querySelectorAll('input[name="os-type"]').forEach((x) => x.addEventListener('change', sync));
+      sync();
+    },
+    preConfirm: () => {
+      const t = document.querySelector('input[name="os-type"]:checked');
+      const f = document.getElementById('os-found').value.trim();
+      if (!t) { Swal.showValidationMessage('กรุณาเลือกประเภท'); return false; }
+      const isEq = t.value === EQUIP_LABEL;
+      const name = isEq ? document.getElementById('eq-name').value.trim() : '';
+      if (isEq && !name) { Swal.showValidationMessage('กรุณาระบุชื่ออุปกรณ์ เช่น สว่าน'); return false; }
+      if (!f) { Swal.showValidationMessage('กรุณาระบุทะเบียนรถ/พนักงานที่พบ'); return false; }
+      return { type: t.value, isEq, name, foundAt: f, remark: document.getElementById('os-remark').value.trim() };
+    }
+  });
+  if (!res.isConfirmed) { setResult('idle', 'ไม่ได้บันทึก', sn, 'ไม่พบในไฟล์ Onhand', 'bi-x-lg'); return; }
+  if (res.value.isEq) return saveEquipment(sn, res.value);
+  if (App.overIdx.has(sn)) return onOverDuplicate(App.over[App.overIdx.get(sn)]);
+  const p = res.value;
+  const rec = [nowStr(), sn, p.type, p.foundAt, App.user.name, p.remark];
+  upsertOverLocal(rec);
+  enqueue({ fn: 'addOverStock', payload: { sn, type: p.type, foundAt: p.foundAt, remark: p.remark }, local: rec });
+  pushRecent({ sn, kind: 'OVER', title: 'สต๊อกเกิน (OverStock)', sub: `${p.type} · พบที่ ${p.foundAt}`, at: rec[0], pending: true });
+  markChanged([], true);
+  setResult('over', 'บันทึก OverStock แล้ว', sn, `${typePill(p.type)} พบที่ ${esc(p.foundAt)}`, 'bi-exclamation-diamond');
+  toast('info', `บันทึก OverStock: ${sn}`);
+}
+
+/* ----- อุปกรณ์ติดตั้ง (สว่าน ฯลฯ) ----- */
+function equipNameField(val) {
+  const used = [...new Set(App.equip.map((e) => e[E.NAME]).filter(Boolean))];
+  const names = [...new Set([...used, ...EQUIP_PRESETS])];
+  return `<label for="eq-name">ชื่ออุปกรณ์</label>
+    <input id="eq-name" class="form-control form-control-lg" list="eq-names" value="${esc(val)}" placeholder="เช่น สว่าน" autocomplete="off">
+    <datalist id="eq-names">${names.map((n) => `<option value="${esc(n)}">`).join('')}</datalist>`;
+}
+
+function saveEquipment(sn, p) {
+  if (App.equipIdx.has(sn)) return onEquipDuplicate(App.equip[App.equipIdx.get(sn)]);
+  const rec = [nowStr(), sn, p.name, p.foundAt, App.user.name, p.remark || ''];
+  upsertEquipLocal(rec);
+  enqueue({ fn: 'addEquipment', payload: { sn, name: p.name, foundAt: p.foundAt, remark: p.remark || '' }, local: rec });
+  pushRecent({ sn, kind: 'EQUIP', title: EQUIP_LABEL, sub: `${p.name} · พบที่ ${p.foundAt}`, at: rec[0], pending: true });
+  markChanged([], true);
+  Feedback.signal('ok');
+  setResult('equip', `บันทึก${EQUIP_LABEL}แล้ว`, sn, `<span class="type-pill type-equip"><i class="bi bi-tools"></i> ${esc(p.name)}</span> พบที่ ${esc(p.foundAt)}`, 'bi-tools');
+  toast('success', `บันทึก${EQUIP_LABEL}: ${p.name}`, sn);
+}
+
+/** ปุ่ม "บันทึกอุปกรณ์ติดตั้ง": คีย์ SN เอง (หรือสแกนในช่อง SN) */
+async function addEquipManual() {
+  const here = targetUnit();
+  const found = here ? here.foundAt : '';
+  const res = await modal({
+    title: `<i class="bi bi-tools"></i> บันทึก${EQUIP_LABEL}`,
+    html: `<div class="small text-muted">อุปกรณ์ที่ไม่มีในไฟล์ Onhand เช่น สว่าน — แยกเก็บในชีต Equipment</div>
+      <div class="swal-form">
+        <label for="eq-sn">SN อุปกรณ์</label>
+        <input id="eq-sn" class="form-control form-control-lg sn-input" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="พิมพ์ SN">
+        ${equipNameField(App.lastEquipName || '')}
+        <label for="eq-found">ทะเบียนรถ/พนักงานที่พบ</label>
+        <input id="eq-found" class="form-control" value="${esc(found)}" placeholder="เช่น 1กข-1234 / สมชาย">
+        <label for="eq-remark">หมายเหตุ</label>
+        <input id="eq-remark" class="form-control" placeholder="(ไม่บังคับ) เช่น ชำรุด, ยี่ห้อ">
+      </div>`,
+    showCancelButton: true, confirmButtonText: `บันทึก${EQUIP_LABEL}`, cancelButtonText: 'ยกเลิก', confirmButtonColor: '#0f766e',
+    didOpen: () => document.getElementById('eq-sn').focus(),
+    preConfirm: () => {
+      const sn = normSN(document.getElementById('eq-sn').value);
+      const name = document.getElementById('eq-name').value.trim();
+      const f = document.getElementById('eq-found').value.trim();
+      if (sn.length < 3) { Swal.showValidationMessage('กรุณาระบุ SN (อย่างน้อย 3 ตัวอักษร)'); return false; }
+      if (!name) { Swal.showValidationMessage('กรุณาระบุชื่ออุปกรณ์ เช่น สว่าน'); return false; }
+      if (!f) { Swal.showValidationMessage('กรุณาระบุทะเบียนรถ/พนักงานที่พบ'); return false; }
+      return { sn, name, foundAt: f, remark: document.getElementById('eq-remark').value.trim() };
+    }
+  });
+  if (!res.isConfirmed) return;
+  const p = res.value;
+  App.lastEquipName = p.name;
+  // SN นี้อยู่ใน Onhand / OverStock อยู่แล้ว -> ใช้ขั้นตอนสแกนปกติ
+  if (App.idx.has(p.sn)) { toast('info', 'SN นี้มีในไฟล์ Onhand — ตรวจนับตามปกติ'); return processScan(p.sn, 'equip'); }
+  if (App.overIdx.has(p.sn)) return onOverDuplicate(App.over[App.overIdx.get(p.sn)]);
+  saveEquipment(p.sn, p);
+}
+
+async function onEquipDuplicate(e) {
+  Feedback.signal('dup');
+  setResult('bad', `สแกนซ้ำ (${EQUIP_LABEL})`, e[E.SN], `${esc(e[E.NAME])} บันทึกแล้วเมื่อ ${hhmm(e[E.TS])} น.`, 'bi-exclamation-octagon');
+  await modal({
+    icon: 'error', title: 'สแกนซ้ำ!',
+    html: `<div class="swal-sn">${esc(e[E.SN])}</div><br>SN นี้ถูกบันทึกเป็น <b>${EQUIP_LABEL} (${esc(e[E.NAME])})</b> แล้ว เมื่อเวลา <b>${hhmm(e[E.TS])} น.</b>
+      <div class="swal-info mt-2"><div><span>ผู้บันทึก</span><span>${esc(e[E.BY])}</span></div><div><span>พบที่</span><span>${esc(e[E.FOUND])}</span></div></div>`,
+    confirmButtonText: 'รับทราบ', confirmButtonColor: '#b91c1c', timer: 4000, timerProgressBar: true
+  });
+}
+
+function setResult(kind, title, sn, detailHtml, icon) {
+  const el = $id('result-card');
+  el.className = 'result-card ' + kind;
+  el.innerHTML = `<div class="result-icon"><i class="bi ${icon || 'bi-upc-scan'}"></i></div>
+    <div class="result-body"><div class="result-title">${esc(title)}</div><div class="result-sn">${esc(sn)}</div><div class="result-detail">${detailHtml || ''}</div></div>`;
+  void el.offsetWidth; el.classList.add('pop');
+}
+
+/* ----- Recent (ประวัติการสแกนของฉัน) ----- */
+function saveRecent() { if (App.user) store('sa_recent_' + App.user.username, JSON.stringify(App.recent.slice(0, 40))); }
+function pushRecent(item) { App.recent.unshift(item); App.recent = App.recent.slice(0, 40); saveRecent(); renderRecent(); }
+function markRecent(sn, patch) {
+  const it = App.recent.find((x) => x.sn === sn && !x.undone);
+  if (it) { Object.assign(it, patch); saveRecent(); renderRecent(); }
+}
+function renderRecent() {
+  const pendingSN = new Set(App.queue.map((j) => j.payload.sn));
+  const ico = { MATCH: ['k-ok', 'bi-check-lg'], MISPLACED: ['k-warn', 'bi-arrow-left-right'], OVER: ['k-over', 'bi-exclamation-diamond'], EQUIP: ['k-equip', 'bi-tools'] };
+  $id('recent-list').innerHTML = App.recent.length ? App.recent.map((it) => {
+    const [k, i] = it.conflict ? ['k-bad', 'bi-x-lg'] : ico[it.kind] || ['k-idle', 'bi-dot'];
+    const pend = pendingSN.has(it.sn) && !it.undone;
+    return `<li class="${k} ${it.undone ? 'undone' : ''}"><div class="f-ico"><i class="bi ${i}"></i></div>
+      <div class="f-main"><div class="f-sn mono">${esc(it.sn)}${pend ? '<span class="pending-dot" title="รอส่งขึ้นระบบ"></span>' : ''}</div>
+      <div class="f-sub">${esc(it.conflict ? 'ไม่ถูกบันทึก/ซ้ำ' : it.title)} · ${esc(it.sub)}</div></div>
+      <div class="f-time">${hhmm(it.at)}${!it.undone && !it.conflict ? `<br><button class="btn btn-link btn-sm p-0 text-danger" data-undo="${esc(it.sn)}" data-kind="${it.kind}">ยกเลิก</button>` : ''}</div></li>`;
+  }).join('') : '<li class="empty">ยังไม่มีรายการ</li>';
+}
+
+async function undoRecent(sn, kind) {
+  const K = {
+    OVER:  { title: 'ลบรายการ OverStock?', text: 'รายการนี้จะถูกลบออกจาก OverStock', add: 'addOverStock', remove: 'removeOverStock', done: 'ลบ OverStock แล้ว' },
+    EQUIP: { title: `ลบรายการ${EQUIP_LABEL}?`, text: `รายการนี้จะถูกลบออกจาก${EQUIP_LABEL}`, add: 'addEquipment', remove: 'removeEquipment', done: `ลบ${EQUIP_LABEL}แล้ว` },
+    SCAN:  { title: 'ยกเลิกการนับ?', text: 'สถานะจะกลับเป็น "ยังไม่นับ"', add: 'saveScan', remove: 'undoScan', done: 'ยกเลิกการนับแล้ว' }
+  }[kind === 'OVER' || kind === 'EQUIP' ? kind : 'SCAN'];
+  const c = await modal({
+    icon: 'question', title: K.title, html: `<div class="swal-sn">${esc(sn)}</div><br>${K.text}`,
+    showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ไม่', confirmButtonColor: '#b91c1c'
+  });
+  if (!c.isConfirmed) return;
+  const qi = App.queue.findIndex((j) => j.fn === K.add && j.payload.sn === sn);
+  if (qi > -1 && App.queue[qi].id === App.inflight) return toast('info', 'กำลังส่งข้อมูลรายการนี้ กรุณาลองใหม่ในอีกสักครู่');
+  if (qi > -1) {
+    App.queue.splice(qi, 1); saveQueue(); updatePending();
+  } else {
+    try {
+      const res = await gs(K.remove, App.token, sn);
+      if (!res.ok) throw new Error(res.message || res.code);
+      if (res.v === App.v + 1) App.v = res.v;
+    } catch (e) {
+      if (isAuthErr(e)) return forceLogout(false);
+      return notify({ icon: 'error', title: 'ยกเลิกไม่สำเร็จ', text: errMsg(e) });
+    }
+  }
+  if (kind === 'OVER') { removeOverLocal(sn); markChanged([], true); }
+  else if (kind === 'EQUIP') { removeEquipLocal(sn); markChanged([], true); }
+  else { const i = App.idx.get(sn); if (i !== undefined) revertRow(i); }
+  markRecent(sn, { undone: true });
+  setResult('idle', K.done, sn, 'สามารถสแกนใหม่ได้', 'bi-arrow-counterclockwise');
+}
+
+/* ----- Camera (html5-qrcode) ----- */
+const Scanner = {
+  qr: null, running: false, starting: false, torchOn: false, torch: null,
+  lastText: '', lastAt: 0, cooldownUntil: 0,
+  formats() {
+    const F = window.Html5QrcodeSupportedFormats;
+    return F ? [F.CODE_128, F.CODE_39, F.CODE_93, F.QR_CODE, F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.ITF, F.CODABAR, F.DATA_MATRIX] : undefined;
+  },
+  /** เช็คก่อนเปิดกล้องสด: คืนข้อความเหตุผลถ้าเปิดไม่ได้แน่นอน */
+  liveBlockedReason() {
+    if (!window.isSecureContext) return 'หน้าเว็บไม่ได้เปิดผ่าน HTTPS';
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return 'เบราว์เซอร์นี้ไม่รองรับกล้องสด';
+    const fp = document.permissionsPolicy || document.featurePolicy;
+    try { if (fp && fp.allowsFeature && !fp.allowsFeature('camera')) return 'หน้าเว็บไม่ได้รับอนุญาตให้ใช้กล้องสด'; } catch (e) {}
+    return '';
+  },
+  async start() {
+    if (this.running || this.starting) return;
+    if (!window.Html5Qrcode) return notify({ icon: 'error', title: 'โหลดตัวสแกนไม่สำเร็จ', text: 'กรุณาตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้าเว็บ' });
+    const blocked = this.liveBlockedReason();
+    if (blocked) return this.cameraFailed({ name: 'Blocked', message: blocked });
+    this.starting = true;
+    this.setBtn('starting');
+    try {
+      if (!this.qr) this.qr = new Html5Qrcode('reader', { formatsToSupport: this.formats(), verbose: false, experimentalFeatures: { useBarCodeDetectorIfSupported: true } });
+      await this.qr.start(
+        { facingMode: 'environment' },
+        {
+          fps: 12, disableFlip: true, aspectRatio: 1.3333,
+          qrbox: (w, h) => { const W = Math.floor(w * 0.88); return { width: W, height: Math.max(90, Math.min(Math.floor(h * 0.6), Math.floor(W * 0.55))) }; }
+        },
+        (text) => this.onCode(text),
+        () => {}
+      );
+      this.running = true;
+      this.setPhotoMode(false);
+      $id('scanner-box').classList.add('running');
+      this.setupTorch();
+    } catch (e) {
+      this.running = false;
+      this.starting = false;
+      this.setBtn();
+      return this.cameraFailed(e);
+    } finally {
+      this.starting = false;
+      this.setBtn();
+    }
+  },
+
+  /** โหมดถ่ายภาพ: ใช้แอปกล้องของมือถือแทนกล้องสด (ใช้ได้ทุกเบราว์เซอร์ รวมถึงในแอป LINE) */
+  setPhotoMode(on) {
+    document.body.classList.toggle('cam-photo', !!on);
+    $id('scanner-hint').innerHTML = on
+      ? 'กล้องสดใช้ไม่ได้ในเบราว์เซอร์นี้<br>กดปุ่ม <b>ถ่ายภาพสแกน</b> ด้านล่าง ถ่ายให้บาร์โค้ดอยู่กลางภาพ'
+      : 'กดปุ่มด้านล่างเพื่อเปิดกล้องสแกนบาร์โค้ด / QR';
+    document.querySelector('#btn-photo .photo-txt').textContent = on ? 'ถ่ายภาพสแกน' : 'ถ่ายภาพ';
+    this.setBtn();
+  },
+
+  /** เปิดกล้องสดไม่ได้ -> สลับเป็นโหมดถ่ายภาพ + บอกวิธีแก้ตามสาเหตุ */
+  cameraFailed(e) {
+    this.setPhotoMode(true);
+    Feedback.signal('err');
+    const raw = String((e && (e.name || '')) + ' ' + ((e && e.message) || e || ''));
+    const denied = /NotAllowed|Permission|denied|Blocked|not allowed/i.test(raw);
+    const notFound = /NotFound|DevicesNotFound|OverconstrainedError/i.test(raw);
+    const ext = InApp.externalUrl();
+    let how;
+    if (IS_GAS && !InApp.any) {
+      // หน้า Apps Script: Google ไม่ให้สิทธิ์กล้อง (ข้อจำกัดของแพลตฟอร์ม แก้ด้วยการตั้งค่ามือถือไม่ได้)
+      how = `หน้าเว็บที่เปิดผ่าน Google Apps Script <b>ไม่ได้รับสิทธิ์ใช้กล้องสด</b> (ข้อจำกัดของ Google)
+        ${BOOT.hostedUrl ? `<a class="btn btn-success w-100 fw-bold mt-2" href="${esc(BOOT.hostedUrl)}" target="_top"><i class="bi bi-camera-video"></i> เปิดหน้าเว็บเวอร์ชันกล้องสด</a>`
+                         : '<div class="small mt-1 text-muted">ผู้ดูแลระบบ: ติดตั้งหน้าเว็บเวอร์ชันกล้องสด (GitHub Pages) ตามคู่มือ README</div>'}`;
+    } else if (InApp.any) {
+      how = `คุณกำลังเปิดผ่าน <b>แอป ${esc(InApp.name)}</b> ซึ่งไม่อนุญาตให้หน้าเว็บใช้กล้องสด
+        ${ext ? `<a class="btn btn-warning w-100 fw-bold mt-2" href="${esc(ext)}" target="_top"><i class="bi bi-box-arrow-up-right"></i> เปิดใน Chrome / Safari</a>` : ''}
+        ${InApp.isIOS && InApp.name !== 'LINE' ? '<div class="small mt-1">หรือแตะเมนู ⋯ มุมขวา → "เปิดใน Safari"</div>' : ''}`;
+    } else if (notFound) {
+      how = 'ไม่พบกล้องบนอุปกรณ์นี้';
+    } else if (denied) {
+      how = InApp.isIOS
+        ? `<b>iPhone (Safari):</b> แตะ <b>aA</b> ที่แถบที่อยู่ → การตั้งค่าเว็บไซต์ → กล้อง → <b>อนุญาต</b> แล้วรีเฟรช<br>หรือ ตั้งค่า → Safari → กล้อง → อนุญาต`
+        : `<b>Android (Chrome):</b> แตะไอคอน <i class="bi bi-sliders"></i>/🔒 หน้าที่อยู่เว็บ → สิทธิ์ → กล้อง → <b>อนุญาต</b> แล้วรีเฟรช<br>หรือ ตั้งค่า Chrome → การตั้งค่าเว็บไซต์ → กล้อง → ลบเว็บนี้ออกจากรายการที่บล็อก`;
+    } else {
+      how = esc(errMsg(e));
+    }
+    notify({
+      icon: 'warning', title: 'เปิดกล้องสดไม่ได้',
+      html: `<div class="text-start">${how}</div>
+        <div class="swal-info mt-3 small text-start"><b>ใช้งานต่อได้ทันที:</b> กดปุ่มด้านล่างเพื่อถ่ายภาพบาร์โค้ดด้วยแอปกล้องของมือถือ ระบบจะอ่าน SN จากภาพให้ (หรือพิมพ์ SN ในช่องด้านล่าง)</div>
+        <button type="button" class="btn btn-primary btn-lg w-100 mt-3" id="swal-photo"><i class="bi bi-camera-fill"></i> ถ่ายภาพสแกนเลย</button>`,
+      showConfirmButton: false, showCloseButton: true,
+      didOpen: () => {
+        const b = document.getElementById('swal-photo');
+        if (b) b.addEventListener('click', () => { $id('scan-image').click(); Swal.close(); });
+      }
+    });
+  },
+  async stop() {
+    if (this.qr && this.running) { try { await this.qr.stop(); } catch (e) {} }
+    this.running = false; this.torchOn = false;
+    const box = $id('scanner-box'); if (box) box.classList.remove('running');
+    $id('btn-torch').classList.add('d-none');
+    this.setBtn();
+  },
+  setBtn(state) {
+    const b = $id('btn-camera');
+    if (state === 'starting') { b.disabled = true; b.innerHTML = '<span class="spinner-border spinner-border-sm"></span> <span>กำลังเปิดกล้อง…</span>'; return; }
+    b.disabled = false;
+    b.classList.toggle('btn-primary', !this.running);
+    b.classList.toggle('btn-danger', this.running);
+    const photo = document.body.classList.contains('cam-photo');
+    b.innerHTML = this.running ? '<i class="bi bi-stop-circle"></i> <span>ปิดกล้อง</span>'
+      : `<i class="bi bi-camera-video"></i> <span>${photo ? 'กล้องสด' : 'เปิดกล้องสแกน'}</span>`;
+  },
+  setupTorch() {
+    try {
+      const t = this.qr.getRunningTrackCameraCapabilities().torchFeature();
+      if (t.isSupported()) { this.torch = t; $id('btn-torch').classList.remove('d-none'); }
+    } catch (e) { /* not supported */ }
+  },
+  async toggleTorch() {
+    if (!this.torch) return;
+    try { this.torchOn = !this.torchOn; await this.torch.apply(this.torchOn); $id('btn-torch').classList.toggle('active', this.torchOn); } catch (e) {}
+  },
+  onCode(text) {
+    const now = Date.now();
+    if (App.modalOpen || App.page !== 'scan' || now < this.cooldownUntil) return;
+    const sn = normSN(text);
+    if (sn === this.lastText && now - this.lastAt < 2500) return;
+    this.lastText = sn; this.lastAt = now; this.cooldownUntil = now + 900;
+    processScan(sn, 'camera');
+  },
+  flash() {
+    const box = $id('scanner-box'); box.classList.add('flash-ok');
+    setTimeout(() => box.classList.remove('flash-ok'), 350);
+  },
+  async scanImage(file) {
+    setResult('idle', 'กำลังอ่านบาร์โค้ดจากภาพ…', '-', '', 'bi-hourglass-split');
+    try {
+      const code = await this.decodeImage(file);
+      processScan(code, 'image');
+    } catch (e) {
+      Feedback.signal('err');
+      setResult('bad', 'อ่านบาร์โค้ดจากภาพไม่สำเร็จ', '-',
+        'ถ่ายให้บาร์โค้ดอยู่กลางภาพ แนวนอน ระยะ 10–15 ซม. ไม่เบลอ/ไม่สะท้อนแสง หรือพิมพ์ SN แทน', 'bi-image');
+    }
+  },
+
+  /** อ่านบาร์โค้ดจากภาพ: BarcodeDetector ของเครื่อง (ถ้ามี) -> html5-qrcode หลายขนาด/หมุน 90° */
+  async decodeImage(file) {
+    const img = await loadImage(file);
+    // ถ้าในภาพมีหลายบาร์โค้ด เลือกตัวที่อยู่ในไฟล์ Onhand ก่อน
+    const pick = (vals) => { const l = vals.map(normSN).filter((x) => x.length >= 3); return l.find((x) => App.idx.has(x)) || l[0]; };
+    if ('BarcodeDetector' in window) {
+      try {
+        const fmts = await BarcodeDetector.getSupportedFormats();
+        const det = new BarcodeDetector(fmts && fmts.length ? { formats: fmts } : undefined);
+        const res = await det.detect(img);
+        const v = pick(res.map((r) => r.rawValue));
+        if (v) return v;
+      } catch (e) { /* fallback */ }
+    }
+    if (!window.Html5Qrcode) throw new Error('decoder not loaded');
+    if (!this.fileQr) this.fileQr = new Html5Qrcode('reader-file', { formatsToSupport: this.formats(), verbose: false });
+    for (const [max, rot] of [[1280, 0], [1280, 90], [1920, 0], [800, 0], [1920, 90]]) {
+      try {
+        const f = await imageToFile(img, max, rot);
+        const v = pick([await this.fileQr.scanFile(f, false)]);
+        if (v) return v;
+      } catch (e) { /* try next size */ }
+    }
+    throw new Error('no barcode');
+  }
+};
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => { resolve(im); setTimeout(() => URL.revokeObjectURL(url), 2000); };
+    im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('อ่านไฟล์ภาพไม่ได้')); };
+    im.src = url;
+  });
+}
+
+function imageToFile(img, max, rot) {
+  const w0 = img.naturalWidth, h0 = img.naturalHeight;
+  const s = Math.min(1, max / Math.max(w0, h0));
+  const w = Math.round(w0 * s), h = Math.round(h0 * s);
+  const c = document.createElement('canvas');
+  const turn = rot === 90 || rot === 270;
+  c.width = turn ? h : w; c.height = turn ? w : h;
+  const g = c.getContext('2d');
+  g.translate(c.width / 2, c.height / 2);
+  g.rotate(rot * Math.PI / 180);
+  g.drawImage(img, -w / 2, -h / 2, w, h);
+  return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(new File([b], 'scan.jpg', { type: 'image/jpeg' })) : reject(new Error('canvas'))), 'image/jpeg', 0.92));
+}
+
+/* ============================== Inventory page ============================== */
+function dtLang() {
+  return {
+    search: '', searchPlaceholder: 'ค้นหา SN / ชื่อ / ทะเบียน…',
+    lengthMenu: 'แสดง _MENU_ แถว', info: 'แสดง _START_–_END_ จาก _TOTAL_ รายการ',
+    infoEmpty: 'ไม่มีรายการ', infoFiltered: '(กรองจาก _MAX_)', zeroRecords: 'ไม่พบรายการที่ตรงกัน',
+    emptyTable: 'ไม่มีข้อมูล', paginate: { first: '«', last: '»', next: '›', previous: '‹' }
+  };
+}
+function excelBtn(title, file) {
+  return {
+    extend: 'excelHtml5', className: 'btn btn-success btn-sm',
+    text: '<i class="bi bi-file-earmark-excel"></i> Export Excel',
+    title: () => `${title} · รอบ ${App.round.name}`,
+    filename: () => `${file}_${App.round.name}_${nowStr().slice(0, 16).replace(/[: ]/g, '-')}`,
+    exportOptions: { orthogonal: 'export', columns: ':not(.no-export)', modifier: { search: 'applied', order: 'applied' } }
+  };
+}
+// ไม่ใช้สีเทา btn-secondary ค่าเริ่มต้นของ DataTables Buttons
+try { $.fn.dataTable.Buttons.defaults.dom.button.className = 'btn'; } catch (e) {}
+/** ปุ่ม Export: Excel + CSV (CSV ใส่ BOM ให้ Excel อ่านภาษาไทยถูกต้อง) — ส่งออกตามตัวกรองที่เลือก */
+function exportBtns(title, file) {
+  const x = excelBtn(title, file);
+  return [x, {
+    extend: 'csvHtml5', className: 'btn btn-outline-success btn-sm', bom: true, charset: 'utf-8',
+    text: '<i class="bi bi-filetype-csv"></i> CSV', filename: x.filename, exportOptions: x.exportOptions
+  }];
+}
+
+const LEFT_FILTER = '__LEFT__';   // ยังไม่นับ + ไม่พบ
+function buildInventoryFilters() {
+  const uniq = (arr) => [...new Set(arr.filter((x) => x !== ''))].sort((a, b) => String(a).localeCompare(String(b), 'th'));
+  const fill = (id, opts, cur) => {
+    const el = $id(id);
+    el.innerHTML = '<option value="">ทั้งหมด</option>' + opts.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join('');
+    el.value = opts.some(([v]) => v === cur) ? cur : '';
+  };
+  const f = App.invFilter;
+  fill('f-type', uniq(App.rows.map((r) => r[C.TYPE])).map((t) => [t, t]), f.type);
+  fill('f-status', [[LEFT_FILTER, 'ยังไม่พบทั้งหมด (ยังไม่นับ + ไม่พบ)'], [S.UNSCANNED, S.UNSCANNED], [S.MATCHED, S.MATCHED], [S.MISPLACED, LABEL_MISPLACED], [S.MISSING, S.MISSING]], f.status);
+  fill('f-dept', uniq(App.rows.map((r) => r[C.DEPT])).map((d) => [d, d]), f.dept);
+  const units = [...App.units.values()].filter((u) => u.rows.length).map((u) => [u.key, u.label + (u.closed ? ' 🔒' : '')])
+    .sort((a, b) => a[1].localeCompare(b[1], 'th'));
+  fill('f-unit', units, f.unit);
+  ['type', 'status', 'dept', 'unit'].forEach((k) => (f[k] = $id('f-' + k).value));
+}
+
+function setInvFilter(f) {
+  if (f.onlyLeft) { f.status = LEFT_FILTER; delete f.onlyLeft; }
+  Object.assign(App.invFilter, f);
+  ['type', 'status', 'dept', 'unit'].forEach((k) => ($id('f-' + k).value = App.invFilter[k] || ''));
+  if (App.tables.inv) App.tables.inv.draw();
+  const tabBtn = $id('tab-onhand-btn'); if (tabBtn && window.bootstrap) bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+}
+
+function bindInventoryUI() {
+  ['type', 'status', 'dept', 'unit'].forEach((k) => $id('f-' + k).addEventListener('change', (e) => {
+    App.invFilter[k] = e.target.value; if (App.tables.inv) App.tables.inv.draw();
+  }));
+  $id('btn-only-missing').addEventListener('click', () => setInvFilter({ status: LEFT_FILTER }));
+  $id('btn-clear-filter').addEventListener('click', () => { setInvFilter({ type: '', status: '', dept: '', unit: '' }); if (App.tables.inv) App.tables.inv.search('').draw(); });
+  document.querySelectorAll('button[data-bs-toggle="pill"]').forEach((b) => b.addEventListener('shown.bs.tab', () => { renderInventory(); adjustTables(); }));
+
+  $.fn.dataTable.ext.search.push((settings, _sd, _i, r) => {
+    if (settings.nTable.id !== 'invTable') return true;
+    const f = App.invFilter;
+    if (f.type && r[C.TYPE] !== f.type) return false;
+    if (f.status === LEFT_FILTER) { if (!scannable(r[C.ST])) return false; }
+    else if (f.status && r[C.ST] !== f.status) return false;
+    if (f.dept && r[C.DEPT] !== f.dept) return false;
+    if (f.unit && unitKey(r) !== f.unit) return false;
+    return true;
+  });
+}
+
+function renderInventory() {
+  if (!App.tables.inv) {
+    App.tables.inv = $('#invTable').DataTable({
+      data: App.rows, deferRender: true, responsive: true, pageLength: 25, lengthMenu: [10, 25, 50, 100, 500],
+      order: [[0, 'asc']], language: dtLang(), autoWidth: false,
+      dom: "<'dt-top'Bf>rt<'dt-bottom'lip>",
+      buttons: exportBtns('รายการสต๊อก Onhand', 'onhand'),
+      columns: [
+        { title: 'ลำดับ', data: C.NO, className: 'text-end', responsivePriority: 11, type: 'num' },
+        { title: 'รหัสพนักงาน', data: C.EMP, responsivePriority: 6 },
+        { title: 'ชื่อพนักงาน', data: C.NAME, responsivePriority: 4 },
+        { title: 'ทะเบียนรถ', data: C.PLATE, responsivePriority: 3 },
+        { title: 'แผนก-หน่วยงาน', data: C.DEPT, responsivePriority: 10 },
+        { title: 'SN', data: C.SN, className: 'mono fw-bold', responsivePriority: 1 },
+        { title: 'ประเภท', data: C.TYPE, responsivePriority: 5, render: (d, t) => (t === 'display' ? typePill(d) : d) },
+        { title: 'สถานะการนับ', data: C.ST, responsivePriority: 2, render: (d, t) => (t === 'display' ? statusBadge(d) : t === 'export' ? statusText(d) : d) },
+        { title: 'พบจริงที่', data: C.FOUND, responsivePriority: 7 },
+        { title: 'หมายเหตุ', data: C.NOTE, className: 'note-cell', responsivePriority: 8, defaultContent: '' },
+        { title: 'วันเวลาที่สแกน', data: C.AT, responsivePriority: 9 },
+        { title: 'ผู้สแกน', data: C.BY, responsivePriority: 12 }
+      ]
+    });
+    App.dirty.invFull = false; App.dirty.inv = false; App.invChanged.clear();
+  } else if (App.dirty.invFull) {
+    App.tables.inv.clear().rows.add(App.rows).draw(false);
+    App.dirty.invFull = false; App.dirty.inv = false; App.invChanged.clear();
+  } else if (App.dirty.inv) {
+    App.invChanged.forEach((i) => { const row = App.tables.inv.row(i); if (row.any()) row.invalidate('data'); });
+    App.invChanged.clear(); App.dirty.inv = false;
+    App.tables.inv.draw(false);
+  }
+
+  if (!App.tables.over) {
+    App.tables.over = $('#overTable').DataTable({
+      data: App.over, responsive: true, pageLength: 25, order: [[0, 'desc']], language: dtLang(), autoWidth: false,
+      dom: "<'dt-top'Bf>rt<'dt-bottom'lip>",
+      buttons: exportBtns('รายการสต๊อกเกิน (OverStock)', 'overstock'),
+      columns: [
+        { title: 'Timestamp', data: O.TS, responsivePriority: 3 },
+        { title: 'SN', data: O.SN, className: 'mono fw-bold', responsivePriority: 1 },
+        { title: 'ประเภท', data: O.TYPE, responsivePriority: 2, render: (d, t) => (t === 'display' ? typePill(d) : d) },
+        { title: 'ทะเบียนรถ/พนักงานที่พบ', data: O.FOUND, responsivePriority: 4 },
+        { title: 'ผู้สแกน', data: O.BY, responsivePriority: 5 },
+        { title: 'หมายเหตุ', data: O.REMARK, responsivePriority: 6 }
+      ]
+    });
+    App.dirty.over = false;
+  } else if (App.dirty.over) {
+    App.tables.over.clear().rows.add(App.over).draw(false);
+    App.dirty.over = false;
+  }
+
+  if (!App.tables.equip) {
+    App.tables.equip = $('#equipTable').DataTable({
+      data: App.equip, responsive: true, pageLength: 25, order: [[0, 'desc']], language: dtLang(), autoWidth: false,
+      dom: "<'dt-top'Bf>rt<'dt-bottom'lip>",
+      buttons: exportBtns(`รายการ${EQUIP_LABEL}`, 'equipment'),
+      columns: [
+        { title: 'Timestamp', data: E.TS, responsivePriority: 4 },
+        { title: 'SN', data: E.SN, className: 'mono fw-bold', responsivePriority: 1 },
+        { title: 'ชื่ออุปกรณ์', data: E.NAME, responsivePriority: 2,
+          render: (d, t) => (t === 'display' ? `<span class="type-pill type-equip"><i class="bi bi-tools"></i> ${esc(d)}</span>` : d) },
+        { title: 'ทะเบียนรถ/พนักงานที่พบ', data: E.FOUND, responsivePriority: 3 },
+        { title: 'ผู้บันทึก', data: E.BY, responsivePriority: 5 },
+        { title: 'หมายเหตุ', data: E.REMARK, responsivePriority: 6 }
+      ]
+    });
+    App.dirty.equip = false;
+  } else if (App.dirty.equip) {
+    App.tables.equip.clear().rows.add(App.equip).draw(false);
+    App.dirty.equip = false;
+  }
+}
+
+/* ============================== Rounds page (Q1–Q4) ============================== */
+function bindRoundsUI() {
+  $id('btn-reload-rounds').addEventListener('click', loadRounds);
+  $id('btn-rename-round').addEventListener('click', renameRound);
+  $id('btn-new-round').addEventListener('click', newRound);
+}
+
+function nextRoundName(cur) {
+  const m = String(cur || '').match(/(\d{4})\s*-\s*Q([1-4])/i);
+  if (m) { const y = +m[1], q = +m[2]; return q === 4 ? `${y + 1}-Q1` : `${y}-Q${q + 1}`; }
+  const d = new Date(); return `${d.getFullYear()}-Q${Math.ceil((d.getMonth() + 1) / 3)}`;
+}
+
+async function loadRounds() {
+  $id('history-table').innerHTML = '<tbody><tr><td class="text-muted text-center py-4"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด…</td></tr></tbody>';
+  try {
+    const r = await gs('getHistory', App.token);
+    App.round = r.round; renderRound();
+    $id('cur-round').textContent = r.round.name;
+    $id('cur-round-start').textContent = r.round.started || '-';
+    const s = r.summary;
+    const box = (v, l, cls) => `<div class="col-6 col-md-4"><div class="stat-box"><div class="v ${cls || ''}">${fmtN(v)}</div><div class="l">${l}</div></div></div>`;
+    $id('round-summary').innerHTML = box(s.total, 'ยอด Onhand') + box(s.matched, 'นับพบ', 'text-success') + box(s.misplaced, 'ยืมข้ามคัน', 'text-warning')
+      + box(s.missing, 'ไม่พบ', 'text-danger') + box(s.unscanned, 'ยังไม่นับ') + box(s.over, 'สต๊อกเกิน')
+      + `<div class="col-12"><div class="stat-box"><div class="l">ปิดการนับแล้ว <b>${fmtN(s.closed)}</b> / ${fmtN(s.units)} คัน · ${EQUIP_LABEL} <b>${fmtN(s.equip)}</b> รายการ</div></div></div>`;
+    const head = ['รอบ', 'เริ่ม', 'ปิดรอบ', 'Onhand', 'นับพบ', 'ยืม', 'ไม่พบ', 'ยังไม่นับ', 'เกิน', 'อุปกรณ์', 'คันปิด/ทั้งหมด', 'ปิดโดย', 'ชีตสำรอง'];
+    $id('history-table').innerHTML = `<thead><tr>${head.map((h) => `<th class="text-nowrap">${h}</th>`).join('')}</tr></thead><tbody>` +
+      (r.history.length ? r.history.map((h) => `<tr>
+        <td class="fw-bold text-primary text-nowrap">${esc(h[0])}</td><td class="small text-nowrap">${esc(dateTh(h[1]))}</td><td class="small text-nowrap">${esc(dateTh(h[2]))}</td>
+        <td class="text-end">${esc(h[4])}</td><td class="text-end text-success">${esc(h[5])}</td><td class="text-end text-warning">${esc(h[6])}</td>
+        <td class="text-end text-danger fw-bold">${esc(h[7])}</td><td class="text-end">${esc(h[8])}</td><td class="text-end">${esc(h[9])}</td>
+        <td class="text-end">${esc(h[13] || '-')}</td>
+        <td class="text-end">${esc(h[11])}/${esc(h[10])}</td><td class="small">${esc(h[3])}</td><td class="small text-muted">${esc(h[12])}</td></tr>`).join('')
+        : '<tr><td colspan="13" class="text-center text-muted py-4">ยังไม่มีรอบที่ปิดแล้ว</td></tr>') + '</tbody>';
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    $id('history-table').innerHTML = `<tbody><tr><td class="text-danger text-center py-4">${esc(errMsg(e))}</td></tr></tbody>`;
+  }
+}
+
+async function renameRound() {
+  const res = await modal({
+    title: 'แก้ชื่อรอบปัจจุบัน', input: 'text', inputValue: App.round.name, inputPlaceholder: 'เช่น 2026-Q4',
+    showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก',
+    preConfirm: (v) => { if (!String(v).trim()) { Swal.showValidationMessage('กรุณาระบุชื่อรอบ'); return false; } return String(v).trim(); }
+  });
+  if (!res.isConfirmed) return;
+  try {
+    const r = await gs('setRoundName', App.token, res.value);
+    if (!r.ok) throw new Error(r.message);
+    App.round = r.round; renderRound(); loadRounds();
+    toast('success', 'บันทึกชื่อรอบแล้ว');
+  } catch (e) { if (isAuthErr(e)) return forceLogout(false); notify({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: errMsg(e) }); }
+}
+
+async function newRound() {
+  const cur = App.round.name;
+  const res = await modal({
+    icon: 'warning', title: 'ปิดรอบ ' + esc(cur) + ' และเริ่มรอบใหม่?',
+    html: `<div class="swal-form">
+        <label for="nr-name">ชื่อรอบใหม่</label>
+        <input id="nr-name" class="form-control form-control-lg" value="${esc(nextRoundName(cur))}">
+        <label class="d-flex gap-2 align-items-center mt-3"><input type="checkbox" id="nr-archive" class="form-check-input m-0" checked>
+          เก็บสำรองข้อมูลรอบ ${esc(cur)} (คัดลอกชีต Onhand / OverStock / Units แล้วซ่อนไว้)</label>
+        <label class="mt-3">รายการ Onhand ของรอบใหม่</label>
+        <div class="form-check"><input class="form-check-input" type="radio" name="nr-mode" id="nr-clear" value="clear" checked>
+          <label class="form-check-label fw-normal m-0" for="nr-clear">ล้างทั้งหมด แล้วอัปโหลดไฟล์ Onhand ใหม่ (แนะนำ)</label></div>
+        <div class="form-check"><input class="form-check-input" type="radio" name="nr-mode" id="nr-keep" value="keep">
+          <label class="form-check-label fw-normal m-0" for="nr-keep">ใช้รายการเดิม แต่รีเซ็ตสถานะเป็น "ยังไม่นับ"</label></div>
+        <div class="small text-muted mt-3">ผลรวมของรอบ ${esc(cur)} จะถูกบันทึกในชีต History · OverStock และสถานะปิดคันจะถูกล้าง</div>
+        <label for="nr-confirm" class="mt-3">พิมพ์ <b>ปิดรอบ</b> เพื่อยืนยัน</label>
+        <input id="nr-confirm" class="form-control" placeholder="ปิดรอบ">
+      </div>`,
+    showCancelButton: true, confirmButtonText: 'ปิดรอบและเริ่มรอบใหม่', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#b91c1c',
+    preConfirm: () => {
+      const name = document.getElementById('nr-name').value.trim();
+      if (!name) { Swal.showValidationMessage('กรุณาระบุชื่อรอบใหม่'); return false; }
+      if (name === cur) { Swal.showValidationMessage('ชื่อรอบใหม่ต้องไม่ซ้ำรอบปัจจุบัน'); return false; }
+      if (document.getElementById('nr-confirm').value.trim() !== 'ปิดรอบ') { Swal.showValidationMessage('กรุณาพิมพ์คำว่า ปิดรอบ'); return false; }
+      return { name, archive: document.getElementById('nr-archive').checked, onhandMode: document.querySelector('input[name="nr-mode"]:checked').value };
+    }
+  });
+  if (!res.isConfirmed) return;
+  showLoader('กำลังปิดรอบ ' + cur + '…');
+  try {
+    await flushQueue();
+    if (App.queue.length) throw new Error('ยังมีรายการที่รอส่งขึ้นระบบ กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่');
+    const r = await gs('startNewRound', App.token, res.value);
+    if (!r.ok) throw new Error(r.message || r.code);
+    App.promptedClose.clear();
+    App.recent = []; saveRecent(); renderRecent();
+    await poll(true);
+    hideLoader();
+    await modal({ icon: 'success', title: 'เริ่มรอบ ' + esc(r.round.name) + ' แล้ว',
+      html: `ปิดรอบ <b>${esc(r.closed)}</b>: นับพบ ${fmtN(r.summary.matched)} · ยืม ${fmtN(r.summary.misplaced)} · ไม่พบ ${fmtN(r.summary.missing)} · ยังไม่นับ ${fmtN(r.summary.unscanned)}
+        ${r.archived.length ? `<div class="small text-muted mt-2">เก็บสำรองไว้ที่ชีต (ซ่อน): ${esc(r.archived.join(', '))}</div>` : ''}
+        ${res.value.onhandMode === 'clear' ? '<div class="mt-2 fw-bold">ขั้นต่อไป: อัปโหลดไฟล์ Onhand ของรอบใหม่</div>' : ''}` });
+    if (res.value.onhandMode === 'clear') navigate('upload'); else loadRounds();
+  } catch (e) {
+    hideLoader();
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'ปิดรอบไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+
+/* ============================== Upload page (SheetJS) ============================== */
+function bindUploadUI() {
+  const dz = $id('dropzone'), input = $id('upload-file');
+  input.addEventListener('change', () => { if (input.files[0]) readFile(input.files[0]); input.value = ''; });
+  ['dragenter', 'dragover'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('drag'); }));
+  dz.addEventListener('drop', (e) => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+  $id('upload-sheet').addEventListener('change', (e) => parseSheet(e.target.value));
+  $id('btn-upload').addEventListener('click', doUpload);
+  $id('btn-reset-audit').addEventListener('click', doResetAudit);
+}
+
+function readFile(file) {
+  if (!window.XLSX) return notify({ icon: 'error', title: 'โหลด SheetJS ไม่สำเร็จ', text: 'กรุณารีเฟรชหน้าเว็บ' });
+  $id('upload-name').textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+  const isCsv = /\.csv$/i.test(file.name);
+  const fr = new FileReader();
+  fr.onload = (e) => {
+    try {
+      App.upload.wb = isCsv ? XLSX.read(e.target.result, { type: 'string', raw: true }) : XLSX.read(e.target.result, { type: 'array' });
+      const names = App.upload.wb.SheetNames;
+      const pick = names.find((n) => n.trim() === 'จัดไฟล์รวม') || names[0];
+      $id('upload-sheet').innerHTML = names.map((n) => `<option ${n === pick ? 'selected' : ''}>${esc(n)}</option>`).join('');
+      $id('upload-options').classList.remove('d-none');
+      parseSheet(pick);
+    } catch (err) {
+      notify({ icon: 'error', title: 'อ่านไฟล์ไม่สำเร็จ', text: errMsg(err) });
+    }
+  };
+  if (isCsv) fr.readAsText(file, 'UTF-8'); else fr.readAsArrayBuffer(file);
+}
+
+/** แปลงชีตเป็น [ลำดับ, รหัสพนักงาน, ชื่อ, ทะเบียน, แผนก, SN, ประเภท] — ตรวจหาหัวตารางอัตโนมัติ */
+function parseSheet(name) {
+  const ws = App.upload.wb.Sheets[name];
+  const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false, blankrows: false });
+  const norm = (s) => String(s).replace(/\s+/g, '').toLowerCase();
+  const snHead = /^(sn|s\/n|serial(no|number)?|serialnumber)$/;
+  let hRow = -1;
+  for (let i = 0; i < Math.min(aoa.length, 20); i++) {
+    if (aoa[i].some((c) => snHead.test(norm(c)))) { hRow = i; break; }
+  }
+  let map = [0, 1, 2, 3, 4, 5, 6];
+  if (hRow > -1) {
+    const h = aoa[hRow].map(norm);
+    const find = (re, not) => h.findIndex((c) => re.test(c) && !(not && not.test(c)));
+    const m = [
+      find(/^(ลำดับ|no\.?|ที่|#)$/),
+      find(/รหัส|empcode|employeeid|^emp(_)?id/),
+      find(/ชื่อ|name/, /แผนก|dept/),
+      find(/ทะเบียน|plate|car/),
+      find(/แผนก|หน่วยงาน|dept|department/),
+      find(snHead),
+      find(/ประเภท|type/)
+    ];
+    map = m.map((v, k) => (v > -1 ? v : (k === 0 ? -1 : k)));
+  }
+  const body = aoa.slice(hRow + 1);
+  const seen = new Set();
+  let dup = 0, blankSN = 0;
+  const rows = [];
+  const typeCount = {};
+  for (const r of body) {
+    const get = (k) => (map[k] > -1 ? String(r[map[k]] == null ? '' : r[map[k]]).trim() : '');
+    const sn = normSN(get(5));
+    if (!sn) { blankSN++; continue; }
+    if (seen.has(sn)) { dup++; continue; }
+    seen.add(sn);
+    let type = get(6);
+    type = /สาร/.test(type) ? 'สารกรอง' : /เครื่อง/.test(type) ? 'เครื่องกรอง' : (type || 'ไม่ระบุ');
+    typeCount[type] = (typeCount[type] || 0) + 1;
+    rows.push([get(0) || rows.length + 1, get(1) || '-', get(2) || '-', get(3) || '-', get(4) || '-', sn, type]);
+  }
+  App.upload.rows = rows;
+
+  const stat = (v, l, cls) => `<div class="col-6 col-md-3"><div class="stat-box"><div class="v ${cls || ''}">${v}</div><div class="l">${l}</div></div></div>`;
+  $id('upload-stats').innerHTML =
+    stat(fmtN(rows.length), 'รายการที่จะนำเข้า', 'text-primary') +
+    Object.keys(typeCount).map((t) => stat(fmtN(typeCount[t]), t)).join('') +
+    stat(fmtN(dup), 'SN ซ้ำ (ข้าม)', dup ? 'text-warning' : '') +
+    stat(fmtN(blankSN), 'แถวไม่มี SN (ข้าม)', '');
+
+  const head = ['ลำดับ', 'รหัสพนักงาน', 'ชื่อพนักงาน', 'ทะเบียนรถ', 'แผนก-หน่วยงาน', 'SN', 'ประเภท'];
+  $id('preview-table').innerHTML = `<thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>` +
+    (rows.slice(0, 100).map((r) => `<tr>${r.map((c, k) => `<td class="${k === 5 ? 'mono fw-bold' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('') ||
+      '<tr><td colspan="7" class="text-center text-muted py-4">ไม่พบข้อมูลที่มี SN</td></tr>') + '</tbody>';
+  $id('preview-note').textContent = `ชีต "${name}" · ${hRow > -1 ? 'พบหัวตารางแถวที่ ' + (hRow + 1) : 'ไม่พบหัวตาราง ใช้คอลัมน์ A–G'} · แสดง ${Math.min(100, rows.length)} แถวแรก`;
+  $id('btn-upload').disabled = !rows.length;
+}
+
+async function doUpload() {
+  const rows = App.upload.rows;
+  if (!rows.length) return;
+  const keep = $id('opt-keep').checked, clearOver = $id('opt-clear-over').checked;
+  const c = await modal({
+    icon: 'warning', title: 'ยืนยันอัปโหลดไฟล์ Onhand?',
+    html: `ข้อมูลในชีต <b>Onhand</b> (รอบ ${esc(App.round.name)}) จะถูกแทนที่ด้วย <b>${fmtN(rows.length)}</b> รายการ<br>
+      ${keep ? '✓ คงสถานะการนับเดิมของ SN ที่ตรงกัน' : '<span class="text-danger">✗ สถานะการนับและการปิดคันทั้งหมดจะเริ่มใหม่</span>'}
+      ${clearOver ? '<br><span class="text-danger">✗ ล้างรายการ OverStock เดิม</span>' : ''}
+      <div class="small text-muted mt-2">ถ้าเป็นไตรมาสใหม่ ให้ "ปิดรอบ" ที่เมนูรอบการนับก่อน เพื่อเก็บผลรอบเดิมไว้</div>`,
+    showCancelButton: true, confirmButtonText: 'อัปโหลด', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#15803d'
+  });
+  if (!c.isConfirmed) return;
+  App.modalOpen = true;
+  Modal.fire({ title: 'กำลังอัปโหลด…', html: `กำลังเขียน ${fmtN(rows.length)} รายการลง Google Sheets`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  try {
+    await flushQueue();
+    const res = await gs('uploadOnhand', App.token, rows, { keepStatus: keep, clearOverStock: clearOver });
+    if (!res.ok) throw new Error(res.message || res.code);
+    App.modalOpen = false;
+    if (!keep) App.promptedClose.clear();
+    await poll(true);
+    await modal({ icon: 'success', title: 'อัปโหลดสำเร็จ',
+      html: `นำเข้า <b>${fmtN(res.count)}</b> รายการ<br>คงสถานะเดิม ${fmtN(res.kept)} · SN ซ้ำ ${fmtN(res.duplicates)}${res.overCleared ? ' · ล้าง OverStock ' + fmtN(res.overCleared) : ''}` });
+    navigate('dashboard');
+  } catch (e) {
+    App.modalOpen = false;
+    if (isAuthErr(e)) return forceLogout(false);
+    modal({ icon: 'error', title: 'อัปโหลดไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+
+async function doResetAudit() {
+  const c = await modal({
+    icon: 'warning', title: 'รีเซ็ตผลการตรวจนับทั้งหมด?',
+    html: `ทุกรายการจะกลับเป็น "ยังไม่นับ" และทุกคันจะถูกเปิดนับใหม่ (ไม่บันทึกประวัติรอบ)<br><label class="mt-3 d-flex gap-2 justify-content-center align-items-center"><input type="checkbox" id="rs-over" class="form-check-input m-0"> ล้าง OverStock ด้วย</label>
+      <div class="mt-3 small text-muted">พิมพ์คำว่า <b>RESET</b> เพื่อยืนยัน</div>`,
+    input: 'text', inputPlaceholder: 'RESET',
+    showCancelButton: true, confirmButtonText: 'รีเซ็ต', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#b91c1c',
+    preConfirm: (v) => {
+      if (String(v).trim().toUpperCase() !== 'RESET') { Swal.showValidationMessage('กรุณาพิมพ์ RESET'); return false; }
+      return { clearOver: document.getElementById('rs-over').checked };
+    }
+  });
+  if (!c.isConfirmed) return;
+  try {
+    showLoader('กำลังรีเซ็ตผลการนับ…');
+    await flushQueue();
+    const res = await gs('resetAudit', App.token, c.value.clearOver);
+    if (!res.ok) throw new Error(res.message || res.code);
+    App.promptedClose.clear();
+    await poll(true);
+    hideLoader();
+    toast('success', `รีเซ็ตแล้ว ${fmtN(res.count)} รายการ`);
+  } catch (e) {
+    hideLoader();
+    if (isAuthErr(e)) return forceLogout(false);
+    modal({ icon: 'error', title: 'รีเซ็ตไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+</script>
+
+</body>
+</html>
