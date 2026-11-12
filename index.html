@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261112082806">
+  <meta name="app-build" content="20261112083903">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%234f6bed%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -443,6 +443,25 @@ body.report-open{overflow:hidden}
 .report-doc.pdf-mode .rp-table{font-size:12.5px}
 .report-doc.pdf-mode .rp-table th,.report-doc.pdf-mode .rp-table td{padding:4px 6px}
 .report-doc.pdf-mode .rp-title{font-size:19px}
+
+/* หน้า A4 ที่จัดเอง (สร้างนอกจอ แล้วแปลงเป็นภาพใส่ PDF ทีละหน้า) — ค่าตายตัว ไม่ขึ้นกับขนาดจอ */
+.rp-print-host{position:fixed;left:-12000px;top:0;width:794px;pointer-events:none}
+.report-doc.rp-page{width:794px!important;height:1123px!important;max-width:none!important;margin:0!important;padding:45px 53px 40px!important;
+  box-shadow:none!important;box-sizing:border-box;overflow:hidden;font-size:12.5px!important;line-height:1.5}
+.rp-page .rp-info{grid-template-columns:1fr 1fr!important}
+.rp-page .rp-info .k{flex-basis:120px!important}
+.rp-page .rp-title{font-size:19px!important}
+.rp-page .rp-table{font-size:12px!important}
+.rp-page .rp-table th,.rp-page .rp-table td{padding:4px 6px!important}
+.rp-page .rp-table th{white-space:nowrap!important;font-size:12px!important;line-height:1.5!important}
+.rp-page .rp-sign{gap:16px!important;margin-top:26px}
+.rp-page .rp-sigline{width:170px!important;height:54px!important}
+.rp-page .rp-sigline img{max-width:170px!important;max-height:52px!important}
+.rp-page .rp-sigline .typed{font-size:14px!important}
+.rp-page .rp-signame,.rp-page .rp-sigrole,.rp-page .rp-sign .rp-note{padding-left:36px!important}
+.rp-runhead{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid #9ca3af;padding-bottom:5px;margin-bottom:6px;font-size:11.5px;color:#374151}
+.rp-runhead b{font-size:13px;color:#111827}
+.rp-page-foot{position:absolute;left:53px;right:53px;bottom:16px;display:flex;justify-content:space-between;gap:12px;font-size:10px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:4px}
 
 @page{size:A4;margin:12mm}
 @media print{
@@ -1245,7 +1264,7 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261112082806";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261112083903";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -3338,16 +3357,45 @@ function buildUnitReport(key) {
   };
 }
 
-function reportHtml(rep, sig, img) {
-  const u = rep.u;
-  const diff = (d) => (d === 0 ? '0' : `<span class="${d < 0 ? 'neg' : 'pos'}">${d > 0 ? '+' : ''}${d}</span>`);
+/* ----- ชิ้นส่วนรายงาน (ใช้ทั้งหน้าจอ และหน้า A4 สำหรับ PDF/พิมพ์) ----- */
+const RP_TITLE = 'รายงานการตรวจนับสต๊อกหน่วยรถ-บริการ';
+const rpDiff = (d) => (d === 0 ? '0' : `<span class="${d < 0 ? 'neg' : 'pos'}">${d > 0 ? '+' : ''}${d}</span>`);
+const RP_DETAIL_HEAD = '<thead><tr><th>ลำดับที่</th><th>หมายเลขเครื่อง/SN</th><th>ประเภท</th><th>จำนวน Onhand</th><th>จำนวนนับได้</th><th>ผลต่าง</th><th>หมายเหตุ</th></tr></thead>';
+const RP_EQUIP_HEAD = '<thead><tr><th>ลำดับที่</th><th>หมายเลขเครื่อง/SN</th><th>ชื่ออุปกรณ์</th><th>หมายเหตุ</th></tr></thead>';
+function rpDetailRows(rep) {
+  return rep.lines.length
+    ? rep.lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="sn">${esc(l.sn)}</td><td>${esc(l.type)}</td><td class="c">${l.onhand}</td><td class="c">${l.count}</td><td class="c">${rpDiff(l.count - l.onhand)}</td><td>${esc(l.note)}</td></tr>`)
+    : ['<tr><td colspan="7" class="c">ไม่มีรายการ</td></tr>'];
+}
+function rpEquipRows(rep) {
+  return rep.equip.map((e, i) => `<tr><td class="c">${i + 1}</td><td class="sn">${esc(e[E.SN])}</td><td>${esc(e[E.NAME])}</td><td>${esc(e[E.REMARK] || '')}</td></tr>`);
+}
+function rpSignHtml(rep, sig, img) {
   const auditor = sig ? sig[7] : App.user.name;          // ผู้ตรวจนับ = ชื่อที่ล็อกอินระบบ
-  const signer = sig ? sig[6] : u.nameText;
-  const p = rep.parts;
+  const signer = sig ? sig[6] : rep.u.nameText;
   const goodImg = img && /^data:image\//.test(img);
+  return `<div class="rp-sign">
+    <div class="rp-sigcol">
+      <div class="rp-sigrow"><span>ลงชื่อ</span><span class="rp-sigline"><span class="typed">${esc(auditor)}</span></span></div>
+      <div class="rp-signame">( ${esc(auditor)} )</div>
+      <div class="rp-sigrole">ผู้ตรวจนับ</div>
+      <div class="rp-note">วันที่ตรวจนับ ${esc(thDateTime(rep.countedAt))}</div>
+    </div>
+    <div class="rp-sigcol">
+      <div class="rp-sigrow"><span>ลงชื่อ</span><span class="rp-sigline">${goodImg ? `<img src="${img}" alt="ลายเซ็นพนักงานหน่วยรถ">` : ''}</span></div>
+      <div class="rp-signame">( ${esc(signer)} )</div>
+      <div class="rp-sigrole">พนักงานหน่วยรถ (รับทราบ)</div>
+      <div class="rp-note">วันที่ตรวจรับ ${sig ? esc(thDateTime(sig[0])) : '..............................'}</div>
+    </div>
+  </div>`;
+}
+function rpStatusText(rep, sig) { return sig ? 'ลงนามรับทราบในระบบแล้ว' : (rep.u.closed ? 'รอพนักงานหน่วยรถลงนาม' : 'ฉบับร่าง: ยังไม่ปิดการนับ'); }
+/** หัวรายงาน + ข้อมูลพนักงาน + ตารางสรุป (หน้าแรก) */
+function rpTopHtml(rep) {
+  const u = rep.u, p = rep.parts;
   return `
   <div class="rp-head">
-    <div class="rp-title">รายงานการตรวจนับสต๊อกหน่วยรถ-บริการ</div>
+    <div class="rp-title">${RP_TITLE}</div>
     <div class="rp-sub">เครื่องกรองและสารกรอง · รอบการนับ ${esc(App.round.name)}</div>
   </div>
   <div class="rp-info">
@@ -3361,41 +3409,76 @@ function reportHtml(rep, sig, img) {
   <table class="rp-table">
     <thead><tr><th>ประเภท</th><th>จำนวน Onhand</th><th>จำนวนนับได้</th><th>ผลต่าง</th></tr></thead>
     <tbody>
-      ${rep.sum.map((s) => `<tr><td>${esc(s.type)}</td><td class="c">${fmtN(s.onhand)}</td><td class="c">${fmtN(s.count)}</td><td class="c">${diff(s.count - s.onhand)}</td></tr>`).join('')}
-      <tr class="tot"><td>รวมทั้งหมด</td><td class="c">${fmtN(rep.total.onhand)}</td><td class="c">${fmtN(rep.total.count)}</td><td class="c">${diff(rep.total.count - rep.total.onhand)}</td></tr>
+      ${rep.sum.map((s) => `<tr><td>${esc(s.type)}</td><td class="c">${fmtN(s.onhand)}</td><td class="c">${fmtN(s.count)}</td><td class="c">${rpDiff(s.count - s.onhand)}</td></tr>`).join('')}
+      <tr class="tot"><td>รวมทั้งหมด</td><td class="c">${fmtN(rep.total.onhand)}</td><td class="c">${fmtN(rep.total.count)}</td><td class="c">${rpDiff(rep.total.count - rep.total.onhand)}</td></tr>
     </tbody>
   </table>
-  <div class="rp-note">ผลต่างประกอบด้วย: ยืมไปคันอื่น ${p.out} · ยืมมาจากคันอื่น ${p.inn} · สต๊อกเกิน ${p.over} · ไม่พบ ${p.miss}${p.un ? ' · ยังไม่นับ ' + p.un : ''}</div>
+  <div class="rp-note">ผลต่างประกอบด้วย: ยืมไปคันอื่น ${p.out} · ยืมมาจากคันอื่น ${p.inn} · สต๊อกเกิน ${p.over} · ไม่พบ ${p.miss}${p.un ? ' · ยังไม่นับ ' + p.un : ''}</div>`;
+}
+
+/** รายงานแบบต่อเนื่อง (แสดงบนจอ) */
+function reportHtml(rep, sig, img) {
+  return `${rpTopHtml(rep)}
   <div class="rp-h2">รายละเอียด</div>
-  <div class="rp-scroll"><table class="rp-table rp-detail">
-    <thead><tr><th>ลำดับที่</th><th>หมายเลขเครื่อง/SN</th><th>ประเภท</th><th>จำนวน Onhand</th><th>จำนวนนับได้</th><th>ผลต่าง</th><th>หมายเหตุ</th></tr></thead>
-    <tbody>
-      ${rep.lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="sn">${esc(l.sn)}</td><td>${esc(l.type)}</td><td class="c">${l.onhand}</td><td class="c">${l.count}</td><td class="c">${diff(l.count - l.onhand)}</td><td>${esc(l.note)}</td></tr>`).join('')
-        || '<tr><td colspan="7" class="c">ไม่มีรายการ</td></tr>'}
-    </tbody>
-  </table></div>
+  <div class="rp-scroll"><table class="rp-table rp-detail">${RP_DETAIL_HEAD}<tbody>${rpDetailRows(rep).join('')}</tbody></table></div>
   ${rep.equip.length ? `<div class="rp-h2">อุปกรณ์ติดตั้งที่พบ (ไม่อยู่ในไฟล์ Onhand)</div>
-  <div class="rp-scroll"><table class="rp-table"><thead><tr><th>ลำดับที่</th><th>หมายเลขเครื่อง/SN</th><th>ชื่ออุปกรณ์</th><th>หมายเหตุ</th></tr></thead><tbody>
-    ${rep.equip.map((e, i) => `<tr><td class="c">${i + 1}</td><td class="sn">${esc(e[E.SN])}</td><td>${esc(e[E.NAME])}</td><td>${esc(e[E.REMARK] || '')}</td></tr>`).join('')}
-  </tbody></table></div>` : ''}
-  <div class="rp-sign">
-    <div class="rp-sigcol">
-      <div class="rp-sigrow"><span>ลงชื่อ</span><span class="rp-sigline"><span class="typed">${esc(auditor)}</span></span></div>
-      <div class="rp-signame">( ${esc(auditor)} )</div>
-      <div class="rp-sigrole">ผู้ตรวจนับ</div>
-      <div class="rp-note">วันที่ตรวจนับ ${esc(thDateTime(rep.countedAt))}</div>
-    </div>
-    <div class="rp-sigcol">
-      <div class="rp-sigrow"><span>ลงชื่อ</span><span class="rp-sigline">${goodImg ? `<img src="${img}" alt="ลายเซ็นพนักงานหน่วยรถ">` : ''}</span></div>
-      <div class="rp-signame">( ${esc(signer)} )</div>
-      <div class="rp-sigrole">พนักงานหน่วยรถ (รับทราบ)</div>
-      <div class="rp-note">วันที่ตรวจรับ ${sig ? esc(thDateTime(sig[0])) : '..............................'}</div>
-    </div>
-  </div>
+  <div class="rp-scroll"><table class="rp-table">${RP_EQUIP_HEAD}<tbody>${rpEquipRows(rep).join('')}</tbody></table></div>` : ''}
+  ${rpSignHtml(rep, sig, img)}
   <div class="rp-foot">
     <span>พิมพ์จากระบบตรวจนับสต๊อกหน่วยรถบริการ · ${esc(thDateTime(nowStr()))}</span>
-    <span>${sig ? 'ลงนามรับทราบในระบบแล้ว' : (u.closed ? 'รอพนักงานหน่วยรถลงนาม' : 'ฉบับร่าง: ยังไม่ปิดการนับ')}</span>
+    <span>${rpStatusText(rep, sig)}</span>
   </div>`;
+}
+
+/* ----- หน้า A4 แบบแบ่งหน้าเอง: หัวคอลัมน์ซ้ำทุกหน้า, ส่วนลงชื่อไม่ถูกตัด, เลขหน้า ----- */
+const PAGE = { w: 794, h: 1123, mt: 45, mb: 40, mx: 53, foot: 26 };   // px ที่ 96 dpi (A4 = 210 x 297 มม.)
+function paginateReport(rep, sig, img) {
+  const host = document.createElement('div');
+  host.className = 'rp-print-host';
+  document.body.appendChild(host);
+  const pages = [];
+  const avail = PAGE.h - PAGE.mt - PAGE.mb - PAGE.foot;
+  let body = null;
+  const fits = () => body.offsetHeight <= avail;
+  const newPage = (first) => {
+    const page = document.createElement('div');
+    page.className = 'rp-page report-doc' + (rep.u.closed ? '' : ' draft');
+    body = document.createElement('div');
+    body.className = 'rp-page-body';
+    page.appendChild(body);
+    host.appendChild(page);
+    pages.push(page);
+    body.innerHTML = first ? rpTopHtml(rep)
+      : `<div class="rp-runhead"><b>${RP_TITLE}</b><span>ทะเบียน ${esc(rep.u.id)} · ${esc(rep.u.nameText)} · รอบ ${esc(App.round.name)}</span></div>`;
+  };
+  /** ใส่ตารางทีละแถว ถ้าล้นหน้า -> ขึ้นหน้าใหม่พร้อมหัวคอลัมน์ */
+  const addTable = (title, head, rows, extraClass) => {
+    if (!rows.length) return;
+    let tbody = null;
+    const start = (cont) => {
+      body.insertAdjacentHTML('beforeend', `<div class="rp-h2">${title}${cont ? ' (ต่อ)' : ''}</div><table class="rp-table ${extraClass || ''}">${head}<tbody></tbody></table>`);
+      tbody = body.lastElementChild.querySelector('tbody');
+    };
+    start(false);
+    tbody.insertAdjacentHTML('beforeend', rows[0]);
+    if (!fits()) {   // หัวตาราง + แถวแรกไม่พอ -> ไปเริ่มหน้าใหม่ทั้งชุด
+      body.lastElementChild.remove(); body.lastElementChild.remove();
+      newPage(false); start(false); tbody.insertAdjacentHTML('beforeend', rows[0]);
+    }
+    for (let i = 1; i < rows.length; i++) {
+      tbody.insertAdjacentHTML('beforeend', rows[i]);
+      if (!fits()) { tbody.lastElementChild.remove(); newPage(false); start(true); tbody.insertAdjacentHTML('beforeend', rows[i]); }
+    }
+  };
+  newPage(true);
+  addTable('รายละเอียด', RP_DETAIL_HEAD, rpDetailRows(rep), 'rp-detail');
+  addTable('อุปกรณ์ติดตั้งที่พบ (ไม่อยู่ในไฟล์ Onhand)', RP_EQUIP_HEAD, rpEquipRows(rep), '');
+  body.insertAdjacentHTML('beforeend', rpSignHtml(rep, sig, img));
+  if (!fits()) { body.lastElementChild.remove(); newPage(false); body.insertAdjacentHTML('beforeend', rpSignHtml(rep, sig, img)); }
+  const printed = thDateTime(nowStr());
+  pages.forEach((p, i) => p.insertAdjacentHTML('beforeend',
+    `<div class="rp-page-foot"><span>พิมพ์จากระบบตรวจนับสต๊อกหน่วยรถบริการ · ${esc(printed)} · ${rpStatusText(rep, sig)}</span><span>หน้า ${i + 1} / ${pages.length}</span></div>`));
+  return { host, pages };
 }
 
 async function openReport(key) {
@@ -3492,8 +3575,8 @@ function renderSignPanel(rep, sig) {
       <div class="mt-2 d-flex flex-wrap gap-2"><button class="btn btn-primary btn-sm" id="sg-print"><i class="bi bi-printer"></i> พิมพ์</button>
       <button class="btn btn-outline-primary btn-sm" id="sg-pdf"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
       <button class="btn btn-outline-secondary btn-sm" id="sg-redo"><i class="bi bi-pencil"></i> ลงนามใหม่</button></div></div>`;
-    $id('sg-print').onclick = () => window.print();
-    $id('sg-pdf').onclick = downloadReportPdf;
+    $id('sg-print').onclick = () => exportReport('print');
+    $id('sg-pdf').onclick = () => exportReport('pdf');
     $id('sg-redo').onclick = () => { Report.resign = true; renderSignPanel(rep, sig); };
     return;
   }
@@ -3593,35 +3676,94 @@ async function saveSignature() {
   }
 }
 
-async function downloadReportPdf() {
-  const doc = $id('report-doc'), u = Report.rep && Report.rep.u;
-  if (!u) return;
-  showLoader('กำลังสร้างไฟล์ PDF…');
+const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+const H2C_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+
+/** สร้าง PDF A4 จากหน้าที่จัดเอง (ทุกหน้าเป็นภาพความละเอียดสูง -> ภาษาไทยไม่เพี้ยน, หน้าตาเหมือนกันทุกเครื่อง) */
+async function makeReportPdf() {
+  const rep = Report.rep, key = Report.key;
+  const sig = App.sigs.get(key) || null;
+  const img = sig ? App.sigImg.get(key) || '' : '';
+  if (!window.jspdf) await loadScript(JSPDF_URL);
+  if (!window.html2canvas) await loadScript(H2C_URL);
+  try { await document.fonts.ready; } catch (e) {}
+  const { host, pages } = paginateReport(rep, sig, img);
   try {
-    if (!window.html2pdf) await loadScript(HTML2PDF_URL);
-    doc.classList.add('pdf-mode');
-    try { await document.fonts.ready; } catch (e) {}
-    const file = `รายงานตรวจนับ_${u.id}_${App.round.name}`.replace(/[\\/:*?"<>|\s]+/g, '_') + '.pdf';
-    await window.html2pdf().set({
-      margin: [12, 14, 12, 14], filename: file,          // บน, ซ้าย, ล่าง, ขวา (มม.) — ซ้ายขวาเท่ากัน
-      image: { type: 'jpeg', quality: 0.96 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.rp-sign'] }
-    }).from(doc).save();
-    toast('success', 'บันทึก PDF แล้ว', file);
-  } catch (e) {
-    notify({ icon: 'error', title: 'สร้าง PDF ไม่สำเร็จ', html: `${esc(errMsg(e))}<br><span class="small">ใช้ปุ่ม พิมพ์ → เลือก "บันทึกเป็น PDF" แทนได้</span>` });
+    const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+    for (let i = 0; i < pages.length; i++) {
+      const cv = await window.html2canvas(pages[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true, scrollX: 0, scrollY: 0, windowWidth: PAGE.w, logging: false });
+      if (i) pdf.addPage();
+      pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+    }
+    pdf.setProperties({ title: `${RP_TITLE} ${rep.u.id}`, subject: `รอบการนับ ${App.round.name}`, creator: 'ระบบตรวจนับสต๊อกหน่วยรถบริการ' });
+    const file = `รายงานตรวจนับ_${rep.u.id}_${App.round.name}`.replace(/[\\/:*?"<>|\s]+/g, '_') + '.pdf';
+    return { pdf, file, pageCount: pages.length };
   } finally {
-    doc.classList.remove('pdf-mode');
-    hideLoader();
+    host.remove();
   }
+}
+
+function saveBlob(blob, file) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = file; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+
+/**
+ * ปุ่ม พิมพ์ / PDF
+ *  - คอมพิวเตอร์ + PDF  -> ดาวน์โหลดไฟล์ทันที
+ *  - อื่น ๆ -> หน้าต่างเลือก: พิมพ์ / แชร์ (มือถือ: แผ่นแชร์ของเครื่อง มีพิมพ์, บันทึกไฟล์, LINE) · เปิดดู · ดาวน์โหลด
+ */
+async function exportReport(mode) {
+  if (!Report.rep) return;
+  showLoader('กำลังจัดหน้ารายงาน A4…');
+  let out;
+  try { out = await makeReportPdf(); }
+  catch (e) {
+    hideLoader();
+    const r = await modal({ icon: 'error', title: 'สร้าง PDF ไม่สำเร็จ', html: `${esc(errMsg(e))}<br><span class="small">จะใช้การพิมพ์ของเบราว์เซอร์แทน</span>`, showCancelButton: true, confirmButtonText: 'พิมพ์ด้วยเบราว์เซอร์', cancelButtonText: 'ปิด' });
+    if (r.isConfirmed) window.print();
+    return;
+  }
+  hideLoader();
+  const { pdf, file, pageCount } = out;
+  const blob = pdf.output('blob');
+  const touch = isTouch();
+  if (mode === 'pdf' && !touch) { saveBlob(blob, file); return toast('success', 'บันทึก PDF แล้ว', `${file} · ${pageCount} หน้า`); }
+  const pdfFile = new File([blob], file, { type: 'application/pdf' });
+  const canShare = !!(navigator.canShare && (() => { try { return navigator.canShare({ files: [pdfFile] }); } catch (e) { return false; } })());
+  let printUrl = '';
+  if (!touch) { pdf.autoPrint(); printUrl = URL.createObjectURL(pdf.output('blob')); }   // คอมพิวเตอร์: เปิดแล้วขึ้นหน้าต่างพิมพ์เอง
+  const viewUrl = URL.createObjectURL(blob);
+  await modal({
+    icon: 'success', title: 'รายงาน A4 พร้อมแล้ว',
+    html: `<div class="small text-muted mb-3">${esc(file)} · ${pageCount} หน้า</div>
+      <div class="d-grid gap-2">
+        ${canShare ? '<button type="button" class="btn btn-primary btn-lg" id="ex-share"><i class="bi bi-share"></i> พิมพ์ / แชร์ / บันทึกไฟล์</button>' : ''}
+        ${!touch ? '<button type="button" class="btn btn-primary btn-lg" id="ex-print"><i class="bi bi-printer"></i> พิมพ์</button>' : ''}
+        <button type="button" class="btn btn-outline-primary" id="ex-view"><i class="bi bi-eye"></i> เปิดดู PDF${touch ? ' (พิมพ์จากเมนูแชร์)' : ''}</button>
+        <button type="button" class="btn btn-outline-secondary" id="ex-save"><i class="bi bi-download"></i> ดาวน์โหลด PDF</button>
+      </div>`,
+    showConfirmButton: false, showCloseButton: true,
+    didOpen: () => {
+      const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
+      on('ex-share', async () => {
+        try { await navigator.share({ files: [pdfFile], title: `${RP_TITLE} ${Report.rep.u.id}` }); Swal.close(); }
+        catch (e) { if (e && e.name !== 'AbortError') notify({ icon: 'error', title: 'แชร์ไม่สำเร็จ', text: errMsg(e) }); }
+      });
+      on('ex-print', () => { window.open(printUrl, '_blank'); Swal.close(); });
+      on('ex-view', () => { window.open(viewUrl, '_blank'); });
+      on('ex-save', () => { saveBlob(blob, file); });
+    }
+  });
+  setTimeout(() => { URL.revokeObjectURL(viewUrl); if (printUrl) URL.revokeObjectURL(printUrl); }, 10 * 60000);
 }
 
 function bindReportUI() {
   $id('rp-back').addEventListener('click', closeReport);
-  $id('rp-print').addEventListener('click', () => window.print());
-  $id('rp-pdf').addEventListener('click', downloadReportPdf);
+  $id('rp-print').addEventListener('click', () => exportReport('print'));
+  $id('rp-pdf').addEventListener('click', () => exportReport('pdf'));
   $id('btn-unit-report').addEventListener('click', () => { if (App.target !== 'ALL') openReport(App.target); });
   $id('btn-closed-reports').addEventListener('click', pickClosedUnit);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && Report.key && !App.modalOpen) closeReport(); });
