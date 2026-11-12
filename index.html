@@ -852,9 +852,10 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
               <div class="panel-head">
                 <div class="panel-title"><i class="bi bi-truck"></i> ความคืบหน้ารายหน่วยรถ / พนักงาน</div>
                 <select class="form-select form-select-sm w-auto" id="unit-filter">
-                  <option value="all">ทุกคัน</option>
-                  <option value="open" selected>เฉพาะคันที่ยังไม่ปิด</option>
+                  <option value="all" selected>ทุกคัน</option>
+                  <option value="open">เฉพาะคันที่ยังไม่ปิด</option>
                   <option value="closed">เฉพาะคันที่ปิดแล้ว</option>
+                  <option value="unsigned">ปิดแล้ว รอพนักงานลงนาม</option>
                   <option value="missing">มีรายการไม่พบ / ค้าง</option>
                 </select>
               </div>
@@ -916,6 +917,10 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
                   <div class="collapse" id="remaining-wrap">
                     <div class="remaining-list" id="remaining-list"></div>
                   </div>
+                  <button class="btn btn-outline-primary btn-sm w-100 mt-2 d-none" id="btn-closed-reports">
+                    <i class="bi bi-file-earmark-text"></i> รายงาน / ลงนาม คันที่ปิดการนับแล้ว
+                    <span class="badge ms-1 text-bg-warning" id="unsigned-count">0</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -2200,6 +2205,7 @@ function unitTableData() {
     const left = s.un + s.miss;
     if (f === 'open' && u.closed) return;
     if (f === 'closed' && !u.closed) return;
+    if (f === 'unsigned' && (!u.closed || App.sigs.has(u.key))) return;
     if (f === 'missing' && !left) return;
     out.push({
       id: u.id, name: u.nameText + (u.kind === 'CAR' && u.empText ? ` (${u.empText})` : ''), dept: u.dept,
@@ -2461,6 +2467,10 @@ function renderScanTarget() {
     : '';
   $id('btn-close-unit').classList.toggle('d-none', !u);
   $id('btn-unit-report').classList.toggle('d-none', !u);
+  const closedList = closedUnits(), waiting = closedList.filter((x) => !App.sigs.has(x.key)).length;
+  $id('btn-closed-reports').classList.toggle('d-none', !closedList.length);
+  $id('unsigned-count').textContent = waiting ? `รอลงนาม ${fmtN(waiting)}` : 'ลงนามครบ';
+  $id('unsigned-count').className = 'badge ms-1 ' + (waiting ? 'text-bg-warning' : 'text-bg-success');
   $id('remaining-count').textContent = fmtN(remaining.length);
   const LIMIT = 300;
   $id('remaining-list').innerHTML = remaining.length
@@ -3289,7 +3299,7 @@ function buildUnitReport(key) {
   return {
     u, lines, equip, sum, total: sumOf(lines),
     parts: { out: k('out'), inn: k('in'), over: k('over'), miss: k('miss'), un: k('un') },
-    countedAt: u.closed && u.meta ? u.meta[U.AT] : (times.at(-1) || '')
+    countedAt: u.closed && u.meta ? u.meta[U.AT] : (times[times.length - 1] || '')
   };
 }
 
@@ -3354,13 +3364,52 @@ function reportHtml(rep, sig, img) {
 }
 
 async function openReport(key) {
-  if (!App.units.get(key)) return;
-  Scanner.stop();
-  Report.key = key; Report.resign = false;
-  document.body.classList.add('report-open');
-  $id('report-view').classList.remove('d-none');
-  $id('report-scroll').scrollTop = 0;
-  await renderReport();
+  try {
+    if (!App.units.get(key)) throw new Error('ไม่พบข้อมูลหน่วยรถ ' + String(key).slice(4) + ' — กดปุ่ม ⟳ ซิงก์ข้อมูลแล้วลองใหม่');
+    Scanner.stop();
+    Report.key = key; Report.resign = false;
+    document.body.classList.add('report-open');
+    $id('report-view').classList.remove('d-none');
+    $id('report-scroll').scrollTop = 0;
+    await renderReport();
+  } catch (e) {
+    document.body.classList.remove('report-open');
+    $id('report-view').classList.add('d-none');
+    Report.key = null;
+    notify({ icon: 'error', title: 'เปิดรายงานไม่สำเร็จ', html: `${esc(errMsg(e))}<div class="small text-muted mt-2">ถ้ายังเปิดไม่ได้ กรุณาแคปหน้าจอนี้ส่งให้ผู้ดูแลระบบ</div>` });
+  }
+}
+
+/** คันที่ปิดการนับแล้ว (ไม่อยู่ในตัวเลือกสแกน) -> เลือกเพื่อเปิดรายงาน / ให้พนักงานลงนาม */
+function closedUnits() {
+  return [...App.units.values()].filter((u) => u.closed)
+    .sort((a, b) => (App.sigs.has(a.key) - App.sigs.has(b.key)) || String(b.meta && b.meta[U.AT]).localeCompare(String(a.meta && a.meta[U.AT])));
+}
+async function pickClosedUnit() {
+  const list = closedUnits();
+  if (!list.length) return notify({ icon: 'info', title: 'ยังไม่มีคันที่ปิดการนับ', text: 'ปิดการนับคันในหน้าสแกนก่อน แล้วจึงเปิดรายงานให้พนักงานลงนามได้' });
+  const row = (u) => {
+    const signed = App.sigs.has(u.key);
+    return `<button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-2 text-start" data-key="${esc(u.key)}" data-text="${esc((u.label + ' ' + u.nameText).toLowerCase())}">
+      <span><b>${esc(u.id)}</b><br><span class="small text-muted">${esc(u.nameText)} · ปิด ${esc(hhmm(u.meta && u.meta[U.AT]))}</span></span>
+      ${signed ? '<span class="badge text-bg-success"><i class="bi bi-pen"></i> ลงนามแล้ว</span>' : '<span class="badge text-bg-warning">รอลงนาม</span>'}</button>`;
+  };
+  await modal({
+    title: 'รายงาน / ลงนาม', showConfirmButton: false, showCloseButton: true,
+    html: `<input id="cu-search" class="form-control mb-2" placeholder="ค้นหาทะเบียน / ชื่อ">
+      <div class="list-group text-start" id="cu-list" style="max-height:52vh;overflow:auto">${list.map(row).join('')}</div>`,
+    didOpen: () => {
+      const box = document.getElementById('cu-list');
+      box.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-key]'); if (!b) return;
+        const key = b.dataset.key; Swal.close(); setTimeout(() => openReport(key), 80);
+      });
+      document.getElementById('cu-search').addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        box.querySelectorAll('[data-key]').forEach((b) => { b.classList.toggle('d-none', !!q && b.dataset.text.indexOf(q) < 0); });
+      });
+    }
+  });
 }
 
 function closeReport() {
@@ -3520,6 +3569,7 @@ function bindReportUI() {
   $id('rp-print').addEventListener('click', () => window.print());
   $id('rp-pdf').addEventListener('click', downloadReportPdf);
   $id('btn-unit-report').addEventListener('click', () => { if (App.target !== 'ALL') openReport(App.target); });
+  $id('btn-closed-reports').addEventListener('click', pickClosedUnit);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && Report.key && !App.modalOpen) closeReport(); });
 }
 
