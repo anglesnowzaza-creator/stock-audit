@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261112083903">
+  <meta name="app-build" content="20261112085157">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%234f6bed%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -463,19 +463,16 @@ body.report-open{overflow:hidden}
 .rp-runhead b{font-size:13px;color:#111827}
 .rp-page-foot{position:absolute;left:53px;right:53px;bottom:16px;display:flex;justify-content:space-between;gap:12px;font-size:10px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:4px}
 
+/* พิมพ์รายงาน: พิมพ์เฉพาะหน้า A4 ที่จัดเอง (แต่ละหน้ามีขอบในตัวแล้ว) -> หน้ากระดาษไม่ต้องมีขอบเพิ่ม */
 @page{size:A4;margin:12mm}
+@page rp{size:A4;margin:0}
 @media print{
-  html,body{background:#fff!important;height:auto!important;overflow:visible!important}
-  body.report-open>*:not(#report-view){display:none!important}
-  #report-view{position:static!important;display:block!important;background:#fff!important}
-  .report-toolbar,.sign-panel{display:none!important}
-  .report-scroll{padding:0!important;overflow:visible!important}
-  .report-doc{box-shadow:none!important;margin:0!important;padding:0!important;max-width:none!important;width:100%!important;font-size:12.5px!important}
-  .report-doc .rp-info{grid-template-columns:1fr 1fr!important}
-  .rp-scroll{overflow:visible!important}
-  .rp-table th{white-space:nowrap!important;font-size:12px!important}
-  .rp-table tr{page-break-inside:avoid;break-inside:avoid}
-  .rp-table thead{display:table-header-group}
+  html,body{background:#fff!important;height:auto!important;overflow:visible!important;margin:0!important;padding:0!important}
+  body.report-open>*:not(.rp-print-root){display:none!important}
+  .rp-print-root{position:static!important;left:auto!important;top:auto!important;width:auto!important}
+  .rp-print-root .rp-page{page:rp;width:210mm!important;height:296mm!important;break-after:page;page-break-after:always;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rp-print-root .rp-page:last-child{break-after:auto;page-break-after:auto}
 }
 
 /* ---------- v2.2: equipment / per-type ---------- */
@@ -1264,7 +1261,7 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261112083903";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261112085157";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -3696,11 +3693,44 @@ async function makeReportPdf() {
       pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
     }
     pdf.setProperties({ title: `${RP_TITLE} ${rep.u.id}`, subject: `รอบการนับ ${App.round.name}`, creator: 'ระบบตรวจนับสต๊อกหน่วยรถบริการ' });
-    const file = `รายงานตรวจนับ_${rep.u.id}_${App.round.name}`.replace(/[\\/:*?"<>|\s]+/g, '_') + '.pdf';
-    return { pdf, file, pageCount: pages.length };
+    return { pdf, file: reportFileBase(rep) + '.pdf', pageCount: pages.length };
   } finally {
     host.remove();
   }
+}
+
+/** ชื่อไฟล์: ทะเบียนรถ_ชื่อพนักงาน_วันที่ตรวจนับ (วว-ดด-ปปปป พ.ศ.) */
+function reportFileBase(rep) {
+  const u = rep.u;
+  const d = String(rep.countedAt || nowStr()).match(/(\d{4})-(\d{2})-(\d{2})/);
+  const date = d ? `${d[3]}-${d[2]}-${Number(d[1]) + 543}` : '';
+  const plate = u.kind === 'CAR' ? u.id : (u.empText || u.id);
+  return [plate, u.nameText, date].filter((x) => x && x !== '-').join('_')
+    .replace(/[\\/:*?"<>|#%&{}$!'@+`=]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 120) || 'รายงานตรวจนับ';
+}
+
+/* ----- พิมพ์ด้วยเบราว์เซอร์ (ปุ่มพิมพ์บนคอม / Ctrl+P): พิมพ์หน้า A4 ที่จัดเอง ไม่ใช่หน้าจอ ----- */
+let printRoot = null, printPrevTitle = null;
+function buildPrintRoot() {
+  removePrintRoot();
+  if (!Report.key || !Report.rep) return;
+  const sig = App.sigs.get(Report.key) || null;
+  const img = sig ? App.sigImg.get(Report.key) || '' : '';
+  const { host } = paginateReport(Report.rep, sig, img);
+  host.classList.add('rp-print-root');
+  printRoot = host;
+  printPrevTitle = document.title;
+  document.title = reportFileBase(Report.rep);      // ชื่อไฟล์ตอน "บันทึกเป็น PDF"
+}
+function removePrintRoot() {
+  if (printRoot) { printRoot.remove(); printRoot = null; }
+  if (printPrevTitle !== null) { document.title = printPrevTitle; printPrevTitle = null; }
+}
+window.addEventListener('beforeprint', () => { if (Report.key && !printRoot) buildPrintRoot(); });
+window.addEventListener('afterprint', () => setTimeout(removePrintRoot, 300));
+function printReport() {
+  buildPrintRoot();
+  try { window.print(); } finally { if (!('onafterprint' in window)) setTimeout(removePrintRoot, 1500); }
 }
 
 function saveBlob(blob, file) {
@@ -3717,47 +3747,53 @@ function saveBlob(blob, file) {
  */
 async function exportReport(mode) {
   if (!Report.rep) return;
-  showLoader('กำลังจัดหน้ารายงาน A4…');
+  const touch = isTouch();
+  if (mode === 'print' && !touch) return printReport();     // คอมพิวเตอร์: หน้าต่างพิมพ์ของเบราว์เซอร์ + หน้า A4 ที่จัดเอง
+  showLoader('กำลังสร้างไฟล์ PDF…');
   let out;
   try { out = await makeReportPdf(); }
   catch (e) {
     hideLoader();
-    const r = await modal({ icon: 'error', title: 'สร้าง PDF ไม่สำเร็จ', html: `${esc(errMsg(e))}<br><span class="small">จะใช้การพิมพ์ของเบราว์เซอร์แทน</span>`, showCancelButton: true, confirmButtonText: 'พิมพ์ด้วยเบราว์เซอร์', cancelButtonText: 'ปิด' });
-    if (r.isConfirmed) window.print();
+    const r = await modal({ icon: 'error', title: 'สร้างไฟล์ PDF ไม่สำเร็จ',
+      html: `${esc(errMsg(e) || 'ไม่ทราบสาเหตุ')}<div class="small text-muted mt-2">ตรวจอินเทอร์เน็ตแล้วลองใหม่ หรือพิมพ์ผ่านเบราว์เซอร์ (เลือก "บันทึกเป็น PDF" ได้)</div>`,
+      showCancelButton: true, confirmButtonText: 'พิมพ์ผ่านเบราว์เซอร์', cancelButtonText: 'ปิด' });
+    if (r.isConfirmed) printReport();
     return;
   }
   hideLoader();
   const { pdf, file, pageCount } = out;
   const blob = pdf.output('blob');
-  const touch = isTouch();
-  if (mode === 'pdf' && !touch) { saveBlob(blob, file); return toast('success', 'บันทึก PDF แล้ว', `${file} · ${pageCount} หน้า`); }
+  if (!touch) { saveBlob(blob, file); return toast('success', 'บันทึก PDF แล้ว', `${file} · ${pageCount} หน้า`); }
+
+  // มือถือ: ให้เห็นไฟล์ทันที + แชร์ (พิมพ์ / บันทึกไปที่ไฟล์ / ส่ง LINE) + ดาวน์โหลด
   const pdfFile = new File([blob], file, { type: 'application/pdf' });
-  const canShare = !!(navigator.canShare && (() => { try { return navigator.canShare({ files: [pdfFile] }); } catch (e) { return false; } })());
-  let printUrl = '';
-  if (!touch) { pdf.autoPrint(); printUrl = URL.createObjectURL(pdf.output('blob')); }   // คอมพิวเตอร์: เปิดแล้วขึ้นหน้าต่างพิมพ์เอง
+  let canShare = false;
+  try { canShare = !!(navigator.canShare && navigator.canShare({ files: [pdfFile] })); } catch (e) {}
   const viewUrl = URL.createObjectURL(blob);
   await modal({
-    icon: 'success', title: 'รายงาน A4 พร้อมแล้ว',
-    html: `<div class="small text-muted mb-3">${esc(file)} · ${pageCount} หน้า</div>
+    icon: 'success', title: 'ไฟล์ PDF พร้อมแล้ว',
+    html: `<div class="small text-muted mb-3 text-break">${esc(file)}<br>${pageCount} หน้า · A4</div>
       <div class="d-grid gap-2">
-        ${canShare ? '<button type="button" class="btn btn-primary btn-lg" id="ex-share"><i class="bi bi-share"></i> พิมพ์ / แชร์ / บันทึกไฟล์</button>' : ''}
-        ${!touch ? '<button type="button" class="btn btn-primary btn-lg" id="ex-print"><i class="bi bi-printer"></i> พิมพ์</button>' : ''}
-        <button type="button" class="btn btn-outline-primary" id="ex-view"><i class="bi bi-eye"></i> เปิดดู PDF${touch ? ' (พิมพ์จากเมนูแชร์)' : ''}</button>
-        <button type="button" class="btn btn-outline-secondary" id="ex-save"><i class="bi bi-download"></i> ดาวน์โหลด PDF</button>
-      </div>`,
+        <button type="button" class="btn btn-primary btn-lg" id="ex-view"><i class="bi bi-file-earmark-pdf"></i> เปิด PDF</button>
+        ${canShare ? '<button type="button" class="btn btn-success btn-lg" id="ex-share"><i class="bi bi-share"></i> แชร์ / พิมพ์ / ส่ง LINE</button>' : ''}
+        <button type="button" class="btn btn-outline-secondary" id="ex-save"><i class="bi bi-download"></i> บันทึกไฟล์ลงเครื่อง</button>
+      </div>
+      <div class="small text-muted mt-3 text-start">เปิด PDF แล้วแตะปุ่มแชร์ <i class="bi bi-box-arrow-up"></i> ของเบราว์เซอร์ → เลือก <b>พิมพ์</b> หรือ <b>บันทึกไปยังไฟล์</b></div>`,
     showConfirmButton: false, showCloseButton: true,
     didOpen: () => {
       const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
-      on('ex-share', async () => {
-        try { await navigator.share({ files: [pdfFile], title: `${RP_TITLE} ${Report.rep.u.id}` }); Swal.close(); }
-        catch (e) { if (e && e.name !== 'AbortError') notify({ icon: 'error', title: 'แชร์ไม่สำเร็จ', text: errMsg(e) }); }
+      on('ex-view', () => {
+        const w = window.open(viewUrl, '_blank');
+        if (!w) location.href = viewUrl;                 // ถ้าเปิดแท็บใหม่ไม่ได้ -> เปิดในหน้าเดิม
       });
-      on('ex-print', () => { window.open(printUrl, '_blank'); Swal.close(); });
-      on('ex-view', () => { window.open(viewUrl, '_blank'); });
-      on('ex-save', () => { saveBlob(blob, file); });
+      on('ex-share', async () => {
+        try { await navigator.share({ files: [pdfFile], title: file }); }
+        catch (e) { if (e && e.name !== 'AbortError') notify({ icon: 'error', title: 'แชร์ไม่สำเร็จ', text: errMsg(e) + ' — ใช้ปุ่ม เปิด PDF แทน' }); }
+      });
+      on('ex-save', () => { saveBlob(blob, file); toast('success', 'กำลังบันทึกไฟล์', 'ดูได้ที่ ดาวน์โหลด / ไฟล์ ในเครื่อง'); });
     }
   });
-  setTimeout(() => { URL.revokeObjectURL(viewUrl); if (printUrl) URL.revokeObjectURL(printUrl); }, 10 * 60000);
+  setTimeout(() => URL.revokeObjectURL(viewUrl), 10 * 60000);
 }
 
 function bindReportUI() {
