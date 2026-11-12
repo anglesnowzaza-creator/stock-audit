@@ -364,6 +364,96 @@ body.cam-photo .scanner-box{min-height:150px}
 .sound-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:8px 12px;border:1px dashed var(--border);border-radius:10px}
 @media (max-width:575.98px){ .scan-actions .photo-txt{display:none} body.cam-photo .scan-actions .photo-txt{display:inline} }
 
+/* ---------- v2.5: Unit report (A4) + signature ---------- */
+body.report-open{overflow:hidden}
+.report-view{position:fixed;inset:0;z-index:2500;background:#e7ebf1;display:flex;flex-direction:column}
+.report-toolbar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 1px 4px rgba(15,23,42,.06)}
+.report-toolbar-title{font-weight:700;font-size:.95rem}
+.report-scroll{flex:1;overflow:auto;padding:16px 10px 48px;-webkit-overflow-scrolling:touch}
+.report-doc{position:relative;background:#fff;color:#111827;max-width:794px;margin:0 auto;padding:28px 32px;box-shadow:0 2px 14px rgba(15,23,42,.14);
+  font-family:'Sarabun',sans-serif;font-size:13px;line-height:1.5}
+.rp-head{text-align:center;border-bottom:2px solid #111827;padding-bottom:8px;margin-bottom:12px}
+.rp-title{font-size:19px;font-weight:700}
+/* ห้ามใช้ letter-spacing ในรายงาน: html2canvas (ตัวสร้าง PDF) จะวาดทีละตัวอักษร ทำให้สระ/วรรณยุกต์ภาษาไทยเพี้ยนตำแหน่ง */
+.report-doc,.report-doc *{letter-spacing:0!important}
+.rp-sub{font-size:12px;color:#4b5563}
+.rp-info{display:grid;grid-template-columns:1fr 1fr;gap:3px 20px;margin:6px 0 10px}
+.rp-info>div{display:flex;gap:8px;align-items:baseline}
+.rp-info .k{color:#4b5563;flex:0 0 120px}
+.rp-info .v{font-weight:600;min-width:0}
+.rp-h2{font-weight:700;font-size:13.5px;margin:12px 0 4px}
+.rp-table{width:100%;border-collapse:collapse;margin:4px 0 6px;font-size:12.5px}
+.rp-table th,.rp-table td{border:1px solid #9ca3af;padding:4px 6px;vertical-align:top}
+.rp-table th{background:#f3f4f6;font-weight:700;text-align:center;white-space:nowrap}
+.rp-table td.c{text-align:center;white-space:nowrap}
+.rp-table td.sn{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600;white-space:nowrap}
+.rp-table tr.tot td{font-weight:700;background:#f9fafb}
+.rp-table .neg{color:#b91c1c;font-weight:700}
+.rp-table .pos{color:#1d4ed8;font-weight:700}
+.rp-note{font-size:11.5px;color:#4b5563}
+/* ท้ายรายงาน: ช่องลงชื่อขนาดพอดี 2 ช่องซ้าย-ขวา สมดุลกัน */
+.rp-sign{display:flex;justify-content:space-around;gap:16px;margin-top:30px;text-align:center;page-break-inside:avoid;break-inside:avoid}
+.rp-sigcol{flex:0 1 260px;min-width:0}
+.rp-sigrow{display:flex;align-items:flex-end;justify-content:center;gap:6px;white-space:nowrap}
+.rp-sigline{display:inline-flex;align-items:flex-end;justify-content:center;width:170px;height:54px;border-bottom:1px dotted #374151}
+.rp-sigline img{max-height:52px;max-width:170px;object-fit:contain}
+.rp-sigline .typed{font-size:14px;font-weight:600;padding-bottom:4px;font-style:italic}
+.rp-signame{margin-top:4px;padding-left:36px}
+.rp-sigrole{font-weight:600;padding-left:36px}
+.rp-sign .rp-note{padding-left:36px}
+.rp-foot{margin-top:18px;padding-top:6px;border-top:1px solid #e5e7eb;font-size:10.5px;color:#6b7280;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.report-doc.draft::before{content:'ฉบับร่าง — ยังไม่ปิดการนับ';position:absolute;top:38%;left:0;right:0;text-align:center;font-size:44px;font-weight:800;
+  color:rgba(185,28,28,.10);transform:rotate(-18deg);pointer-events:none}
+.sign-panel{max-width:794px;margin:14px auto 0}
+.sign-card{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.sign-card.done{border-color:var(--ok-line);background:#f6fef9}
+.sig-pad-wrap{position:relative;border:2px dashed #94a3b8;border-radius:12px;background:#fff;margin:8px 0}
+#sig-pad{width:100%;height:190px;display:block;touch-action:none;cursor:crosshair;border-radius:10px}
+.sig-hint{position:absolute;bottom:6px;left:0;right:0;text-align:center;color:#94a3b8;font-size:.78rem;pointer-events:none}
+@media (max-width:575.98px){
+  .report-doc{padding:16px 12px;font-size:11.5px}
+  .rp-title{font-size:16px}
+  .rp-info{grid-template-columns:1fr}
+  .rp-info .k{flex-basis:104px}
+  .rp-table{font-size:10.5px}
+  .rp-table th,.rp-table td{padding:3px 3px}
+  .rp-table th{white-space:normal;font-size:9.5px;line-height:1.25}
+  .rp-detail td:nth-child(7){min-width:84px}
+  .rp-sign{gap:8px}
+  .rp-sigline{width:96px;height:44px}
+  .rp-sigline img{max-width:96px;max-height:42px}
+  .rp-sigline .typed{font-size:11.5px}
+  .rp-signame,.rp-sigrole,.rp-sign .rp-note{padding-left:30px}
+}
+.rp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.report-doc.pdf-mode .rp-scroll{overflow:visible}
+.report-doc.pdf-mode .rp-table th{white-space:nowrap;font-size:12.5px}
+/* PDF: เรนเดอร์ที่ความกว้าง A4 คงที่ */
+/* กว้างเท่าพื้นที่พิมพ์ของ PDF พอดี (กล่องที่ html2pdf สร้าง = A4 ลบขอบซ้ายขวา) -> ขอบซ้ายขวาเท่ากัน */
+.report-doc.pdf-mode{width:auto!important;max-width:none!important;margin:0!important;box-shadow:none;padding:0!important;font-size:12.5px}
+.report-doc.pdf-mode .rp-sigline{width:170px;height:54px}
+.report-doc.pdf-mode .rp-sigline img{max-width:170px;max-height:52px}
+.report-doc.pdf-mode .rp-signame,.report-doc.pdf-mode .rp-sigrole,.report-doc.pdf-mode .rp-sign .rp-note{padding-left:36px}
+.report-doc.pdf-mode .rp-info{grid-template-columns:1fr 1fr}
+.report-doc.pdf-mode .rp-table{font-size:12.5px}
+.report-doc.pdf-mode .rp-table th,.report-doc.pdf-mode .rp-table td{padding:4px 6px}
+.report-doc.pdf-mode .rp-title{font-size:19px}
+
+@page{size:A4;margin:12mm}
+@media print{
+  html,body{background:#fff!important;height:auto!important;overflow:visible!important}
+  body.report-open>*:not(#report-view){display:none!important}
+  #report-view{position:static!important;display:block!important;background:#fff!important}
+  .report-toolbar,.sign-panel{display:none!important}
+  .report-scroll{padding:0!important;overflow:visible!important}
+  .report-doc{box-shadow:none!important;margin:0!important;padding:0!important;max-width:none!important;width:100%!important;font-size:12.5px!important}
+  .report-doc .rp-info{grid-template-columns:1fr 1fr!important}
+  .rp-scroll{overflow:visible!important}
+  .rp-table th{white-space:nowrap!important;font-size:12px!important}
+  .rp-table tr{page-break-inside:avoid;break-inside:avoid}
+  .rp-table thead{display:table-header-group}
+}
+
 /* ---------- v2.2: equipment / per-type ---------- */
 :root{ --equip:#0f766e; --equip-soft:#ccfbf1; --equip-line:#5eead4; }
 .k-equip .f-ico{background:var(--equip-soft);color:var(--equip)}
@@ -613,6 +703,22 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
     </div>
   </div>
 
+  <!-- ===================== Unit report (รายงานการตรวจรับ + ลงนาม) ===================== -->
+  <div id="report-view" class="report-view d-none" role="dialog" aria-modal="true" aria-label="รายงานการตรวจนับสต๊อกหน่วยรถ-บริการ">
+    <div class="report-toolbar">
+      <button class="btn btn-light btn-sm" id="rp-back"><i class="bi bi-arrow-left"></i> กลับ</button>
+      <div class="report-toolbar-title">รายงานการตรวจนับ</div>
+      <div class="ms-auto d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm" id="rp-pdf"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+        <button class="btn btn-primary btn-sm" id="rp-print"><i class="bi bi-printer"></i> พิมพ์</button>
+      </div>
+    </div>
+    <div class="report-scroll" id="report-scroll">
+      <div class="report-doc" id="report-doc"></div>
+      <div class="sign-panel" id="sign-panel"></div>
+    </div>
+  </div>
+
   <!-- ===================== Login ===================== -->
   <section id="login-screen" class="login-screen d-none">
     <div class="login-card">
@@ -798,9 +904,14 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
                     <button class="btn btn-link btn-sm px-0" id="btn-remaining" data-bs-toggle="collapse" data-bs-target="#remaining-wrap">
                       <i class="bi bi-list-check"></i> รายการที่ยังไม่นับ (<span id="remaining-count">0</span>)
                     </button>
-                    <button class="btn btn-outline-danger btn-sm d-none" id="btn-close-unit">
-                      <i class="bi bi-lock"></i> ปิดการนับคันนี้
-                    </button>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-outline-primary btn-sm d-none" id="btn-unit-report">
+                        <i class="bi bi-file-earmark-text"></i> รายงาน / ลงนาม
+                      </button>
+                      <button class="btn btn-outline-danger btn-sm d-none" id="btn-close-unit">
+                        <i class="bi bi-lock"></i> ปิดการนับคันนี้
+                      </button>
+                    </div>
                   </div>
                   <div class="collapse" id="remaining-wrap">
                     <div class="remaining-list" id="remaining-list"></div>
@@ -863,7 +974,6 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
                     <input class="form-check-input" type="checkbox" id="sound-on" checked>
                     <label class="form-check-label small" for="sound-on"><i class="bi bi-volume-up"></i> เสียงสแกน</label>
                   </div>
-                  <button class="btn btn-sm btn-outline-secondary" id="btn-test-sound"><i class="bi bi-music-note-beamed"></i> ทดสอบเสียง</button>
                 </div>
 
                 <div class="manual-entry">
@@ -1155,6 +1265,7 @@ const App = {
   token: null, user: null,
   rows: [], idx: new Map(), over: [], overIdx: new Map(), equip: [], equipIdx: new Map(),
   units: new Map(), unitMeta: new Map(), targets: new Map(), prefixType: new Map(),
+  sigs: new Map(), sigImg: new Map(),   // ลายเซ็นรับทราบ: key -> meta (ไม่รวมรูป), key -> data URL
   round: { name: '-', started: '' },
   v: 0, page: 'dashboard', target: 'ALL',
   lastSync: 0, syncing: false, pollTimer: null, autoRefresh: true,
@@ -1560,6 +1671,7 @@ function setData(full) {
   App.over = full.over || [];
   App.equip = full.equip || [];
   App.unitMeta = new Map((full.units || []).map((u) => [u[U.KEY], u]));
+  App.sigs = new Map((full.sigs || []).map((s) => [s[2], s]));
   if (full.round) App.round = full.round;
   rebuildIndexes();
   applyQueueOverlay();
@@ -1702,6 +1814,8 @@ function applyChanges(changes) {
       removeEquipLocal(c.sn); overChanged = true;
     } else if (c.k === 'U') {
       applyUnitChange(c, true);
+    } else if (c.k === 'G') {
+      App.sigs.set(c.d[2], c.d); App.sigImg.delete(c.d[2]); App.dirty.dash = true;
     }
   }
   applyQueueOverlay();
@@ -1715,6 +1829,7 @@ function setRowStatus(r, d) { r[C.ST] = d[0]; r[C.FOUND] = d[1]; r[C.AT] = d[2];
 function applyUnitChange(c, fromPoll) {
   const row = c.d;
   App.unitMeta.set(row[U.KEY], row);
+  if (c.st === S.UNSCANNED) { App.sigs.delete(row[U.KEY]); App.sigImg.delete(row[U.KEY]); }   // เปิดนับใหม่ = ลายเซ็นเดิมถูกล้าง
   const changed = [];
   (c.sns || []).forEach((sn) => {
     const i = App.idx.get(sn); if (i === undefined) return;
@@ -1962,6 +2077,7 @@ function bindUI() {
   bindInventoryUI();
   bindUploadUI();
   bindRoundsUI();
+  bindReportUI();
   $id('unit-filter').addEventListener('change', () => { App.dirty.dash = true; renderDashboard(); });
 }
 
@@ -2155,7 +2271,8 @@ function renderUnitTable() {
             const u = App.units.get(row.key);
             if (t === 'export') return d ? `ปิดแล้ว (${u && u.meta ? u.meta[U.BY] + ' ' + u.meta[U.AT] : ''})` : 'เปิด';
             if (t !== 'display') return d;
-            return d ? `<span class="st u-closed"><i class="bi bi-lock-fill"></i>ปิดแล้ว</span><div class="small text-muted">${esc(u && u.meta ? u.meta[U.BY] + ' · ' + hhmm(u.meta[U.AT]) : '')}</div>`
+            const signed = App.sigs.has(row.key) ? '<div class="small text-success"><i class="bi bi-pen"></i> ลงนามแล้ว</div>' : '';
+            return d ? `<span class="st u-closed"><i class="bi bi-lock-fill"></i>ปิดแล้ว</span><div class="small text-muted">${esc(u && u.meta ? u.meta[U.BY] + ' · ' + hhmm(u.meta[U.AT]) : '')}</div>${signed}`
                      : `<span class="st u-open"><i class="bi bi-unlock"></i>กำลังนับ</span>`;
           } },
         { title: '', data: 'key', orderable: false, className: 'text-end no-export', responsivePriority: 2,
@@ -2164,6 +2281,7 @@ function renderUnitTable() {
             const u = App.units.get(key);
             const canReopen = u && u.closed && (isAdmin() || (u.meta && u.meta[U.BY] === App.user.name));
             return `<div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-primary" data-act="report" data-unit="${esc(key)}" title="รายงานการตรวจรับ / ลงนาม"><i class="bi bi-file-earmark-text"></i></button>
               ${row.total ? `<button class="btn btn-outline-danger" data-act="missing" data-unit="${esc(key)}" title="ดูรายการที่ยังไม่พบ"><i class="bi bi-search"></i> ค้าง</button>` : ''}
               ${u && !u.closed ? `<button class="btn btn-outline-primary" data-act="scan" data-unit="${esc(key)}" title="สแกนคันนี้"><i class="bi bi-upc-scan"></i></button>
                 <button class="btn btn-outline-secondary" data-act="close" data-unit="${esc(key)}" title="ปิดการนับคันนี้"><i class="bi bi-lock"></i></button>` : ''}
@@ -2178,6 +2296,7 @@ function renderUnitTable() {
       if (act === 'scan') { setTarget(key); navigate('scan'); }
       else if (act === 'close') closeUnit(key, false);
       else if (act === 'reopen') reopenUnit(key);
+      else if (act === 'report') openReport(key);
       else { setInvFilter({ type: '', status: '', dept: '', unit: key, onlyLeft: true }); navigate('inventory'); }
     });
   } else {
@@ -2341,6 +2460,7 @@ function renderScanTarget() {
       + `<div class="type-split" style="grid-column:1/-1">${TYPES.map((t) => { const g = s.byType[t]; return `<span>${typePill(t)} ครอบครอง <b>${fmtN(g.hold)}</b> / Onhand ${fmtN(g.total)}${g.un + g.miss ? ` · <span class="text-danger">ค้าง ${fmtN(g.un + g.miss)}</span>` : ''}</span>`; }).join('')}${s.equip ? `<span>${typePill(EQUIP_LABEL).replace('type-other', 'type-equip')} ${esc(s.equipNames)}</span>` : ''}</div>`
     : '';
   $id('btn-close-unit').classList.toggle('d-none', !u);
+  $id('btn-unit-report').classList.toggle('d-none', !u);
   $id('remaining-count').textContent = fmtN(remaining.length);
   const LIMIT = 300;
   $id('remaining-list').innerHTML = remaining.length
@@ -2387,7 +2507,14 @@ async function closeUnit(key, auto) {
     hideLoader();
     if (App.target === key || App.target === 'ALL') setTarget('ALL');
     Feedback.signal('done');
-    toast('success', `ปิดการนับ ${u.id} แล้ว`, 'เลือกทะเบียนคันถัดไปได้เลย');
+    // นับเสร็จ -> ให้พนักงานหน่วยรถลงนามรับทราบทันที
+    const go = await modal({
+      icon: 'success', title: `ปิดการนับ ${esc(u.id)} แล้ว`,
+      html: 'เปิดรายงานการตรวจรับ ให้พนักงานหน่วยรถลงนามรับทราบตอนนี้เลยไหม?',
+      showCancelButton: true, confirmButtonText: '<i class="bi bi-pen"></i> เปิดรายงาน / ลงนาม', cancelButtonText: 'ภายหลัง'
+    });
+    if (go.isConfirmed) openReport(key);
+    else toast('success', `ปิดการนับ ${u.id} แล้ว`, 'เลือกทะเบียนคันถัดไปได้เลย');
   } catch (e) {
     hideLoader();
     if (isAuthErr(e)) return forceLogout(false);
@@ -2456,14 +2583,7 @@ function bindScanUI() {
   // เสียงสแกน
   const snd = $id('sound-on');
   snd.checked = Feedback.enabled;
-  snd.addEventListener('change', () => { Feedback.enabled = snd.checked; store('sa_sound', snd.checked ? null : '0'); if (snd.checked) Feedback.signal('ok'); });
-  $id('btn-test-sound').addEventListener('click', () => {
-    Feedback.unlock();
-    Feedback.enabled = true; snd.checked = true; store('sa_sound', null);
-    Feedback.signal('ok');
-    setTimeout(() => Feedback.signal('dup'), 700);
-    toast('info', 'เสียงสแกนปกติ → เสียงสแกนซ้ำ', 'ถ้าไม่ได้ยิน ให้เพิ่มระดับเสียงสื่อ/ปิดโหมดเงียบ');
-  });
+  snd.addEventListener('change', () => { Feedback.enabled = snd.checked; store('sa_sound', snd.checked ? null : '0'); });
 
   $id('btn-clear-recent').addEventListener('click', () => { App.recent = []; saveRecent(); renderRecent(); });
   $id('recent-list').addEventListener('click', (e) => {
@@ -3122,6 +3242,285 @@ function imageToFile(img, max, rot) {
   g.rotate(rot * Math.PI / 180);
   g.drawImage(img, -w / 2, -h / 2, w, h);
   return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(new File([b], 'scan.jpg', { type: 'image/jpeg' })) : reject(new Error('canvas'))), 'image/jpeg', 0.92));
+}
+
+/* ============================== Unit report: รายงานการตรวจรับ + ลงนามรับทราบ ============================== */
+const TH_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+/** '2026-11-12 13:45:00' -> '12 พ.ย. 2569 เวลา 13:45 น.' */
+function thDateTime(s) {
+  const m = String(s || '').match(/(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if (!m) return '-';
+  return `${Number(m[3])} ${TH_MONTHS[Number(m[2]) - 1]} ${Number(m[1]) + 543}` + (m[4] ? ` เวลา ${m[4]}:${m[5]} น.` : '');
+}
+const HTML2PDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+const Report = { key: null, rep: null, resign: false };
+
+/** รวบรวมข้อมูลรายงานของ 1 คัน: ของในคัน (Onhand) + ยืมมา + สต๊อกเกินที่พบ + อุปกรณ์ติดตั้ง */
+function buildUnitReport(key) {
+  const u = App.units.get(key);
+  if (!u) return null;
+  const tOrder = (t) => { const i = TYPES.indexOf(t); return i < 0 ? 9 : i; };
+  const lines = [];
+  u.rows.slice().sort((a, b) => tOrder(a[C.TYPE]) - tOrder(b[C.TYPE]) || a[C.SN].localeCompare(b[C.SN])).forEach((r) => {
+    let count = 0, note = '', kind = 'own';
+    if (r[C.ST] === S.MATCHED) { count = 1; note = r[C.NOTE] || ''; }
+    else if (r[C.ST] === S.MISPLACED) { kind = 'out'; note = `ยืมไปอยู่ที่ ${foundId(r[C.FOUND])} (ไม่ถือว่าสูญหาย)`; }
+    else if (r[C.ST] === S.MISSING) { kind = 'miss'; note = 'ไม่พบ'; }
+    else { kind = 'un'; note = 'ยังไม่นับ'; }
+    lines.push({ sn: r[C.SN], type: r[C.TYPE], onhand: 1, count, note, kind });
+  });
+  App.rows.forEach((r) => {
+    if (r[C.ST] === S.MISPLACED && foundId(r[C.FOUND]) === u.id && unitKey(r) !== key) {
+      const o = unitOf(r);
+      lines.push({ sn: r[C.SN], type: r[C.TYPE], onhand: 0, count: 1, note: `ยืมมาจาก ${o ? o.id : r[C.PLATE]}`, kind: 'in' });
+    }
+  });
+  App.over.forEach((o) => {
+    if (foundId(o[O.FOUND]) === u.id) lines.push({ sn: o[O.SN], type: o[O.TYPE], onhand: 0, count: 1, note: 'สต๊อกเกิน (ไม่มีในไฟล์ Onhand)' + (o[O.REMARK] ? ' · ' + o[O.REMARK] : ''), kind: 'over' });
+  });
+  const equip = App.equip.filter((e) => foundId(e[E.FOUND]) === u.id);
+  const types = TYPES.slice();
+  lines.forEach((l) => { if (types.indexOf(l.type) < 0) types.push(l.type); });
+  const sumOf = (ls) => ({ onhand: ls.reduce((s, l) => s + l.onhand, 0), count: ls.reduce((s, l) => s + l.count, 0) });
+  const sum = types.map((t) => Object.assign({ type: t }, sumOf(lines.filter((l) => l.type === t))))
+    .filter((s) => s.onhand || s.count || TYPES.indexOf(s.type) > -1);
+  const k = (x) => lines.filter((l) => l.kind === x).length;
+  const times = lines.length ? App.rows.filter((r) => (unitKey(r) === key || foundId(r[C.FOUND]) === u.id) && r[C.AT]).map((r) => r[C.AT]).sort() : [];
+  return {
+    u, lines, equip, sum, total: sumOf(lines),
+    parts: { out: k('out'), inn: k('in'), over: k('over'), miss: k('miss'), un: k('un') },
+    countedAt: u.closed && u.meta ? u.meta[U.AT] : (times.at(-1) || '')
+  };
+}
+
+function reportHtml(rep, sig, img) {
+  const u = rep.u;
+  const diff = (d) => (d === 0 ? '0' : `<span class="${d < 0 ? 'neg' : 'pos'}">${d > 0 ? '+' : ''}${d}</span>`);
+  const auditor = sig ? sig[7] : App.user.name;          // ผู้ตรวจนับ = ชื่อที่ล็อกอินระบบ
+  const signer = sig ? sig[6] : u.nameText;
+  const p = rep.parts;
+  const goodImg = img && /^data:image\//.test(img);
+  return `
+  <div class="rp-head">
+    <div class="rp-title">รายงานการตรวจนับสต๊อกหน่วยรถ-บริการ</div>
+    <div class="rp-sub">เครื่องกรองและสารกรอง · รอบการนับ ${esc(App.round.name)}</div>
+  </div>
+  <div class="rp-info">
+    <div><span class="k">รหัสพนักงาน</span><span class="v">${esc(u.empText || '-')}</span></div>
+    <div><span class="k">ชื่อ-นามสกุล</span><span class="v">${esc(u.nameText)}</span></div>
+    <div><span class="k">ทะเบียนรถ</span><span class="v">${esc(u.kind === 'CAR' ? u.id : '-')}</span></div>
+    <div><span class="k">แผนก-หน่วยงาน</span><span class="v">${esc(u.dept)}</span></div>
+    <div><span class="k">วันที่ตรวจนับ</span><span class="v">${esc(thDateTime(rep.countedAt))}</span></div>
+    <div><span class="k">จำนวนรวมทั้งหมด</span><span class="v">Onhand ${fmtN(rep.total.onhand)} · นับได้ ${fmtN(rep.total.count)} รายการ</span></div>
+  </div>
+  <table class="rp-table">
+    <thead><tr><th>ประเภท</th><th>จำนวน Onhand</th><th>จำนวนนับได้</th><th>ผลต่าง</th></tr></thead>
+    <tbody>
+      ${rep.sum.map((s) => `<tr><td>${esc(s.type)}</td><td class="c">${fmtN(s.onhand)}</td><td class="c">${fmtN(s.count)}</td><td class="c">${diff(s.count - s.onhand)}</td></tr>`).join('')}
+      <tr class="tot"><td>รวมทั้งหมด</td><td class="c">${fmtN(rep.total.onhand)}</td><td class="c">${fmtN(rep.total.count)}</td><td class="c">${diff(rep.total.count - rep.total.onhand)}</td></tr>
+    </tbody>
+  </table>
+  <div class="rp-note">ผลต่างประกอบด้วย: ยืมไปคันอื่น ${p.out} · ยืมมาจากคันอื่น ${p.inn} · สต๊อกเกิน ${p.over} · ไม่พบ ${p.miss}${p.un ? ' · ยังไม่นับ ' + p.un : ''}</div>
+  <div class="rp-h2">รายละเอียด</div>
+  <div class="rp-scroll"><table class="rp-table rp-detail">
+    <thead><tr><th>ลำดับที่</th><th>หมายเลขเครื่อง/SN</th><th>ประเภท</th><th>จำนวน Onhand</th><th>จำนวนนับได้</th><th>ผลต่าง</th><th>หมายเหตุ</th></tr></thead>
+    <tbody>
+      ${rep.lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="sn">${esc(l.sn)}</td><td>${esc(l.type)}</td><td class="c">${l.onhand}</td><td class="c">${l.count}</td><td class="c">${diff(l.count - l.onhand)}</td><td>${esc(l.note)}</td></tr>`).join('')
+        || '<tr><td colspan="7" class="c">ไม่มีรายการ</td></tr>'}
+    </tbody>
+  </table></div>
+  ${rep.equip.length ? `<div class="rp-h2">อุปกรณ์ติดตั้งที่พบ (ไม่อยู่ในไฟล์ Onhand)</div>
+  <div class="rp-scroll"><table class="rp-table"><thead><tr><th>ลำดับที่</th><th>หมายเลขเครื่อง/SN</th><th>ชื่ออุปกรณ์</th><th>หมายเหตุ</th></tr></thead><tbody>
+    ${rep.equip.map((e, i) => `<tr><td class="c">${i + 1}</td><td class="sn">${esc(e[E.SN])}</td><td>${esc(e[E.NAME])}</td><td>${esc(e[E.REMARK] || '')}</td></tr>`).join('')}
+  </tbody></table></div>` : ''}
+  <div class="rp-sign">
+    <div class="rp-sigcol">
+      <div class="rp-sigrow"><span>ลงชื่อ</span><span class="rp-sigline"><span class="typed">${esc(auditor)}</span></span></div>
+      <div class="rp-signame">( ${esc(auditor)} )</div>
+      <div class="rp-sigrole">ผู้ตรวจนับ</div>
+      <div class="rp-note">วันที่ตรวจนับ ${esc(thDateTime(rep.countedAt))}</div>
+    </div>
+    <div class="rp-sigcol">
+      <div class="rp-sigrow"><span>ลงชื่อ</span><span class="rp-sigline">${goodImg ? `<img src="${img}" alt="ลายเซ็นพนักงานหน่วยรถ">` : ''}</span></div>
+      <div class="rp-signame">( ${esc(signer)} )</div>
+      <div class="rp-sigrole">พนักงานหน่วยรถ (รับทราบ)</div>
+      <div class="rp-note">วันที่ตรวจรับ ${sig ? esc(thDateTime(sig[0])) : '..............................'}</div>
+    </div>
+  </div>
+  <div class="rp-foot">
+    <span>พิมพ์จากระบบตรวจนับสต๊อกหน่วยรถบริการ · ${esc(thDateTime(nowStr()))}</span>
+    <span>${sig ? 'ลงนามรับทราบในระบบแล้ว' : (u.closed ? 'รอพนักงานหน่วยรถลงนาม' : 'ฉบับร่าง: ยังไม่ปิดการนับ')}</span>
+  </div>`;
+}
+
+async function openReport(key) {
+  if (!App.units.get(key)) return;
+  Scanner.stop();
+  Report.key = key; Report.resign = false;
+  document.body.classList.add('report-open');
+  $id('report-view').classList.remove('d-none');
+  $id('report-scroll').scrollTop = 0;
+  await renderReport();
+}
+
+function closeReport() {
+  document.body.classList.remove('report-open');
+  $id('report-view').classList.add('d-none');
+  Report.key = null;
+  App.dirty.dash = true; App.dirty.scan = true;
+  renderCurrent();
+}
+
+async function renderReport() {
+  const key = Report.key;
+  const rep = Report.rep = buildUnitReport(key);
+  if (!rep) return closeReport();
+  const sig = App.sigs.get(key) || null;
+  const img = sig ? App.sigImg.get(key) || '' : '';
+  const doc = $id('report-doc');
+  doc.classList.toggle('draft', !rep.u.closed);
+  doc.innerHTML = reportHtml(rep, sig, img);
+  renderSignPanel(rep, sig);
+  if (sig && !img) {
+    try {
+      const r = await gs('getSignature', App.token, key);
+      if (r.ok && /^data:image\//.test(r.signature)) {
+        App.sigImg.set(key, r.signature);
+        if (Report.key === key) doc.innerHTML = reportHtml(rep, sig, r.signature);
+      }
+    } catch (e) { if (isAuthErr(e)) forceLogout(false); }
+  }
+}
+
+function renderSignPanel(rep, sig) {
+  const p = $id('sign-panel'), u = rep.u;
+  if (!u.closed) {
+    p.innerHTML = `<div class="sign-card"><div class="fw-bold mb-1"><i class="bi bi-lock"></i> ยังลงนามไม่ได้</div>
+      <div class="small text-muted mb-2">ต้องปิดการนับคันนี้ก่อน ตัวเลขในรายงานจึงจะเป็นฉบับจริง (ตอนนี้เป็นฉบับร่าง)</div>
+      <button class="btn btn-outline-danger btn-sm" id="sg-close"><i class="bi bi-lock"></i> ปิดการนับคันนี้</button></div>`;
+    $id('sg-close').onclick = () => { closeReport(); closeUnit(u.key, false); };
+    return;
+  }
+  if (sig && !Report.resign) {
+    p.innerHTML = `<div class="sign-card done"><div><i class="bi bi-patch-check-fill text-success"></i>
+      ลงนามรับทราบแล้ว โดย <b>${esc(sig[6])}</b> เมื่อ ${esc(thDateTime(sig[0]))} · ผู้ตรวจนับ ${esc(sig[7])}</div>
+      <div class="mt-2 d-flex flex-wrap gap-2"><button class="btn btn-primary btn-sm" id="sg-print"><i class="bi bi-printer"></i> พิมพ์</button>
+      <button class="btn btn-outline-primary btn-sm" id="sg-pdf"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+      <button class="btn btn-outline-secondary btn-sm" id="sg-redo"><i class="bi bi-pencil"></i> ลงนามใหม่</button></div></div>`;
+    $id('sg-print').onclick = () => window.print();
+    $id('sg-pdf').onclick = downloadReportPdf;
+    $id('sg-redo').onclick = () => { Report.resign = true; renderSignPanel(rep, sig); };
+    return;
+  }
+  p.innerHTML = `<div class="sign-card">
+    <div class="fw-bold"><i class="bi bi-pen"></i> พนักงานหน่วยรถลงนามรับทราบ</div>
+    <div class="small text-muted">ตรวจรายการด้านบน แล้วเซ็นชื่อในกรอบ · ผู้ตรวจนับ: <b>${esc(App.user.name)}</b></div>
+    <label class="form-label small mt-2 mb-1" for="sg-name">ชื่อผู้ลงนาม</label>
+    <input id="sg-name" class="form-control" value="${esc(u.nameText === '-' ? '' : u.nameText)}" placeholder="ชื่อ-นามสกุล พนักงานหน่วยรถ">
+    <div class="sig-pad-wrap"><canvas id="sig-pad" aria-label="กรอบลงลายมือชื่อ"></canvas><div class="sig-hint">เซ็นชื่อในกรอบนี้</div></div>
+    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="sg-ack">
+      <label class="form-check-label small" for="sg-ack">ข้าพเจ้ารับทราบผลการตรวจนับตามรายงานข้างต้น</label></div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary" id="sg-clear"><i class="bi bi-eraser"></i> ล้าง</button>
+      ${sig ? '<button class="btn btn-outline-secondary" id="sg-cancel">ยกเลิก</button>' : ''}
+      <button class="btn btn-success flex-grow-1" id="sg-save"><i class="bi bi-check2-circle"></i> บันทึกลายเซ็น</button>
+    </div></div>`;
+  SigPad.init($id('sig-pad'));
+  $id('sg-clear').onclick = () => SigPad.clear();
+  $id('sg-save').onclick = saveSignature;
+  if (sig) $id('sg-cancel').onclick = () => { Report.resign = false; renderSignPanel(rep, sig); };
+}
+
+/** กรอบลายเซ็น (นิ้ว / ปากกา / เมาส์) */
+const SigPad = {
+  c: null, g: null, empty: true, drawing: false,
+  init(canvas) {
+    this.c = canvas;
+    const r = canvas.getBoundingClientRect(), dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+    const g = this.g = canvas.getContext('2d');
+    g.scale(dpr, dpr); g.lineWidth = 2.6; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#111827';
+    this.empty = true; this.drawing = false;
+    const pt = (e) => { const b = canvas.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+    canvas.onpointerdown = (e) => {
+      e.preventDefault(); try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
+      this.drawing = true; const p = pt(e); g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x + 0.1, p.y + 0.1); g.stroke(); this.empty = false;
+    };
+    canvas.onpointermove = (e) => { if (!this.drawing) return; e.preventDefault(); const p = pt(e); g.lineTo(p.x, p.y); g.stroke(); };
+    canvas.onpointerup = canvas.onpointercancel = canvas.onpointerleave = () => { this.drawing = false; };
+  },
+  clear() { if (!this.g) return; this.g.save(); this.g.setTransform(1, 0, 0, 1, 0, 0); this.g.clearRect(0, 0, this.c.width, this.c.height); this.g.restore(); this.empty = true; },
+  /** PNG ขนาดเล็ก (ไม่เกิน ~45,000 ตัวอักษร ให้เก็บในเซลล์ Google Sheets ได้) */
+  dataURL() {
+    const W = 480, H = Math.max(1, Math.round(W * this.c.height / this.c.width));
+    const o = document.createElement('canvas'); o.width = W; o.height = H;
+    const g = o.getContext('2d'); g.drawImage(this.c, 0, 0, W, H);
+    let url = o.toDataURL('image/png');
+    if (url.length > 45000) { g.globalCompositeOperation = 'destination-over'; g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); url = o.toDataURL('image/jpeg', 0.6); }
+    return url;
+  }
+};
+
+async function saveSignature() {
+  const name = $id('sg-name').value.trim();
+  if (!name) return notify({ icon: 'warning', title: 'กรุณาระบุชื่อผู้ลงนาม' });
+  if (SigPad.empty) return notify({ icon: 'warning', title: 'กรุณาเซ็นชื่อในกรอบ' });
+  if (!$id('sg-ack').checked) return notify({ icon: 'warning', title: 'กรุณาติ๊กยืนยันรับทราบผลการตรวจนับ' });
+  const rep = Report.rep, u = rep.u, url = SigPad.dataURL();
+  if (url.length > 48000) return notify({ icon: 'warning', title: 'ลายเซ็นละเอียดเกินไป', text: 'กดล้าง แล้วเซ็นใหม่ให้เรียบง่ายขึ้น' });
+  const btn = $id('sg-save');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก…';
+  try {
+    await flushQueue();
+    const r = await gs('saveSignature', App.token, {
+      key: u.key, id: u.id, emp: u.empText, name: u.nameText, signer: name,
+      onhand: rep.total.onhand, counted: rep.total.count, diff: rep.total.count - rep.total.onhand, signature: url
+    });
+    if (!r.ok) throw new Error(r.message || r.code);
+    if (r.v === App.v + 1) App.v = r.v;
+    App.sigs.set(u.key, r.record); App.sigImg.set(u.key, url);
+    Report.resign = false;
+    Feedback.signal('done');
+    await renderReport();
+    toast('success', 'บันทึกลายเซ็นแล้ว', 'พิมพ์หรือบันทึกเป็น PDF ได้เลย');
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'บันทึกลายเซ็นไม่สำเร็จ', text: errMsg(e) });
+    btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2-circle"></i> บันทึกลายเซ็น';
+  }
+}
+
+async function downloadReportPdf() {
+  const doc = $id('report-doc'), u = Report.rep && Report.rep.u;
+  if (!u) return;
+  showLoader('กำลังสร้างไฟล์ PDF…');
+  try {
+    if (!window.html2pdf) await loadScript(HTML2PDF_URL);
+    doc.classList.add('pdf-mode');
+    try { await document.fonts.ready; } catch (e) {}
+    const file = `รายงานตรวจนับ_${u.id}_${App.round.name}`.replace(/[\\/:*?"<>|\s]+/g, '_') + '.pdf';
+    await window.html2pdf().set({
+      margin: [12, 14, 12, 14], filename: file,          // บน, ซ้าย, ล่าง, ขวา (มม.) — ซ้ายขวาเท่ากัน
+      image: { type: 'jpeg', quality: 0.96 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.rp-sign'] }
+    }).from(doc).save();
+    toast('success', 'บันทึก PDF แล้ว', file);
+  } catch (e) {
+    notify({ icon: 'error', title: 'สร้าง PDF ไม่สำเร็จ', html: `${esc(errMsg(e))}<br><span class="small">ใช้ปุ่ม พิมพ์ → เลือก "บันทึกเป็น PDF" แทนได้</span>` });
+  } finally {
+    doc.classList.remove('pdf-mode');
+    hideLoader();
+  }
+}
+
+function bindReportUI() {
+  $id('rp-back').addEventListener('click', closeReport);
+  $id('rp-print').addEventListener('click', () => window.print());
+  $id('rp-pdf').addEventListener('click', downloadReportPdf);
+  $id('btn-unit-report').addEventListener('click', () => { if (App.target !== 'ALL') openReport(App.target); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && Report.key && !App.modalOpen) closeReport(); });
 }
 
 /* ============================== Inventory page ============================== */
