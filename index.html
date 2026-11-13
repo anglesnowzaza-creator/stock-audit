@@ -3360,8 +3360,8 @@ function buildUnitReport(key) {
 /* ----- ชิ้นส่วนรายงาน (ใช้ทั้งหน้าจอ และหน้า A4 สำหรับ PDF/พิมพ์) ----- */
 const RP_TITLE = 'รายงานการตรวจนับสต๊อกหน่วยรถ-บริการ';
 const rpDiff = (d) => (d === 0 ? '0' : `<span class="${d < 0 ? 'neg' : 'pos'}">${d > 0 ? '+' : ''}${d}</span>`);
-const RP_DETAIL_HEAD = '<thead><tr><th>ลำดับที่</th><th>หมายเลขเครื่อง/SN</th><th>ประเภท</th><th>จำนวน Onhand</th><th>จำนวนนับได้</th><th>ผลต่าง</th><th>หมายเหตุ</th></tr></thead>';
-const RP_EQUIP_HEAD = '<thead><tr><th>ลำดับที่</th><th>หมายเลขเครื่อง/SN</th><th>ชื่ออุปกรณ์</th><th>หมายเหตุ</th></tr></thead>';
+const RP_DETAIL_HEAD = '<thead><tr><th>ลำดับ</th><th>หมายเลขเครื่อง/SN</th><th>ประเภท</th><th>จำนวน Onhand</th><th>จำนวนนับได้</th><th>ผลต่าง</th><th>หมายเหตุ</th></tr></thead>';
+const RP_EQUIP_HEAD = '<thead><tr><th>ลำดับ</th><th>หมายเลขเครื่อง/SN</th><th>ชื่ออุปกรณ์</th><th>หมายเหตุ</th></tr></thead>';
 function rpDetailRows(rep) {
   return rep.lines.length
     ? rep.lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="sn">${esc(l.sn)}</td><td>${esc(l.type)}</td><td class="c">${l.onhand}</td><td class="c">${l.count}</td><td class="c">${rpDiff(l.count - l.onhand)}</td><td>${esc(l.note)}</td></tr>`)
