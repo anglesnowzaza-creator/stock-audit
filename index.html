@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261113050714">
+  <meta name="app-build" content="20261113052955">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%236d5ce8%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -1162,6 +1162,30 @@ body.role-viewer .viewer-only{display:flex!important}
 .fu-choice label{margin:0!important;border:2px solid var(--border);border-radius:12px;padding:9px 6px!important;text-align:center;cursor:pointer;font-size:.88rem!important;font-weight:600;background:#fff}
 .fu-choice input:checked+label{background:var(--fu-soft);border-color:var(--fu);color:var(--fu)}
 
+/* ---------- v3.1 จัดการผู้ใช้ / รูปถ่ายหลักฐาน ---------- */
+.role-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.76rem;font-weight:700;border:1px solid}
+.role-admin{background:#efecff;color:#5846d6;border-color:#d9d2fb}
+.role-auditor{background:#e4f1ff;color:#2563a8;border-color:#cfe3fb}
+.role-viewer{background:#fdeef6;color:#a3326b;border-color:#f6cfe2}
+#users-table tr.u-off td{color:var(--muted)}
+.role-choice{display:grid;gap:8px}
+.role-choice input{display:none}
+.role-choice label{margin:0!important;border:2px solid var(--border);border-radius:12px;padding:8px 12px!important;cursor:pointer;background:#fff;text-align:left}
+.role-choice label b{display:block;font-size:.92rem} .role-choice label small{display:block;color:var(--muted);font-size:.78rem;font-weight:400}
+.role-choice input:checked+label{border-color:var(--primary);background:linear-gradient(135deg,#f1edff,#fcf0f7)}
+.pin-once{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:2rem;font-weight:800;letter-spacing:.25em;color:var(--primary-600);
+  background:#f3f0ff;border:2px dashed #cfc6fb;border-radius:14px;padding:10px;margin:12px auto 8px;max-width:240px}
+.photo-cell{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center}
+.btn-photo-count{background:#f1edff;color:var(--primary-600);border:1px solid #ddd5fb;padding:0 8px;font-weight:700}
+.btn-photo-count:hover{background:#e6e0ff;color:var(--primary-600)}
+.result-photo{margin-top:8px}
+.photo-preview{max-width:100%;max-height:46vh;border-radius:12px;border:1px solid var(--border);display:block;margin:0 auto}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;text-align:left;margin-top:6px}
+.photo-item{margin:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface-2)}
+.photo-img{aspect-ratio:4/3;display:grid;place-items:center;background:#f1eff9}
+.photo-img img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-item figcaption{padding:6px 9px;font-size:.78rem;color:var(--text-2)}
+
 /* รายงานสรุปผู้บริหาร: ซ่อนบนจอ แสดงเฉพาะตอนพิมพ์ */
 .exec-doc{display:none}
 @page exec{size:A4;margin:0}
@@ -1329,6 +1353,7 @@ body.role-viewer .viewer-only{display:flex!important}
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow-sm">
             <li><h6 class="dropdown-header" id="user-dd-name">-</h6></li>
+            <li><button class="dropdown-item" id="btn-change-pin"><i class="bi bi-key me-2"></i>เปลี่ยน PIN ของฉัน</button></li>
             <li><button class="dropdown-item" id="btn-share-line"><i class="bi bi-chat-dots me-2"></i>คัดลอกลิงก์สำหรับส่ง LINE</button></li>
             <li><hr class="dropdown-divider"></li>
             <li class="px-3 py-1">
@@ -1357,6 +1382,7 @@ body.role-viewer .viewer-only{display:flex!important}
         <div class="side-label admin-only mt-2">ผู้ดูแลระบบ</div>
         <a href="#" class="side-link admin-only" data-page="upload"><i class="bi bi-cloud-upload"></i><span>อัปโหลดไฟล์ Onhand</span></a>
         <a href="#" class="side-link admin-only" data-page="rounds"><i class="bi bi-calendar3"></i><span>รอบการตรวจนับ</span></a>
+        <a href="#" class="side-link admin-only" data-page="users"><i class="bi bi-people"></i><span>จัดการผู้ใช้</span></a>
       </nav>
       <div class="side-progress">
         <div class="d-flex justify-content-between small mb-1">
@@ -1797,6 +1823,29 @@ body.role-viewer .viewer-only{display:flex!important}
         </div>
       </section>
 
+      <!-- ============ จัดการผู้ใช้ (Admin) ============ -->
+      <section class="page d-none" id="page-users">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title"><i class="bi bi-people"></i> จัดการผู้ใช้</h2>
+            <div class="page-sub">เพิ่มผู้ใช้ · เปลี่ยนสิทธิ์ · ระงับการใช้งาน · รีเซ็ต PIN (PIN เก็บแบบเข้ารหัส ดูย้อนหลังไม่ได้)</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary btn-sm" id="btn-add-user"><i class="bi bi-person-plus"></i> เพิ่มผู้ใช้</button>
+          </div>
+        </div>
+        <div class="card panel">
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0" id="users-table">
+                <tbody><tr><td class="text-muted text-center py-4">กำลังโหลด…</td></tr></tbody>
+              </table>
+            </div>
+            <div class="small text-muted mt-3"><i class="bi bi-info-circle"></i> เปลี่ยนสิทธิ์ / ระงับ / รีเซ็ต PIN แล้ว ผู้ใช้คนนั้นจะถูกออกจากระบบทุกเครื่อง และต้องเข้าสู่ระบบใหม่ · ทุกการเปลี่ยนแปลงบันทึกในชีต Log</div>
+          </div>
+        </div>
+      </section>
+
       <!-- ============ คู่มือการใช้งาน ============ -->
       <section class="page d-none" id="page-manual">
         <div class="page-head mn-toolbar">
@@ -1823,7 +1872,7 @@ body.role-viewer .viewer-only{display:flex!important}
             <div class="mn-cover-roles">
               <div class="mn-role"><i class="bi bi-person-badge"></i><div><b>Auditor (ผู้ตรวจนับ)</b><small>สแกนนับสต๊อก · ปิดการนับรายคัน · ดู Dashboard / รายการ · ให้พนักงานลงนาม</small></div></div>
               <div class="mn-role"><i class="bi bi-shield-check"></i><div><b>Admin (ผู้ดูแลระบบ)</b><small>ทำได้ทุกอย่าง + อัปโหลดไฟล์ Onhand · จัดการรอบการนับ · เปิดคันกลับมานับใหม่</small></div></div>
-              <div class="mn-role"><i class="bi bi-eye"></i><div><b>Viewer (ผู้บริหาร)</b><small>ดูหน้า Dashboard แบบ Real-time และ Export Excel / CSV ได้อย่างเดียว ไม่สามารถสแกนหรือแก้ไขข้อมูล</small></div></div>
+              <div class="mn-role"><i class="bi bi-eye"></i><div><b>Viewer (ผู้บริหาร)</b><small>ดูหน้า Dashboard แบบ Real-time · เปิดดูรายงานรายคัน · รายงานสรุปผู้บริหาร (PDF) · Export Excel / CSV — ไม่สามารถสแกนหรือแก้ไขข้อมูล</small></div></div>
             </div>
           </header>
 
@@ -1861,6 +1910,8 @@ body.role-viewer .viewer-only{display:flex!important}
               <li><b>ใช้ปืนยิงบาร์โค้ด (Bluetooth)</b> เปิด “โหมดปืนยิง” แล้วยิงได้ทันที หรือ <b>พิมพ์ SN เอง</b> ในช่องกรอกแล้วกดตรวจสอบ</li>
               <li><b>ติดตามความคืบหน้า</b> ตัวเลข นับแล้ว / ทั้งหมด และรายการที่ยังไม่พบของคันนี้ แสดงใต้ช่องเลือกเป้าหมาย</li>
               <li><b>บันทึกอุปกรณ์ติดตั้ง</b> (สว่าน ฯลฯ ที่ไม่มีในไฟล์ Onhand) กดปุ่ม “บันทึกอุปกรณ์ติดตั้ง” → ใส่ SN และชื่ออุปกรณ์</li>
+              <li><b>แนบรูปหลักฐาน</b> (สต๊อกเกิน / อุปกรณ์ / ของสภาพผิดปกติ) กดปุ่ม <i class="bi bi-camera"></i> <b>แนบรูปหลักฐาน</b> ใต้ผลการสแกน หรือปุ่ม <i class="bi bi-camera"></i> ในคอลัมน์ “รูป” ของหน้ารายการสต๊อก → ถ่ายรูป → ใส่หมายเหตุ → บันทึก
+                <small>ระบบย่อรูปให้อัตโนมัติ · เก็บใน Google Drive โฟลเดอร์ Stock Audit Photos · กดตัวเลข <i class="bi bi-images"></i> เพื่อดูรูป · ลบได้เฉพาะรูปที่ตัวเองถ่าย (Admin ลบได้ทุกรูป)</small></li>
             </ol>
             <div class="mn-grid2">
               <div class="mn-note tip"><i class="bi bi-wifi-off"></i><div><b>สัญญาณหลุด?</b> สแกนต่อได้เลย ระบบเก็บรายการไว้ในเครื่อง (ป้ายสีเหลือง ☁️ ที่ Header) และส่งให้เองเมื่อกลับมาออนไลน์</div></div>
@@ -1965,7 +2016,15 @@ body.role-viewer .viewer-only{display:flex!important}
                 <small>ชื่อรอบตั้งให้อัตโนมัติ เช่น 2026-Q4 → 2027-Q1 (แก้ไขได้)</small>
               </div>
             </div>
-            <div class="mn-note tip"><i class="bi bi-person-plus"></i><div><b>เพิ่มผู้ใช้งาน</b> ที่ชีต <code>Users</code> ใน Google Sheets: Username/Email · ชื่อ-สกุล · Role (Admin / Auditor / Viewer) · สถานะ (Active / Inactive) · PIN — ใช้ Role <b>Viewer</b> สำหรับผู้บริหารที่ต้องการดู Dashboard อย่างเดียว</div></div>
+            <div class="mn-card mt-2">
+              <div class="mn-card-head"><i class="bi bi-people"></i> จัดการผู้ใช้ (เมนู จัดการผู้ใช้)</div>
+              <ol>
+                <li><b>เพิ่มผู้ใช้</b> → ใส่ Username / Email, ชื่อ-สกุล, เลือกสิทธิ์ Auditor / Viewer (ผู้บริหาร) / Admin → ใส่ PIN หรือเว้นว่างให้ระบบสุ่ม 6 หลัก → บันทึก → <b>จด PIN ที่แสดงส่งให้ผู้ใช้</b> (แสดงครั้งเดียว)</li>
+                <li><b>แก้ไข</b> <i class="bi bi-pencil"></i> เปลี่ยนชื่อ / สิทธิ์ · <b>ระงับ / เปิดใช้</b> เมื่อพนักงานลาออกหรือกลับมาทำงาน</li>
+                <li><b>รีเซ็ต PIN</b> <i class="bi bi-key"></i> เมื่อผู้ใช้ลืม PIN → ระบบสุ่ม PIN ใหม่ให้ส่งต่อ</li>
+              </ol>
+              <small>PIN เก็บแบบเข้ารหัส (ดูในชีต Users ไม่ได้) · เปลี่ยนสิทธิ์ / ระงับ / รีเซ็ต PIN แล้ว ผู้ใช้คนนั้นถูกออกจากระบบทุกเครื่องทันที · ต้องมี Admin ที่ใช้งานอยู่อย่างน้อย 1 คน · ทุกคนเปลี่ยน PIN ของตัวเองได้ที่เมนูผู้ใช้มุมขวาบน → เปลี่ยน PIN ของฉัน</small>
+            </div>
             <div class="mn-grid2 mt-2">
               <div class="mn-card">
                 <div class="mn-card-head"><i class="bi bi-cloud-check"></i> สำรองข้อมูลอัตโนมัติ</div>
@@ -1975,6 +2034,17 @@ body.role-viewer .viewer-only{display:flex!important}
                 <div class="mn-card-head"><i class="bi bi-journal-text"></i> ประวัติการแก้ไข (ชีต Log)</div>
                 <small>บันทึกว่าใครทำอะไรเมื่อไหร่: เข้าสู่ระบบ, ยกเลิกการสแกน, ลบสต๊อกเกิน/อุปกรณ์, เพิ่มทะเบียน, ปิด/เปิดคัน, ลงนาม, อัปโหลดไฟล์, รอบการนับ และการแก้ไขข้อมูลในชีตโดยตรง</small>
               </div>
+            </div>
+            <div class="mn-card mt-2">
+              <div class="mn-card-head"><i class="bi bi-envelope-paper"></i> อีเมลสรุปรายวันถึงผู้บริหาร (ตั้งค่าใน Google Sheets)</div>
+              <ol>
+                <li>เปิดไฟล์ Google Sheets ของระบบ → เมนู <b>📦 ระบบตรวจนับสต๊อก</b> → <b>📧 ตั้งค่าอีเมลสรุปรายวันถึงผู้บริหาร</b></li>
+                <li>พิมพ์อีเมลผู้รับ คั่นด้วยจุลภาค เช่น <code>boss@company.com, manager@company.com</code> → กด <b>OK</b></li>
+                <li>ครั้งแรก Google จะขออนุญาตส่งอีเมล → <b>Review permissions</b> → เลือกบัญชี → <b>Allow</b></li>
+                <li>ทดสอบทันที: เมนู <b>📧 ส่งอีเมลสรุปตอนนี้ (ทดสอบ)</b> แล้วตรวจกล่องจดหมาย (รวมถึงโฟลเดอร์ Spam)</li>
+              </ol>
+              <small>ระบบส่งอัตโนมัติทุกวันประมาณ 17:00 น. เนื้อหา: % ตรวจพบ · สแกนวันนี้ · ปิดการนับวันนี้ · ภาพรวมรอบ · การติดตามของที่ไม่พบ · ปุ่มเปิด Dashboard
+                · <b>เปลี่ยนรายชื่อ</b> ทำซ้ำข้อ 1–2 · <b>หยุดส่ง</b> ทำข้อ 1 แล้วลบอีเมลออกให้ว่าง → OK · ส่งในนามบัญชีเจ้าของสคริปต์ (Gmail ทั่วไป ~100 ผู้รับ/วัน)</small>
             </div>
           </section>
 
@@ -2005,6 +2075,8 @@ body.role-viewer .viewer-only{display:flex!important}
               <dd>กดปุ่ม <b>Sync</b> ที่มุมขวาบน หรือ Sync ทันที ใน Dashboard</dd>
               <dt><i class="bi bi-exclamation-triangle"></i> แถบแดง “เซิร์ฟเวอร์ (Apps Script) ยังเป็นเวอร์ชันเก่า”</dt>
               <dd>หน้าเว็บอัปเดตแล้วแต่ Apps Script ยังไม่ได้ Deploy เวอร์ชันใหม่ → แจ้ง Admin ให้วาง Code.gs ล่าสุด แล้ว Deploy → New version · ถ้าเป็นแถบเหลือง “มีหน้าเว็บเวอร์ชันใหม่” ให้กดรีเฟรช</dd>
+              <dt><i class="bi bi-key"></i> ลืม PIN</dt>
+              <dd>แจ้ง Admin ให้กด <b>รีเซ็ต PIN</b> ที่เมนู จัดการผู้ใช้ แล้วเข้าสู่ระบบด้วย PIN ใหม่ → เปลี่ยนเป็น PIN ของตัวเองได้ที่เมนูผู้ใช้ → เปลี่ยน PIN ของฉัน</dd>
               <dt><i class="bi bi-hourglass-bottom"></i> ขึ้นข้อความ “Session หมดอายุ”</dt>
               <dd>เข้าสู่ระบบใหม่ รายการที่สแกนไว้และรอส่งจะไม่หาย</dd>
             </dl>
@@ -2051,7 +2123,7 @@ body.role-viewer .viewer-only{display:flex!important}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113050714";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113052955";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -2075,6 +2147,7 @@ const FOLLOW_STATUS = ['รอติดตาม', 'ตามคืนได้�
 const FOLLOW_CLS = { 'รอติดตาม': 'fu-wait', 'ตามคืนได้แล้ว': 'fu-back', 'แจ้งหาย': 'fu-lost', 'ตัดจำหน่าย': 'fu-off' };
 const FOLLOW_ICO = { 'รอติดตาม': 'bi-hourglass-split', 'ตามคืนได้แล้ว': 'bi-arrow-return-left', 'แจ้งหาย': 'bi-megaphone', 'ตัดจำหน่าย': 'bi-x-circle' };
 const F = { AT:0, ROUND:1, SN:2, ST:3, OWNER:4, NOTE:5, BY:6 };
+const PH = { AT:0, ROUND:1, SN:2, KIND:3, ID:4, BY:5, NOTE:6 };   // รูปถ่ายหลักฐาน (ชีต Photos)
 const C = { NO:0, EMP:1, NAME:2, PLATE:3, DEPT:4, SN:5, TYPE:6, ST:7, FOUND:8, AT:9, BY:10, NOTE:11 };
 const O = { TS:0, SN:1, TYPE:2, FOUND:3, BY:4, REMARK:5 };
 const U = { KEY:0, ID:1, NAME:2, SRC:3, ST:4, AT:5, BY:6, TOTAL:7, M:8, W:9, MISS:10, SKIP:11, REASON:12 };
@@ -2091,6 +2164,7 @@ const App = {
   units: new Map(), unitMeta: new Map(), targets: new Map(), prefixType: new Map(),
   sigs: new Map(), sigImg: new Map(),   // ลายเซ็นรับทราบ: key -> meta (ไม่รวมรูป), key -> data URL
   follow: new Map(), hist: [],          // ติดตามของที่ไม่พบ: SN -> แถว FollowUp · ประวัติรอบ (ย่อ) สำหรับกราฟแนวโน้ม
+  photos: [], photoImg: new Map(),      // รูปถ่ายหลักฐาน (metadata) · File ID -> data URL ที่โหลดแล้ว
   round: { name: '-', started: '' },
   v: 0, page: 'dashboard', target: 'ALL',
   lastSync: 0, syncing: false, pollTimer: null, autoRefresh: true,
@@ -2500,7 +2574,7 @@ function forceLogout(manual) {
  *  - เซิร์ฟเวอร์เก่ากว่า  -> แถบแดง: ให้ Admin วาง Code.gs ใหม่แล้ว Deploy New version (และกันการปิดคันแบบ "ไม่ได้นับ")
  *  - หน้าเว็บเก่ากว่า     -> แถบเหลือง: ให้รีเฟรชหน้าเว็บ
  */
-const REQUIRED_API = 10;
+const REQUIRED_API = 11;
 function checkApi(api) {
   if (api === undefined && App.apiServer !== undefined) return;   // คำตอบบางแบบไม่มีเลขเวอร์ชัน
   const v = Number(api) || 0;
@@ -2532,6 +2606,7 @@ function setData(full) {
   App.sigs = new Map((full.sigs || []).map((s) => [s[2], s]));
   App.follow = new Map((full.follow || []).map((f) => [normSN(f[F.SN]), f]));
   App.hist = full.hist || [];
+  App.photos = (full.photos || []).map((p) => { p[PH.SN] = normSN(p[PH.SN]); return p; });
   if (full.round) App.round = full.round;
   rebuildIndexes();
   applyQueueOverlay();
@@ -2678,6 +2753,12 @@ function applyChanges(changes) {
       applyUnitChange(c, true);
     } else if (c.k === 'G') {
       App.sigs.set(c.d[2], c.d); App.sigImg.delete(c.d[2]); App.dirty.dash = true;
+    } else if (c.k === 'P' || c.k === 'PD') {
+      let sn = null;
+      if (c.k === 'P') { const d = c.d.slice(); sn = d[PH.SN] = normSN(d[PH.SN]); if (!App.photos.some((p) => p[PH.ID] === d[PH.ID])) App.photos.push(d); }
+      else { const old = App.photos.find((p) => p[PH.ID] === c.id); sn = old ? old[PH.SN] : null; App.photos = App.photos.filter((p) => p[PH.ID] !== c.id); App.photoImg.delete(c.id); }
+      overChanged = true;
+      const i = sn ? App.idx.get(sn) : undefined; if (i !== undefined) changed.push(i);
     } else if (c.k === 'F') {
       const sn = normSN(c.d[F.SN]);
       App.follow.set(sn, c.d); App.dirty.dash = true;
@@ -2983,6 +3064,15 @@ function bindUI() {
   $id('api-banner-reload').addEventListener('click', () => location.reload());
   $id('btn-follow-list').addEventListener('click', () => { setInvFilter({ type: '', status: S.MISSING, dept: '', unit: '' }); navigate('inventory'); });
   $id('btn-exec-report').addEventListener('click', printExecReport);
+  $id('btn-change-pin').addEventListener('click', changeMyPin);
+  $id('btn-add-user').addEventListener('click', () => editUser(null));
+  $id('users-table').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-uact]'); if (!b) return;
+    const u = (App.userList || []).find((x) => x.username === b.dataset.user); if (!u) return;
+    if (b.dataset.uact === 'edit') editUser(u);
+    else if (b.dataset.uact === 'pin') resetUserPin(u);
+    else if (b.dataset.uact === 'toggle') saveUserQuick(u, { active: !u.active });
+  });
   // กด Ctrl+P ขณะเปิดหน้าคู่มือ -> พิมพ์เฉพาะคู่มือ
   window.addEventListener('beforeprint', () => { if (App.page === 'manual') document.body.classList.add('print-manual'); });
   window.addEventListener('afterprint', () => document.body.classList.remove('print-manual'));
@@ -3012,7 +3102,7 @@ function toggleSidebar() {
 }
 
 function navigate(page) {
-  if ((page === 'upload' || page === 'rounds') && !isAdmin()) page = 'dashboard';
+  if ((page === 'upload' || page === 'rounds' || page === 'users') && !isAdmin()) page = 'dashboard';
   if (isViewer()) page = 'dashboard';   // Viewer เข้าได้เฉพาะ Dashboard
   App.page = page;
   document.querySelectorAll('.page').forEach((p) => p.classList.toggle('d-none', p.id !== 'page-' + page));
@@ -3021,6 +3111,7 @@ function navigate(page) {
   if (page !== 'scan') Scanner.stop();
   if (page === 'rounds') loadRounds();
   if (page === 'manual') renderManual();
+  if (page === 'users') loadUsers();
   renderCurrent();
   window.scrollTo(0, 0);
   if (page === 'scan') refocusInput();
@@ -3315,7 +3406,8 @@ function renderUnitTable() {
           } },
         { title: '', data: 'key', orderable: false, className: 'text-end no-export', responsivePriority: 2,
           render: (key, t, row) => {
-            if (t !== 'display' || isViewer()) return '';   // Viewer: ดูอย่างเดียว ไม่มีปุ่มจัดการ
+            if (t !== 'display') return '';
+            if (isViewer()) return `<button class="btn btn-sm btn-outline-primary" data-act="report" data-unit="${esc(key)}" title="ดูรายงานการตรวจนับ"><i class="bi bi-file-earmark-text"></i> รายงาน</button>`;   // Viewer: ดูรายงานได้อย่างเดียว
             const u = App.units.get(key);
             const canReopen = u && u.closed && (isAdmin() || (u.meta && u.meta[U.BY] === App.user.name));
             return `<div class="btn-group btn-group-sm">
@@ -3966,9 +4058,148 @@ async function onEquipDuplicate(e) {
 function setResult(kind, title, sn, detailHtml, icon) {
   const el = $id('result-card');
   el.className = 'result-card ' + kind;
+  const pk = photoKindOf(sn);
   el.innerHTML = `<div class="result-icon"><i class="bi ${icon || 'bi-upc-scan'}"></i></div>
-    <div class="result-body"><div class="result-title">${esc(title)}</div><div class="result-sn">${esc(sn)}</div><div class="result-detail">${detailHtml || ''}</div></div>`;
+    <div class="result-body"><div class="result-title">${esc(title)}</div><div class="result-sn">${esc(sn)}</div><div class="result-detail">${detailHtml || ''}</div>
+    ${pk && !isViewer() ? `<div class="result-photo">${photoCell(normSN(sn), pk, 'display', true)}</div>` : ''}</div>`;
   void el.offsetWidth; el.classList.add('pop');
+}
+
+/* ============================== รูปถ่ายหลักฐาน ============================== */
+/** ประเภทรายการของ SN (ใช้กำกับรูป) */
+function photoKindOf(sn) {
+  sn = normSN(sn);
+  if (!sn || sn === '-') return '';
+  if (App.idx.has(sn)) return 'Onhand';
+  if (App.overIdx && App.overIdx.has(sn)) return 'OverStock';
+  if (App.equipIdx && App.equipIdx.has(sn)) return EQUIP_LABEL;
+  return '';
+}
+function photosOf(sn) { return App.photos.filter((p) => p[PH.SN] === sn); }
+/** ช่องรูปในตาราง: จำนวนรูป (กดดู) + ปุ่มแนบรูป */
+function photoCell(sn, kind, t, big) {
+  const list = photosOf(sn);
+  if (t !== 'display') return list.length;
+  const view = list.length ? `<button class="btn btn-sm btn-photo-count" data-photo-view="${esc(sn)}" title="ดูรูป"><i class="bi bi-images"></i> ${list.length}</button>` : '';
+  const add = isViewer() ? '' : `<button class="btn btn-sm btn-outline-secondary${big ? '' : ' py-0 px-2'}" data-photo-add="${esc(sn)}" data-kind="${esc(kind)}" title="แนบรูปหลักฐาน"><i class="bi bi-camera"></i>${big ? ' แนบรูปหลักฐาน' : ''}</button>`;
+  return `<span class="photo-cell">${view}${add}</span>` || '<span class="text-muted">-</span>';
+}
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('button[data-photo-add]');
+  if (a) { e.preventDefault(); return attachPhoto(a.dataset.photoAdd, a.dataset.kind); }
+  const v = e.target.closest('button[data-photo-view]');
+  if (v) { e.preventDefault(); viewPhotos(v.dataset.photoView); }
+});
+
+/** ย่อรูปให้ด้านยาวไม่เกิน 1600px แล้วแปลงเป็น JPEG (ไฟล์เล็ก ส่งเร็วแม้สัญญาณหน้างานไม่ดี) */
+function compressImage(file, max = 1600, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('อ่านไฟล์รูปไม่ได้')); };
+    img.src = url;
+  });
+}
+function pickImageFile() {
+  return new Promise((resolve) => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*'; inp.setAttribute('capture', 'environment');
+    inp.onchange = () => resolve(inp.files[0] || null);
+    inp.click();
+  });
+}
+async function attachPhoto(sn, kind) {
+  if (isViewer() || !sn) return;
+  const file = await pickImageFile();
+  if (!file) return;
+  let data;
+  try { data = await compressImage(file); } catch (e) { return notify({ icon: 'error', title: 'แนบรูปไม่สำเร็จ', text: errMsg(e) }); }
+  const res = await modal({
+    title: 'แนบรูปหลักฐาน',
+    html: `<div class="swal-sn">${esc(sn)}</div><div class="small text-muted mb-2">${esc(kind || '')}</div>
+      <img src="${data}" class="photo-preview" alt="ตัวอย่างรูป">
+      <div class="swal-form"><label for="ph-note">หมายเหตุ (ไม่บังคับ)</label>
+      <input id="ph-note" class="form-control" maxlength="300" placeholder="เช่น ฉลากชำรุด / กล่องบุบ / พบที่ใต้เบาะ"></div>`,
+    showCancelButton: true, confirmButtonText: '<i class="bi bi-cloud-upload"></i> บันทึกรูป', cancelButtonText: 'ยกเลิก',
+    preConfirm: () => ({ note: $id('ph-note').value.trim() })
+  });
+  if (!res.isConfirmed) return;
+  showLoader('กำลังอัปโหลดรูป…');
+  try {
+    if (App.apiOld) throw new Error('เซิร์ฟเวอร์ยังเป็นเวอร์ชันเก่า — แจ้ง Admin ให้ Deploy Code.gs เวอร์ชันใหม่ก่อน');
+    const r = await gs('addPhoto', App.token, { sn, kind, note: res.value.note, data });
+    if (!r.ok) throw new Error(r.message || r.code);
+    if (r.v === App.v + 1) App.v = r.v;
+    App.photoImg.set(r.record[PH.ID], data);
+    hideLoader();
+    applyChanges([{ k: 'P', d: r.record }]);
+    if (App.page === 'scan') setResult(...lastResultArgs());
+    toast('success', 'บันทึกรูปแล้ว', sn);
+  } catch (e) {
+    hideLoader();
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'อัปโหลดรูปไม่สำเร็จ', text: errMsg(e) + ' — ตรวจสัญญาณอินเทอร์เน็ตแล้วลองใหม่' });
+  }
+}
+/** อัปเดตปุ่มรูปในการ์ดผลสแกน (นับจำนวนรูปใหม่) โดยไม่เปลี่ยนข้อความเดิม */
+function lastResultArgs() {
+  const el = $id('result-card');
+  const kind = (el.className.match(/result-card (\w+)/) || [])[1] || 'idle';
+  const title = el.querySelector('.result-title') ? el.querySelector('.result-title').textContent : '';
+  const sn = el.querySelector('.result-sn') ? el.querySelector('.result-sn').textContent : '';
+  const det = el.querySelector('.result-detail') ? el.querySelector('.result-detail').innerHTML : '';
+  const ico = ((el.querySelector('.result-icon i') || {}).className || '').replace('bi ', '');
+  return [kind, title, sn, det, ico];
+}
+async function viewPhotos(sn) {
+  const list = photosOf(sn);
+  if (!list.length) return;
+  const canDel = (p) => !isViewer() && (isAdmin() || p[PH.BY] === App.user.name);
+  modal({
+    title: `รูปหลักฐาน (${list.length})`, width: 'min(46em, 96vw)',
+    html: `<div class="swal-sn">${esc(sn)}</div><div class="photo-grid">${list.map((p) => `
+      <figure class="photo-item" data-id="${esc(p[PH.ID])}">
+        <div class="photo-img"><span class="spinner-border spinner-border-sm"></span></div>
+        <figcaption><b>${esc(p[PH.KIND])}</b> · ${esc(p[PH.BY])} · ${esc(hhmm(p[PH.AT]))} ${esc(dateTh(p[PH.AT]))}${p[PH.NOTE] ? `<div>${esc(p[PH.NOTE])}</div>` : ''}
+          ${canDel(p) ? `<button class="btn btn-sm btn-outline-danger mt-1" data-photo-del="${esc(p[PH.ID])}"><i class="bi bi-trash"></i> ลบ</button>` : ''}</figcaption>
+      </figure>`).join('')}</div>`,
+    confirmButtonText: 'ปิด',
+    didOpen: (popup) => {
+      popup.querySelectorAll('[data-photo-del]').forEach((b) => b.addEventListener('click', () => deletePhoto(b.dataset.photoDel, sn)));
+      list.forEach(async (p) => {
+        const box = popup.querySelector(`.photo-item[data-id="${CSS.escape(p[PH.ID])}"] .photo-img`);
+        try {
+          let src = App.photoImg.get(p[PH.ID]);
+          if (!src) { const r = await gs('getPhoto', App.token, p[PH.ID]); if (!r.ok) throw new Error(r.message); src = r.data; App.photoImg.set(p[PH.ID], src); }
+          if (box) box.innerHTML = `<a href="${src}" target="_blank" rel="noopener"><img src="${src}" alt="รูปหลักฐาน ${esc(sn)}"></a>`;
+        } catch (e) { if (box) box.innerHTML = `<span class="small text-danger">${esc(errMsg(e))}</span>`; }
+      });
+    }
+  });
+}
+async function deletePhoto(id, sn) {
+  const c = await modal({ icon: 'warning', title: 'ลบรูปนี้?', text: 'ไฟล์จะถูกย้ายไปถังขยะของ Google Drive (กู้คืนได้ภายใน 30 วัน)',
+    showCancelButton: true, confirmButtonText: 'ลบรูป', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#d23c50' });
+  if (!c.isConfirmed) return viewPhotos(sn);
+  try {
+    const r = await gs('removePhoto', App.token, id);
+    if (!r.ok) throw new Error(r.message || r.code);
+    if (r.v === App.v + 1) App.v = r.v;
+    applyChanges([{ k: 'PD', id }]);
+    toast('success', 'ลบรูปแล้ว');
+    if (photosOf(sn).length) viewPhotos(sn);
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'ลบรูปไม่สำเร็จ', text: errMsg(e) });
+  }
 }
 
 /* ----- Recent (ประวัติการสแกนของฉัน) ----- */
@@ -4399,7 +4630,8 @@ function rpEquipRows(rep) {
   return rep.equip.map((e, i) => `<tr><td class="c">${i + 1}</td><td class="sn">${esc(e[E.SN])}</td><td>${esc(e[E.NAME])}</td><td>${esc(e[E.REMARK] || '')}</td></tr>`);
 }
 function rpSignHtml(rep, sig, img) {
-  const auditor = sig ? sig[7] : App.user.name;          // ผู้ตรวจนับ = ชื่อที่ล็อกอินระบบ
+  // ผู้ตรวจนับ = ชื่อที่ล็อกอินระบบ (ผู้บริหารเปิดดู -> ใช้ชื่อผู้ปิดการนับคันนั้นแทน)
+  const auditor = sig ? sig[7] : isViewer() ? (rep.u.closed && rep.u.meta ? rep.u.meta[U.BY] : '') : App.user.name;
   const signer = sig ? sig[6] : rep.u.nameText;
   const goodImg = img && /^data:image\//.test(img);
   return `<div class="rp-sign">
@@ -4608,6 +4840,13 @@ async function renderReport() {
 
 function renderSignPanel(rep, sig) {
   const p = $id('sign-panel'), u = rep.u;
+  if (isViewer()) {   // ผู้บริหาร: ดูรายงานอย่างเดียว ไม่มีการลงนาม / ปิดคัน
+    p.innerHTML = `<div class="sign-card${sig ? ' done' : ''}"><div>${sig
+      ? `<i class="bi bi-patch-check-fill text-success"></i> ลงนามรับทราบแล้ว โดย <b>${esc(sig[6])}</b> เมื่อ ${esc(thDateTime(sig[0]))} · ผู้ตรวจนับ ${esc(sig[7])}`
+      : `<i class="bi bi-eye"></i> ${u.closed ? 'รอพนักงานหน่วยรถลงนามรับทราบ' : 'ฉบับร่าง — คันนี้ยังไม่ปิดการนับ'}`}</div>
+      <div class="small text-muted mt-1">โหมดผู้บริหาร: ดูอย่างเดียว · พิมพ์ / PDF ได้จากปุ่มด้านบน</div></div>`;
+    return;
+  }
   if (!u.closed) {
     p.innerHTML = `<div class="sign-card"><div class="fw-bold mb-1"><i class="bi bi-lock"></i> ยังลงนามไม่ได้</div>
       <div class="small text-muted mb-2">ต้องปิดการนับคันนี้ก่อน ตัวเลขในรายงานจึงจะเป็นฉบับจริง (ตอนนี้เป็นฉบับร่าง)</div>
@@ -4951,6 +5190,7 @@ function renderInventory() {
         { title: 'หมายเหตุ', data: C.NOTE, className: 'note-cell', responsivePriority: 8, defaultContent: '' },
         { title: 'วันเวลาที่สแกน', data: C.AT, responsivePriority: 9 },
         { title: 'ผู้สแกน', data: C.BY, responsivePriority: 12 },
+        { title: 'รูป', data: C.SN, className: 'text-center', responsivePriority: 7, render: (sn, t) => photoCell(sn, 'Onhand', t) },
         { title: 'การติดตาม (ของที่ไม่พบ)', data: C.SN, responsivePriority: 6, orderable: true,
           render: (sn, t, r) => {
             if (r[C.ST] !== S.MISSING) return t === 'display' ? '<span class="text-muted small">-</span>' : '';
@@ -4984,7 +5224,8 @@ function renderInventory() {
         { title: 'ประเภท', data: O.TYPE, responsivePriority: 2, render: (d, t) => (t === 'display' ? typePill(d) : d) },
         { title: 'ทะเบียนรถ/พนักงานที่พบ', data: O.FOUND, responsivePriority: 4 },
         { title: 'ผู้สแกน', data: O.BY, responsivePriority: 5 },
-        { title: 'หมายเหตุ', data: O.REMARK, responsivePriority: 6 }
+        { title: 'หมายเหตุ', data: O.REMARK, responsivePriority: 6 },
+        { title: 'รูป', data: O.SN, className: 'text-center', responsivePriority: 2, render: (sn, t) => photoCell(sn, 'OverStock', t) }
       ]
     });
     App.dirty.over = false;
@@ -5005,7 +5246,8 @@ function renderInventory() {
           render: (d, t) => (t === 'display' ? `<span class="type-pill type-equip"><i class="bi bi-tools"></i> ${esc(d)}</span>` : d) },
         { title: 'ทะเบียนรถ/พนักงานที่พบ', data: E.FOUND, responsivePriority: 3 },
         { title: 'ผู้บันทึก', data: E.BY, responsivePriority: 5 },
-        { title: 'หมายเหตุ', data: E.REMARK, responsivePriority: 6 }
+        { title: 'หมายเหตุ', data: E.REMARK, responsivePriority: 6 },
+        { title: 'รูป', data: E.SN, className: 'text-center', responsivePriority: 2, render: (sn, t) => photoCell(sn, EQUIP_LABEL, t) }
       ]
     });
     App.dirty.equip = false;
@@ -5193,6 +5435,121 @@ async function editFollowUp(sn) {
   } catch (e) {
     if (isAuthErr(e)) return forceLogout(false);
     notify({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+
+/* ============================== จัดการผู้ใช้ (Admin) + เปลี่ยน PIN ============================== */
+const ROLE_DESC = { Admin: 'ผู้ดูแลระบบ — ทุกเมนู', Auditor: 'ผู้ตรวจนับ — สแกน / ปิดการนับ / รายงาน', Viewer: 'ผู้บริหาร — ดู Dashboard อย่างเดียว' };
+
+async function loadUsers() {
+  const tb = $id('users-table');
+  tb.innerHTML = '<tbody><tr><td class="text-muted text-center py-4"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด…</td></tr></tbody>';
+  try {
+    const r = await gs('listUsers', App.token);
+    if (!r.ok) throw new Error(r.message || r.code);
+    App.userList = r.users;
+    const me = String(r.me || '').toLowerCase();
+    tb.innerHTML = `<thead><tr><th>Username / Email</th><th>ชื่อ-สกุล</th><th>สิทธิ์</th><th>สถานะ</th><th>PIN</th><th class="text-end">จัดการ</th></tr></thead><tbody>` +
+      r.users.map((u) => `<tr class="${u.active ? '' : 'u-off'}">
+        <td class="fw-bold">${esc(u.username)}${u.username.toLowerCase() === me ? ' <span class="badge text-bg-light">คุณ</span>' : ''}</td>
+        <td>${esc(u.name)}</td>
+        <td><span class="role-pill role-${u.role.toLowerCase()}">${esc(ROLE_LABEL[u.role] || u.role)}</span></td>
+        <td>${u.active ? '<span class="st st-ok"><i class="bi bi-check-circle-fill"></i>ใช้งาน</span>' : '<span class="st st-idle"><i class="bi bi-pause-circle"></i>ระงับ</span>'}</td>
+        <td class="small">${u.hasPin ? (u.hashed ? '<i class="bi bi-shield-lock text-success"></i> ตั้งแล้ว (เข้ารหัส)' : '<i class="bi bi-exclamation-triangle text-warning"></i> ยังไม่เข้ารหัส') : '<span class="text-danger">ไม่มี PIN</span>'}</td>
+        <td class="text-end"><div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-primary" data-uact="edit" data-user="${esc(u.username)}" title="แก้ไข"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-outline-secondary" data-uact="pin" data-user="${esc(u.username)}" title="รีเซ็ต PIN"><i class="bi bi-key"></i> PIN</button>
+          ${u.username.toLowerCase() === me ? '' : `<button class="btn ${u.active ? 'btn-outline-danger' : 'btn-outline-success'}" data-uact="toggle" data-user="${esc(u.username)}">${u.active ? '<i class="bi bi-pause-circle"></i> ระงับ' : '<i class="bi bi-play-circle"></i> เปิดใช้'}</button>`}
+        </div></td></tr>`).join('') + '</tbody>';
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    tb.innerHTML = `<tbody><tr><td class="text-danger text-center py-4">${esc(errMsg(e))}</td></tr></tbody>`;
+  }
+}
+
+async function editUser(u) {
+  const isNew = !u;
+  const res = await modal({
+    title: isNew ? 'เพิ่มผู้ใช้' : 'แก้ไขผู้ใช้',
+    html: `<div class="swal-form">
+      <label for="us-user">Username / Email</label>
+      <input id="us-user" class="form-control" maxlength="100" value="${esc(u ? u.username : '')}" ${isNew ? '' : 'disabled'} placeholder="เช่น somchai หรือ somchai@company.com">
+      <label for="us-name">ชื่อ-สกุล</label>
+      <input id="us-name" class="form-control" maxlength="150" value="${esc(u ? u.name : '')}">
+      <label>สิทธิ์</label>
+      <div class="role-choice">${['Auditor', 'Viewer', 'Admin'].map((r) => `<input type="radio" name="us-role" id="us-r-${r}" value="${r}" ${(u ? u.role : 'Auditor') === r ? 'checked' : ''}><label for="us-r-${r}"><b>${esc(ROLE_LABEL[r])}</b><small>${esc(ROLE_DESC[r])}</small></label>`).join('')}</div>
+      ${isNew ? `<label for="us-pin">PIN (ตัวเลข 4–8 หลัก · เว้นว่าง = สุ่มให้ 6 หลัก)</label><input id="us-pin" class="form-control" inputmode="numeric" maxlength="8">` : ''}
+      <label class="d-flex align-items-center gap-2 mt-3" for="us-active"><input type="checkbox" class="form-check-input m-0" id="us-active" ${!u || u.active ? 'checked' : ''}> เปิดใช้งาน (Active)</label>
+    </div>`,
+    showCancelButton: true, confirmButtonText: '<i class="bi bi-save"></i> บันทึก', cancelButtonText: 'ยกเลิก',
+    preConfirm: () => {
+      const v = { isNew, username: $id('us-user').value.trim(), name: $id('us-name').value.trim(),
+        role: document.querySelector('input[name="us-role"]:checked').value, active: $id('us-active').checked, pin: isNew ? $id('us-pin').value.trim() : '' };
+      if (!v.username || /\s/.test(v.username)) { Swal.showValidationMessage('Username ต้องไม่ว่างและไม่มีช่องว่าง'); return false; }
+      if (v.pin && !/^\d{4,8}$/.test(v.pin)) { Swal.showValidationMessage('PIN ต้องเป็นตัวเลข 4–8 หลัก'); return false; }
+      return v;
+    }
+  });
+  if (res.isConfirmed) await submitUser(res.value);
+}
+function saveUserQuick(u, patch) { return submitUser(Object.assign({ isNew: false, username: u.username, name: u.name, role: u.role, active: u.active }, patch)); }
+async function submitUser(v) {
+  try {
+    const r = await gs('saveUser', App.token, v);
+    if (!r.ok) throw new Error(r.message || r.code);
+    if (r.pin) await showPinOnce(v.username, r.pin, 'เพิ่มผู้ใช้แล้ว');
+    else toast('success', 'บันทึกแล้ว', v.username);
+    loadUsers();
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+async function resetUserPin(u) {
+  const c = await modal({ icon: 'question', title: 'รีเซ็ต PIN?', html: `<b>${esc(u.username)}</b> (${esc(u.name)})<br>ระบบจะสุ่ม PIN ใหม่ 6 หลัก และให้ผู้ใช้คนนี้ออกจากระบบทุกเครื่อง`,
+    showCancelButton: true, confirmButtonText: 'รีเซ็ต PIN', cancelButtonText: 'ยกเลิก' });
+  if (!c.isConfirmed) return;
+  try {
+    const r = await gs('resetPin', App.token, u.username);
+    if (!r.ok) throw new Error(r.message || r.code);
+    await showPinOnce(u.username, r.pin, 'รีเซ็ต PIN แล้ว');
+    loadUsers();
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'รีเซ็ตไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+/** แสดง PIN ครั้งเดียว (ระบบเก็บแบบเข้ารหัส ดูย้อนหลังไม่ได้) */
+function showPinOnce(username, pin, title) {
+  return modal({ icon: 'success', title,
+    html: `ผู้ใช้ <b>${esc(username)}</b><div class="pin-once">${esc(pin)}</div><div class="small text-danger">จด / ส่งให้ผู้ใช้ตอนนี้ — ปิดหน้าต่างแล้วจะดู PIN นี้อีกไม่ได้</div>`,
+    confirmButtonText: '<i class="bi bi-clipboard"></i> คัดลอกแล้วปิด',
+    preConfirm: () => { try { navigator.clipboard.writeText(pin); } catch (e) { /* คัดลอกเองได้ */ } return true; } });
+}
+async function changeMyPin() {
+  const res = await modal({
+    title: 'เปลี่ยน PIN ของฉัน',
+    html: `<div class="swal-form">
+      <label for="cp-old">PIN เดิม</label><input id="cp-old" type="password" class="form-control" inputmode="numeric" maxlength="8" autocomplete="current-password">
+      <label for="cp-new">PIN ใหม่ (ตัวเลข 4–8 หลัก)</label><input id="cp-new" type="password" class="form-control" inputmode="numeric" maxlength="8" autocomplete="new-password">
+      <label for="cp-new2">ยืนยัน PIN ใหม่</label><input id="cp-new2" type="password" class="form-control" inputmode="numeric" maxlength="8" autocomplete="new-password">
+    </div>`,
+    showCancelButton: true, confirmButtonText: 'บันทึก PIN ใหม่', cancelButtonText: 'ยกเลิก',
+    preConfirm: () => {
+      const o = $id('cp-old').value.trim(), n = $id('cp-new').value.trim(), n2 = $id('cp-new2').value.trim();
+      if (!/^\d{4,8}$/.test(n)) { Swal.showValidationMessage('PIN ใหม่ต้องเป็นตัวเลข 4–8 หลัก'); return false; }
+      if (n !== n2) { Swal.showValidationMessage('ยืนยัน PIN ใหม่ไม่ตรงกัน'); return false; }
+      return { o, n };
+    }
+  });
+  if (!res.isConfirmed) return;
+  try {
+    const r = await gs('changeMyPin', App.token, res.value.o, res.value.n);
+    if (!r.ok) throw new Error(r.message || r.code);
+    toast('success', 'เปลี่ยน PIN แล้ว', 'ใช้ PIN ใหม่ในการเข้าสู่ระบบครั้งถัดไป');
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'เปลี่ยน PIN ไม่สำเร็จ', text: errMsg(e) });
   }
 }
 
