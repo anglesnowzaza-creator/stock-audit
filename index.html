@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261112093141">
+  <meta name="app-build" content="20261113024206">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%234f6bed%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -50,6 +50,7 @@
   --warn:#c2410c;  --warn-soft:#ffedd5; --warn-line:#fdba74;
   --bad:#b91c1c;   --bad-soft:#fee2e2;  --bad-line:#fca5a5;
   --over:#6d28d9;  --over-soft:#ede9fe; --over-line:#c4b5fd;
+  --skip:#0e7490;  --skip-soft:#cffafe; --skip-line:#67e8f9;   /* ไม่ได้นับ (มีเหตุผล) */
   --idle:#475569;  --idle-soft:#f1f5f9;
 
   --radius:14px;
@@ -332,6 +333,18 @@ div.dataTables_wrapper .dt-buttons .btn{border-radius:10px!important}
 .round-chip{display:inline-flex;align-items:center;gap:4px;background:var(--primary-soft);color:var(--primary);border-radius:999px;padding:0 8px;font-weight:600}
 .round-title{font-size:1.7rem;font-weight:800;color:var(--primary)}
 .st-bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
+.st-skip{background:var(--skip-soft);color:var(--skip);border-color:var(--skip-line);white-space:normal}
+.text-skip{color:var(--skip)!important}
+.progress-split .seg.skip{background:var(--skip)}
+.kpi-tile.skip .dot{background:var(--skip)}
+.kpi-grid>.kpi-tile.over{grid-column:1/-1}
+.close-choice{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface-2)}
+.close-choice .cc-opt{display:flex;gap:8px;align-items:flex-start;padding:6px 0;cursor:pointer;font-size:.9rem}
+.close-choice .cc-opt input{margin-top:4px}
+.close-choice .cc-opt small{display:block;color:var(--muted);font-size:.78rem}
+.close-choice .cc-reason{margin-top:6px;padding-top:8px;border-top:1px dashed var(--border)}
+.close-choice .cc-chips{display:flex;flex-wrap:wrap;gap:6px}
+.close-choice .cc-chips .btn.active{background:var(--skip);border-color:var(--skip);color:#fff}
 .u-closed{background:#e2e8f0;color:#334155;border-color:#cbd5e1}
 .u-open{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
 .target-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
@@ -1264,8 +1277,8 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261112093141";</script>
-  <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"appUrl":"","hostedUrl":"","auto":null};</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113024206";</script>
+  <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
    Stock Audit — Client App (v2)
@@ -1276,13 +1289,16 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
    ========================================================================== */
 'use strict';
 
-const S = BOOT.status;                    // {UNSCANNED, MATCHED, MISPLACED, MISSING}
+const S = BOOT.status;                    // {UNSCANNED, MATCHED, MISPLACED, MISSING, NOTCOUNTED}
+if (!S.NOTCOUNTED) S.NOTCOUNTED = 'ไม่ได้นับ';   // ปิดคันโดยไม่ได้ตรวจนับ (มีเหตุผล) — ไม่นับเป็นของหาย
 const US = BOOT.unitStatus;               // {OPEN, CLOSED}
 const USRC = BOOT.unitSrc;                // {ONHAND, ADDED}
 const TYPES = BOOT.types;                 // ['เครื่องกรอง','สารกรอง']
+const SKIP_REASONS = BOOT.skipReasons || ['พนักงานลาออก', 'รถซ่อม', 'พนักงานลางาน', 'โอนย้ายหน่วยงาน'];
+const SKIP_PREFIX = 'ไม่ได้นับ: ';
 const C = { NO:0, EMP:1, NAME:2, PLATE:3, DEPT:4, SN:5, TYPE:6, ST:7, FOUND:8, AT:9, BY:10, NOTE:11 };
 const O = { TS:0, SN:1, TYPE:2, FOUND:3, BY:4, REMARK:5 };
-const U = { KEY:0, ID:1, NAME:2, SRC:3, ST:4, AT:5, BY:6, TOTAL:7, M:8, W:9, MISS:10 };
+const U = { KEY:0, ID:1, NAME:2, SRC:3, ST:4, AT:5, BY:6, TOTAL:7, M:8, W:9, MISS:10, SKIP:11, REASON:12 };
 const E = { TS:0, SN:1, NAME:2, FOUND:3, BY:4, REMARK:5 };       // อุปกรณ์ติดตั้ง
 const EQUIP_LABEL = 'อุปกรณ์ติดตั้ง';
 const EQUIP_PRESETS = ['สว่าน', 'สว่านไร้สาย', 'ไขควงไฟฟ้า', 'เครื่องเจียร', 'เครื่องตัดท่อ', 'ปั๊มทดสอบแรงดัน', 'เครื่องวัด TDS'];
@@ -1318,7 +1334,7 @@ const pct = (a, b) => (b ? (a / b) * 100 : 0);
 const fmtPct = (p) => (p >= 99.95 || p === 0 ? p.toFixed(0) : p.toFixed(1)) + '%';
 const isTouch = () => window.matchMedia('(pointer:coarse)').matches;
 const pad = (n) => String(n).padStart(2, '0');
-const scannable = (st) => !st || st === S.UNSCANNED || st === S.MISSING;
+const scannable = (st) => !st || st === S.UNSCANNED || st === S.MISSING || st === S.NOTCOUNTED;
 const isAdmin = () => App.user && App.user.role === 'Admin';
 function nowStr() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
 function hhmm(s) { const m = String(s || '').match(/(\d{1,2}):(\d{2})/); return m ? `${pad(m[1])}:${m[2]}` : '-'; }
@@ -1374,6 +1390,7 @@ function statusBadge(st) {
   if (st === S.MATCHED) return `<span class="st st-ok"><i class="bi bi-check-circle-fill"></i>${esc(st)}</span>`;
   if (st === S.MISPLACED) return `<span class="st st-warn"><i class="bi bi-arrow-left-right"></i>${LABEL_MISPLACED}</span>`;
   if (st === S.MISSING) return `<span class="st st-bad"><i class="bi bi-x-octagon-fill"></i>${esc(st)}</span>`;
+  if (st === S.NOTCOUNTED) return `<span class="st st-skip"><i class="bi bi-slash-circle"></i>${esc(st)}</span>`;
   return `<span class="st st-idle"><i class="bi bi-circle"></i>${esc(st || S.UNSCANNED)}</span>`;
 }
 
@@ -1754,6 +1771,7 @@ function rebuildUnits() {
   units.forEach((u) => {
     u.meta = App.unitMeta.get(u.key) || null;
     u.closed = !!(u.meta && u.meta[U.ST] === US.CLOSED);
+    u.skipReason = u.closed && u.meta[U.REASON] ? String(u.meta[U.REASON]).trim() : '';   // ปิดแบบ "ไม่ได้นับ"
     u.added = !!(u.meta && u.meta[U.SRC] === USRC.ADDED);
     const names = [...u.names].join(', ');
     u.nameText = names || '-';
@@ -1796,12 +1814,12 @@ function unitCounters() {
 }
 /**
  * สถิติของหน่วยรถ (รวม + แยกตามประเภทใน s.byType)
- *  total=Onhand, m=นับพบในคัน, w=ยืมไปคันอื่น, miss=ไม่พบ, un=ยังไม่นับ, bin=ยืมมา, over=สต๊อกเกิน
+ *  total=Onhand, m=นับพบในคัน, w=ยืมไปคันอื่น, miss=ไม่พบ, skip=ไม่ได้นับ, un=ยังไม่นับ, bin=ยืมมา, over=สต๊อกเกิน
  *  hold = ครอบครองจริง = นับพบในคัน + ยืมมา + สต๊อกเกินที่พบในคัน
  */
 function unitStat(u, counters) {
   const c = counters || unitCounters();
-  const mk = () => ({ total: 0, m: 0, w: 0, miss: 0, un: 0, bin: 0, over: 0, hold: 0 });
+  const mk = () => ({ total: 0, m: 0, w: 0, miss: 0, skip: 0, un: 0, bin: 0, over: 0, hold: 0 });
   const s = mk();
   s.byType = {};
   TYPES.forEach((t) => (s.byType[t] = mk()));
@@ -1812,6 +1830,7 @@ function unitStat(u, counters) {
       if (r[C.ST] === S.MATCHED) g.m++;
       else if (r[C.ST] === S.MISPLACED) g.w++;
       else if (r[C.ST] === S.MISSING) g.miss++;
+      else if (r[C.ST] === S.NOTCOUNTED) g.skip++;
       else g.un++;
     }
   }
@@ -1864,8 +1883,11 @@ function applyUnitChange(c, fromPoll) {
   (c.sns || []).forEach((sn) => {
     const i = App.idx.get(sn); if (i === undefined) return;
     const r = App.rows[i];
-    if (c.st === S.MISSING && r[C.ST] === S.UNSCANNED) { r[C.ST] = S.MISSING; changed.push(i); }
-    else if (c.st === S.UNSCANNED && r[C.ST] === S.MISSING) { r[C.ST] = S.UNSCANNED; changed.push(i); }
+    if ((c.st === S.MISSING || c.st === S.NOTCOUNTED) && r[C.ST] === S.UNSCANNED) {
+      r[C.ST] = c.st; if (c.note) r[C.NOTE] = c.note; changed.push(i);
+    } else if (c.st === S.UNSCANNED && (r[C.ST] === S.MISSING || r[C.ST] === S.NOTCOUNTED)) {
+      r[C.ST] = S.UNSCANNED; if (String(r[C.NOTE] || '').startsWith(SKIP_PREFIX)) r[C.NOTE] = ''; changed.push(i);
+    }
   });
   const prevTarget = App.target;
   rebuildUnits();
@@ -2104,11 +2126,12 @@ function jobFailed(job, e) {
   notify({ icon: 'error', title: 'ส่งข้อมูลไม่สำเร็จ', html: `<div class="swal-sn">${esc(sn)}</div><br>${esc(errMsg(e))}<br>กรุณาสแกนใหม่อีกครั้ง` });
 }
 
-/** คืนสถานะเดิม: ถ้าคันเจ้าของปิดแล้ว -> ไม่พบ, ไม่งั้น -> ยังไม่นับ */
+/** คืนสถานะเดิม: ถ้าคันเจ้าของปิดแล้ว -> ไม่พบ (หรือ ไม่ได้นับ + เหตุผล), ไม่งั้น -> ยังไม่นับ */
 function revertRow(i) {
   const r = App.rows[i];
   const u = unitOf(r);
-  setRowStatus(r, [u && u.closed ? S.MISSING : S.UNSCANNED, '', '', '', '']);
+  if (u && u.closed && u.skipReason) setRowStatus(r, [S.NOTCOUNTED, '', '', '', SKIP_PREFIX + u.skipReason]);
+  else setRowStatus(r, [u && u.closed ? S.MISSING : S.UNSCANNED, '', '', '', '']);
   markChanged([i], false);
 }
 
@@ -2174,7 +2197,7 @@ function renderCurrent() {
 
 /* ============================== Stats / Dashboard ============================== */
 function computeStats() {
-  const mk = () => ({ total: 0, matched: 0, misplaced: 0, missing: 0, unscanned: 0, over: 0 });
+  const mk = () => ({ total: 0, matched: 0, misplaced: 0, missing: 0, notcounted: 0, unscanned: 0, over: 0 });
   const s = { all: mk() };
   TYPES.forEach((t) => (s[t] = mk()));
   for (const r of App.rows) {
@@ -2184,6 +2207,7 @@ function computeStats() {
       if (r[C.ST] === S.MATCHED) g.matched++;
       else if (r[C.ST] === S.MISPLACED) g.misplaced++;
       else if (r[C.ST] === S.MISSING) g.missing++;
+      else if (r[C.ST] === S.NOTCOUNTED) g.notcounted++;
       else g.unscanned++;
     }
   }
@@ -2203,13 +2227,14 @@ function renderSideProgress() {
   $id('cnt-equip').textContent = fmtN(App.equip.length);
 }
 
-/** แถบความคืบหน้า: เขียว = นับพบ, ส้ม = ยืมข้ามคัน, แดง = ไม่พบ, เทา = ยังไม่นับ */
+/** แถบความคืบหน้า: เขียว = นับพบ, ส้ม = ยืมข้ามคัน, แดง = ไม่พบ, ม่วง = ไม่ได้นับ, เทา = ยังไม่นับ */
 function splitBar(g) {
-  const a = pct(g.matched, g.total), b = pct(g.misplaced, g.total), c = pct(g.missing || 0, g.total);
-  return `<div class="progress-split" role="img" aria-label="นับพบ ${fmtPct(a)} ยืมข้ามคัน ${fmtPct(b)} ไม่พบ ${fmtPct(c)}">
+  const a = pct(g.matched, g.total), b = pct(g.misplaced, g.total), c = pct(g.missing || 0, g.total), d = pct(g.notcounted || 0, g.total);
+  return `<div class="progress-split" role="img" aria-label="นับพบ ${fmtPct(a)} ยืมข้ามคัน ${fmtPct(b)} ไม่พบ ${fmtPct(c)} ไม่ได้นับ ${fmtPct(d)}">
       ${a ? `<div class="seg ok" style="width:${a}%" title="นับพบ ${fmtN(g.matched)}"></div>` : ''}
       ${b ? `<div class="seg warn" style="width:${b}%" title="ยืมข้ามคัน ${fmtN(g.misplaced)}"></div>` : ''}
       ${c ? `<div class="seg bad" style="width:${c}%" title="ไม่พบ ${fmtN(g.missing)}"></div>` : ''}
+      ${d ? `<div class="seg skip" style="width:${d}%" title="ไม่ได้นับ ${fmtN(g.notcounted)}"></div>` : ''}
     </div>`;
 }
 
@@ -2228,10 +2253,11 @@ function kpiGroup(title, icon, tone, g, foot) {
         ${tile('warn', 'bi-arrow-left-right', 'ยืมข้ามคัน', fmtN(g.misplaced))}
         ${tile('idle', 'bi-hourglass-split', 'ยังไม่นับ', fmtN(g.unscanned))}
         ${tile('bad', 'bi-x-octagon', 'ไม่พบ (ปิดคันแล้ว)', fmtN(g.missing))}
+        ${tile('skip', 'bi-slash-circle', 'ไม่ได้นับ (มีเหตุผล)', fmtN(g.notcounted))}
         ${tile('over', 'bi-exclamation-diamond', 'สต๊อกเกิน', fmtN(g.over))}
       </div>
       ${splitBar(g)}
-      <div class="legend"><span><i style="background:var(--ok)"></i>นับพบ ${fmtPct(pct(g.matched, g.total))}</span><span><i style="background:var(--warn)"></i>ยืมข้ามคัน ${fmtPct(pct(g.misplaced, g.total))}</span><span><i style="background:var(--bad)"></i>ไม่พบ ${fmtPct(pct(g.missing, g.total))}</span><span><i style="background:#e9eef6"></i>ยังไม่นับ ${fmtPct(pct(g.unscanned, g.total))}</span></div>
+      <div class="legend"><span><i style="background:var(--ok)"></i>นับพบ ${fmtPct(pct(g.matched, g.total))}</span><span><i style="background:var(--warn)"></i>ยืมข้ามคัน ${fmtPct(pct(g.misplaced, g.total))}</span><span><i style="background:var(--bad)"></i>ไม่พบ ${fmtPct(pct(g.missing, g.total))}</span>${g.notcounted ? `<span><i style="background:var(--skip)"></i>ไม่ได้นับ ${fmtPct(pct(g.notcounted, g.total))}</span>` : ''}<span><i style="background:#e9eef6"></i>ยังไม่นับ ${fmtPct(pct(g.unscanned, g.total))}</span></div>
       ${foot ? `<div class="kpi-foot">${foot}</div>` : ''}
     </div>
   </div>`;
@@ -2265,8 +2291,8 @@ function unitTableData() {
       id: u.id, name: u.nameText + (u.kind === 'CAR' && u.empText ? ` (${u.empText})` : ''), dept: u.dept,
       total: s.total, m: s.m, w: s.w, bin: s.bin, over: s.over, hold: s.hold, left,
       pct: s.total ? pct(s.m + s.w, s.total) : -1, closed: u.closed ? 1 : 0, key: u.key,
-      equip: s.equip, equipNames: s.equipNames,
-      ty: TYPES.map((t) => { const g = s.byType[t]; return { total: g.total, m: g.m, w: g.w, bin: g.bin, over: g.over, hold: g.hold, left: g.un + g.miss }; })
+      equip: s.equip, equipNames: s.equipNames, skip: s.skip, reason: u.skipReason,
+      ty: TYPES.map((t) => { const g = s.byType[t]; return { total: g.total, m: g.m, w: g.w, bin: g.bin, over: g.over, hold: g.hold, left: g.un + g.miss, skip: g.skip }; })
     });
   });
   return out;
@@ -2281,16 +2307,18 @@ function typeColumns() {
     render: (d, typ, row) => {
       if (typ !== 'display') return d;
       const g = row.ty[k];
-      return `<span class="tcell"><b>${fmtN(g.hold)}</b><small>/${fmtN(g.total)}</small></span>${g.left ? `<div class="small text-danger">ค้าง ${fmtN(g.left)}</div>` : ''}`;
+      return `<span class="tcell"><b>${fmtN(g.hold)}</b><small>/${fmtN(g.total)}</small></span>${g.left ? `<div class="small text-danger">ค้าง ${fmtN(g.left)}</div>` : ''}${g.skip ? `<div class="small text-skip">ไม่ได้นับ ${fmtN(g.skip)}</div>` : ''}`;
     }
   }));
   return cols;
 }
 function typeExportColumns() {
-  const defs = [['total', 'Onhand'], ['m', 'นับพบในคัน'], ['w', 'ยืมไปคันอื่น'], ['bin', 'ยืมมาจากคันอื่น'], ['over', 'สต๊อกเกิน'], ['hold', 'ครอบครองจริง'], ['left', 'ไม่พบ/ค้าง']];
+  const defs = [['total', 'Onhand'], ['m', 'นับพบในคัน'], ['w', 'ยืมไปคันอื่น'], ['bin', 'ยืมมาจากคันอื่น'], ['over', 'สต๊อกเกิน'], ['hold', 'ครอบครองจริง'], ['left', 'ไม่พบ/ค้าง'], ['skip', 'ไม่ได้นับ']];
   const cols = [];
   TYPES.forEach((t, k) => defs.forEach(([f, l]) => cols.push({ title: `${t}: ${l}`, data: (row) => row.ty[k][f], visible: false, className: 'text-end' })));
   cols.push({ title: `${EQUIP_LABEL}: รายการ`, data: 'equipNames', visible: false });
+  cols.push({ title: 'ไม่ได้นับ: จำนวนรวม', data: 'skip', visible: false, className: 'text-end' });
+  cols.push({ title: 'เหตุผลที่ไม่ได้นับ', data: (row) => row.reason || '', visible: false });
   return cols;
 }
 
@@ -2329,10 +2357,11 @@ function renderUnitTable() {
         { title: 'สถานะ', data: 'closed', responsivePriority: 2,
           render: (d, t, row) => {
             const u = App.units.get(row.key);
-            if (t === 'export') return d ? `ปิดแล้ว (${u && u.meta ? u.meta[U.BY] + ' ' + u.meta[U.AT] : ''})` : 'เปิด';
+            if (t === 'export') return d ? `ปิดแล้ว${row.reason ? ' - ไม่ได้นับ: ' + row.reason : ''} (${u && u.meta ? u.meta[U.BY] + ' ' + u.meta[U.AT] : ''})` : 'เปิด';
             if (t !== 'display') return d;
             const signed = App.sigs.has(row.key) ? '<div class="small text-success"><i class="bi bi-pen"></i> ลงนามแล้ว</div>' : '';
-            return d ? `<span class="st u-closed"><i class="bi bi-lock-fill"></i>ปิดแล้ว</span><div class="small text-muted">${esc(u && u.meta ? u.meta[U.BY] + ' · ' + hhmm(u.meta[U.AT]) : '')}</div>${signed}`
+            const skip = row.reason ? `<div><span class="st st-skip" title="ไม่ได้นับ ${fmtN(row.skip)} รายการ"><i class="bi bi-slash-circle"></i>ไม่ได้นับ: ${esc(row.reason)}</span></div>` : '';
+            return d ? `<span class="st u-closed"><i class="bi bi-lock-fill"></i>ปิดแล้ว</span>${skip}<div class="small text-muted">${esc(u && u.meta ? u.meta[U.BY] + ' · ' + hhmm(u.meta[U.AT]) : '')}</div>${signed}`
                      : `<span class="st u-open"><i class="bi bi-unlock"></i>กำลังนับ</span>`;
           } },
         { title: '', data: 'key', orderable: false, className: 'text-end no-export', responsivePriority: 2,
@@ -2533,7 +2562,50 @@ function renderScanTarget() {
     : `<div class="rm text-success fw-bold"><span><i class="bi bi-check2-all"></i> ${rows.length ? 'นับครบทุกรายการแล้ว' : 'คันนี้ไม่มีรายการใน Onhand'}</span></div>`;
 }
 
-/** ปิดการนับคัน: รายการที่ยังไม่พบ -> "ไม่พบ" และซ่อนคันนี้จากตัวเลือก */
+/**
+ * ตัวเลือกตอนปิดคันที่ยังมีรายการค้าง:
+ *  - "ไม่พบ"     = ตรวจแล้วไม่เจอ (นับเป็นของหาย)
+ *  - "ไม่ได้นับ" = ไม่ได้ตรวจนับคันนี้ เช่น พนักงานลาออก (ไม่นับเป็นของหาย) + เหตุผลลงหมายเหตุ
+ */
+function closeLeftChoiceHtml(n, preferSkip) {
+  return `<div class="close-choice text-start mt-2">
+    <div class="small fw-bold mb-1">รายการที่ยังไม่พบ ${fmtN(n)} รายการ ให้บันทึกเป็น</div>
+    <label class="cc-opt"><input type="radio" name="cc-mode" value="miss" ${preferSkip ? '' : 'checked'}>
+      <span><b class="text-danger">ไม่พบ</b><small>ตรวจนับแล้วแต่ไม่เจอของ (นับเป็นของหาย)</small></span></label>
+    <label class="cc-opt"><input type="radio" name="cc-mode" value="skip" ${preferSkip ? 'checked' : ''}>
+      <span><b class="text-skip">ไม่ได้นับ</b><small>ไม่ได้ตรวจนับคันนี้ ระบุเหตุผล (ไม่นับเป็นของหาย)</small></span></label>
+    <div id="cc-reason-box" class="cc-reason ${preferSkip ? '' : 'd-none'}">
+      <div class="cc-chips">${SKIP_REASONS.map((r) => `<button type="button" class="btn btn-sm btn-outline-secondary" data-reason="${esc(r)}">${esc(r)}</button>`).join('')}
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-reason="">อื่นๆ (ระบุ)</button></div>
+      <input id="cc-reason" class="form-control form-control-sm mt-2" maxlength="200" placeholder="เหตุผลที่ไม่ได้นับ เช่น พนักงานลาออก">
+      <div class="small text-muted mt-1">เหตุผลจะถูกบันทึกในหมายเหตุของทุกรายการที่ไม่ได้นับ และในชีต Units</div>
+    </div>
+  </div>`;
+}
+function bindCloseLeftChoice() {
+  const box = document.getElementById('cc-reason-box');
+  if (!box) return;
+  const input = document.getElementById('cc-reason');
+  document.querySelectorAll('input[name="cc-mode"]').forEach((el) => el.addEventListener('change', () => {
+    const skip = document.querySelector('input[name="cc-mode"]:checked').value === 'skip';
+    box.classList.toggle('d-none', !skip);
+    if (skip) input.focus();
+  }));
+  box.querySelectorAll('[data-reason]').forEach((b) => b.addEventListener('click', () => {
+    box.querySelectorAll('[data-reason]').forEach((x) => x.classList.toggle('active', x === b));
+    input.value = b.dataset.reason;
+    if (!b.dataset.reason) input.focus();
+  }));
+}
+function readCloseLeftChoice() {
+  const mode = document.querySelector('input[name="cc-mode"]:checked');
+  if (!mode || mode.value !== 'skip') return { reason: '' };
+  const reason = document.getElementById('cc-reason').value.trim();
+  if (!reason) { Swal.showValidationMessage('กรุณาเลือกหรือพิมพ์เหตุผลที่ไม่ได้นับ'); return false; }
+  return { reason };
+}
+
+/** ปิดการนับคัน: รายการที่ยังไม่พบ -> "ไม่พบ" (หรือ "ไม่ได้นับ" + เหตุผล) และซ่อนคันนี้จากตัวเลือก */
 async function closeUnit(key, auto) {
   const u = App.units.get(key);
   if (!u || u.closed) return;
@@ -2553,21 +2625,25 @@ async function closeUnit(key, auto) {
         <div><span>${EQUIP_LABEL}</span><span>${fmtN(s.equip)}${s.equipNames ? ` <small class="text-muted">(${esc(s.equipNames)})</small>` : ''}</span></div>
         <div><span>ยังไม่พบ</span><span class="text-danger">${fmtN(left.length)}</span></div>
       </div>
-      ${left.length ? `<div class="small text-danger mt-2 text-start">รายการที่ยังไม่พบ ${fmtN(left.length)} รายการจะถูกบันทึกเป็น "ไม่พบ"</div>
+      ${left.length ? closeLeftChoiceHtml(left.length, s.m + s.w === 0) + `
         <div class="remaining-list text-start">${left.slice(0, 20).map((r) => `<div class="rm"><span class="mono fw-bold">${esc(r[C.SN])}</span>${typePill(r[C.TYPE])}</div>`).join('')}${left.length > 20 ? `<div class="rm small text-muted">…และอีก ${left.length - 20} รายการ</div>` : ''}</div>` : ''}
       <div class="small text-muted mt-2">คันที่ปิดแล้วจะไม่แสดงในรายการให้เลือก (Admin เปิดใหม่ได้)</div>`,
     showCancelButton: true, confirmButtonText: '<i class="bi bi-lock-fill"></i> ปิดการนับคันนี้',
-    cancelButtonText: auto ? 'ยังไม่ปิด' : 'ยกเลิก', confirmButtonColor: '#b91c1c'
+    cancelButtonText: auto ? 'ยังไม่ปิด' : 'ยกเลิก', confirmButtonColor: '#b91c1c',
+    didOpen: () => bindCloseLeftChoice(),
+    preConfirm: () => readCloseLeftChoice()
   });
   if (!res.isConfirmed) return;
+  const reason = (res.value && res.value.reason) || '';
   showLoader('กำลังปิดการนับ ' + u.id + '…');
   try {
     await flushQueue();
     if (App.queue.some((j) => j.fn === 'saveScan')) throw new Error('ยังมีรายการสแกนที่รอส่งขึ้นระบบ กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่');
-    const r = await gs('setUnitStatus', App.token, key, true);
+    const r = await gs('setUnitStatus', App.token, key, true, { reason });
     if (!r.ok && r.code !== 'ALREADY') throw new Error(r.message || r.code);
+    if (reason && r.ok && r.st !== S.NOTCOUNTED) throw new Error('เซิร์ฟเวอร์ยังเป็นเวอร์ชันเก่า (บันทึกเป็น "ไม่พบ") — กรุณาอัปเดต Code.gs และ Deploy เวอร์ชันใหม่ แล้วเปิดคันนี้ใหม่และปิดอีกครั้ง');
     if (r.v === App.v + 1) App.v = r.v;
-    if (r.unit) applyUnitChange({ d: r.unit, sns: r.sns, st: r.st }, false);
+    if (r.unit) applyUnitChange({ d: r.unit, sns: r.sns, st: r.st, note: r.note }, false);
     hideLoader();
     if (App.target === key || App.target === 'ALL') setTarget('ALL');
     Feedback.signal('done');
@@ -2591,7 +2667,7 @@ async function reopenUnit(key) {
   if (!u || !u.closed) return;
   const c = await modal({
     icon: 'question', title: 'เปิดคันนี้กลับมานับใหม่?',
-    html: `<div class="swal-sn">${esc(u.id)}</div><br>รายการ "ไม่พบ" ของคันนี้จะกลับเป็น "ยังไม่นับ"`,
+    html: `<div class="swal-sn">${esc(u.id)}</div><br>รายการ "ไม่พบ" / "ไม่ได้นับ" ของคันนี้จะกลับเป็น "ยังไม่นับ"${u.skipReason ? `<br><small class="text-muted">(ล้างเหตุผลเดิม: ${esc(u.skipReason)})</small>` : ''}`,
     showCancelButton: true, confirmButtonText: 'เปิดนับใหม่', cancelButtonText: 'ยกเลิก'
   });
   if (!c.isConfirmed) return;
@@ -2701,7 +2777,8 @@ function processScan(raw, source) {
   if (!scannable(r[C.ST])) return onDuplicate(r);
   if (matchesTarget(r)) {
     const here = targetUnit() || unitOf(r);
-    return commitScan(r, S.MATCHED, here ? here.foundAt : ownerLabel(r), r[C.ST] === S.MISSING ? 'พบภายหลังปิดการนับคัน' : '');
+    return commitScan(r, S.MATCHED, here ? here.foundAt : ownerLabel(r),
+      r[C.ST] === S.MISSING ? 'พบภายหลังปิดการนับคัน' : r[C.ST] === S.NOTCOUNTED ? 'พบภายหลังปิดการนับคัน (เดิม ' + (r[C.NOTE] || 'ไม่ได้นับ') + ')' : '');
   }
   return onMisplaced(r);
 }
@@ -2780,7 +2857,7 @@ async function onMisplaced(r) {
   const here = targetUnit();
   const ownerTxt = owner ? owner.id + (owner.nameText !== '-' ? ' (' + owner.nameText + ')' : '') : ownerLabel(r);
   const hereTxt = here ? here.id : '-';
-  const note0 = `คัน ${hereTxt} ยืมจาก ${ownerTxt}` + (r[C.ST] === S.MISSING ? ' · เดิมบันทึกไม่พบ' : '');
+  const note0 = `คัน ${hereTxt} ยืมจาก ${ownerTxt}` + (r[C.ST] === S.MISSING ? ' · เดิมบันทึกไม่พบ' : r[C.ST] === S.NOTCOUNTED ? ' · เดิมบันทึกไม่ได้นับ' : '');
   Feedback.signal('warn');
   setResult('warn', 'พบข้ามหน่วยรถ!', r[C.SN], `ในระบบเป็นของ <b>${esc(ownerTxt)}</b>`, 'bi-arrow-left-right');
   const res = await modal({
@@ -3330,6 +3407,7 @@ function buildUnitReport(key) {
     if (r[C.ST] === S.MATCHED) { count = 1; note = r[C.NOTE] || ''; }
     else if (r[C.ST] === S.MISPLACED) { kind = 'out'; note = `ยืมไปอยู่ที่ ${foundId(r[C.FOUND])} (ไม่ถือว่าสูญหาย)`; }
     else if (r[C.ST] === S.MISSING) { kind = 'miss'; note = 'ไม่พบ'; }
+    else if (r[C.ST] === S.NOTCOUNTED) { kind = 'skip'; note = r[C.NOTE] || (u.skipReason ? SKIP_PREFIX + u.skipReason : 'ไม่ได้นับ'); }
     else { kind = 'un'; note = 'ยังไม่นับ'; }
     lines.push({ sn: r[C.SN], type: r[C.TYPE], onhand: 1, count, note, kind });
   });
@@ -3352,7 +3430,7 @@ function buildUnitReport(key) {
   const times = lines.length ? App.rows.filter((r) => (unitKey(r) === key || foundId(r[C.FOUND]) === u.id) && r[C.AT]).map((r) => r[C.AT]).sort() : [];
   return {
     u, lines, equip, sum, total: sumOf(lines),
-    parts: { out: k('out'), inn: k('in'), over: k('over'), miss: k('miss'), un: k('un') },
+    parts: { out: k('out'), inn: k('in'), over: k('over'), miss: k('miss'), skip: k('skip'), un: k('un') },
     countedAt: u.closed && u.meta ? u.meta[U.AT] : (times[times.length - 1] || '')
   };
 }
@@ -3405,6 +3483,7 @@ function rpTopHtml(rep) {
     <div><span class="k">แผนก-หน่วยงาน</span><span class="v">${esc(u.dept)}</span></div>
     <div><span class="k">วันที่ตรวจนับ</span><span class="v">${esc(thDateTime(rep.countedAt))}</span></div>
     <div><span class="k">จำนวนรวมทั้งหมด</span><span class="v">Onhand ${fmtN(rep.total.onhand)} · นับได้ ${fmtN(rep.total.count)} รายการ</span></div>
+    ${u.skipReason ? `<div><span class="k">ไม่ได้นับ</span><span class="v">${fmtN(p.skip)} รายการ · เหตุผล: ${esc(u.skipReason)}</span></div>` : ''}
   </div>
   <table class="rp-table">
     <thead><tr><th>ประเภท</th><th>จำนวน Onhand</th><th>จำนวนนับได้</th><th>ผลต่าง</th></tr></thead>
@@ -3413,7 +3492,7 @@ function rpTopHtml(rep) {
       <tr class="tot"><td>รวมทั้งหมด</td><td class="c">${fmtN(rep.total.onhand)}</td><td class="c">${fmtN(rep.total.count)}</td><td class="c">${rpDiff(rep.total.count - rep.total.onhand)}</td></tr>
     </tbody>
   </table>
-  <div class="rp-note">ผลต่างประกอบด้วย: ยืมไปคันอื่น ${p.out} · ยืมมาจากคันอื่น ${p.inn} · สต๊อกเกิน ${p.over} · ไม่พบ ${p.miss}${p.un ? ' · ยังไม่นับ ' + p.un : ''}</div>`;
+  <div class="rp-note">ผลต่างประกอบด้วย: ยืมไปคันอื่น ${p.out} · ยืมมาจากคันอื่น ${p.inn} · สต๊อกเกิน ${p.over} · ไม่พบ ${p.miss}${p.skip ? ' · ไม่ได้นับ ' + p.skip + (u.skipReason ? ' (' + esc(u.skipReason) + ')' : '') : ''}${p.un ? ' · ยังไม่นับ ' + p.un : ''}</div>`;
 }
 
 /** รายงานแบบต่อเนื่อง (แสดงบนจอ) */
@@ -3839,7 +3918,7 @@ function exportBtns(title, file) {
   }];
 }
 
-const LEFT_FILTER = '__LEFT__';   // ยังไม่นับ + ไม่พบ
+const LEFT_FILTER = '__LEFT__';   // ยังไม่นับ + ไม่พบ + ไม่ได้นับ
 function buildInventoryFilters() {
   const uniq = (arr) => [...new Set(arr.filter((x) => x !== ''))].sort((a, b) => String(a).localeCompare(String(b), 'th'));
   const fill = (id, opts, cur) => {
@@ -3849,7 +3928,7 @@ function buildInventoryFilters() {
   };
   const f = App.invFilter;
   fill('f-type', uniq(App.rows.map((r) => r[C.TYPE])).map((t) => [t, t]), f.type);
-  fill('f-status', [[LEFT_FILTER, 'ยังไม่พบทั้งหมด (ยังไม่นับ + ไม่พบ)'], [S.UNSCANNED, S.UNSCANNED], [S.MATCHED, S.MATCHED], [S.MISPLACED, LABEL_MISPLACED], [S.MISSING, S.MISSING]], f.status);
+  fill('f-status', [[LEFT_FILTER, 'ยังไม่พบทั้งหมด (ยังไม่นับ + ไม่พบ + ไม่ได้นับ)'], [S.UNSCANNED, S.UNSCANNED], [S.MATCHED, S.MATCHED], [S.MISPLACED, LABEL_MISPLACED], [S.MISSING, S.MISSING], [S.NOTCOUNTED, S.NOTCOUNTED]], f.status);
   fill('f-dept', uniq(App.rows.map((r) => r[C.DEPT])).map((d) => [d, d]), f.dept);
   const units = [...App.units.values()].filter((u) => u.rows.length).map((u) => [u.key, u.label + (u.closed ? ' 🔒' : '')])
     .sort((a, b) => a[1].localeCompare(b[1], 'th'));
@@ -3982,17 +4061,17 @@ async function loadRounds() {
     const s = r.summary;
     const box = (v, l, cls) => `<div class="col-6 col-md-4"><div class="stat-box"><div class="v ${cls || ''}">${fmtN(v)}</div><div class="l">${l}</div></div></div>`;
     $id('round-summary').innerHTML = box(s.total, 'ยอด Onhand') + box(s.matched, 'นับพบ', 'text-success') + box(s.misplaced, 'ยืมข้ามคัน', 'text-warning')
-      + box(s.missing, 'ไม่พบ', 'text-danger') + box(s.unscanned, 'ยังไม่นับ') + box(s.over, 'สต๊อกเกิน')
+      + box(s.missing, 'ไม่พบ', 'text-danger') + box(s.notcounted || 0, 'ไม่ได้นับ (มีเหตุผล)', 'text-skip') + box(s.unscanned, 'ยังไม่นับ') + box(s.over, 'สต๊อกเกิน')
       + `<div class="col-12"><div class="stat-box"><div class="l">ปิดการนับแล้ว <b>${fmtN(s.closed)}</b> / ${fmtN(s.units)} คัน · ${EQUIP_LABEL} <b>${fmtN(s.equip)}</b> รายการ</div></div></div>`;
-    const head = ['รอบ', 'เริ่ม', 'ปิดรอบ', 'Onhand', 'นับพบ', 'ยืม', 'ไม่พบ', 'ยังไม่นับ', 'เกิน', 'อุปกรณ์', 'คันปิด/ทั้งหมด', 'ปิดโดย', 'ชีตสำรอง'];
+    const head = ['รอบ', 'เริ่ม', 'ปิดรอบ', 'Onhand', 'นับพบ', 'ยืม', 'ไม่พบ', 'ไม่ได้นับ', 'ยังไม่นับ', 'เกิน', 'อุปกรณ์', 'คันปิด/ทั้งหมด', 'ปิดโดย', 'ชีตสำรอง'];
     $id('history-table').innerHTML = `<thead><tr>${head.map((h) => `<th class="text-nowrap">${h}</th>`).join('')}</tr></thead><tbody>` +
       (r.history.length ? r.history.map((h) => `<tr>
         <td class="fw-bold text-primary text-nowrap">${esc(h[0])}</td><td class="small text-nowrap">${esc(dateTh(h[1]))}</td><td class="small text-nowrap">${esc(dateTh(h[2]))}</td>
         <td class="text-end">${esc(h[4])}</td><td class="text-end text-success">${esc(h[5])}</td><td class="text-end text-warning">${esc(h[6])}</td>
-        <td class="text-end text-danger fw-bold">${esc(h[7])}</td><td class="text-end">${esc(h[8])}</td><td class="text-end">${esc(h[9])}</td>
+        <td class="text-end text-danger fw-bold">${esc(h[7])}</td><td class="text-end text-skip">${esc(h[14] || '-')}</td><td class="text-end">${esc(h[8])}</td><td class="text-end">${esc(h[9])}</td>
         <td class="text-end">${esc(h[13] || '-')}</td>
         <td class="text-end">${esc(h[11])}/${esc(h[10])}</td><td class="small">${esc(h[3])}</td><td class="small text-muted">${esc(h[12])}</td></tr>`).join('')
-        : '<tr><td colspan="13" class="text-center text-muted py-4">ยังไม่มีรอบที่ปิดแล้ว</td></tr>') + '</tbody>';
+        : '<tr><td colspan="14" class="text-center text-muted py-4">ยังไม่มีรอบที่ปิดแล้ว</td></tr>') + '</tbody>';
   } catch (e) {
     if (isAuthErr(e)) return forceLogout(false);
     $id('history-table').innerHTML = `<tbody><tr><td class="text-danger text-center py-4">${esc(errMsg(e))}</td></tr></tbody>`;
