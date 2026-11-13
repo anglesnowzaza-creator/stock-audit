@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261113024206">
+  <meta name="app-build" content="20261113032038">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%234f6bed%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -338,6 +338,17 @@ div.dataTables_wrapper .dt-buttons .btn{border-radius:10px!important}
 .progress-split .seg.skip{background:var(--skip)}
 .kpi-tile.skip .dot{background:var(--skip)}
 .kpi-grid>.kpi-tile.over{grid-column:1/-1}
+/* สถานะพนักงาน / หน่วยรถ (Dashboard) */
+.pp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:768px){.pp-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (min-width:1200px){.pp-grid{grid-template-columns:repeat(7,minmax(0,1fr))}}
+.pp-tile{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--surface-2);min-width:0;border-top:3px solid var(--idle)}
+.pp-tile.base{border-top-color:var(--primary)} .pp-tile.ok{border-top-color:var(--ok)} .pp-tile.skip{border-top-color:var(--skip)}
+.pp-label{font-size:.8rem;color:var(--text-2);font-weight:600;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-tile.ok .pp-label i{color:var(--ok)} .pp-tile.skip .pp-label i{color:var(--skip)} .pp-tile.base .pp-label i{color:var(--primary)}
+.pp-val{font-size:1.35rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.3}
+.pp-val small{font-size:.75rem;font-weight:600;color:var(--muted)}
+.pp-sub{font-size:.74rem;color:var(--muted)}
 .close-choice{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface-2)}
 .close-choice .cc-opt{display:flex;gap:8px;align-items:flex-start;padding:6px 0;cursor:pointer;font-size:.9rem}
 .close-choice .cc-opt input{margin-top:4px}
@@ -883,6 +894,14 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
           <div class="col-12 col-md-6 col-xl-4"><div id="kpi-media"></div></div>
         </div>
 
+        <div class="card panel mt-3" id="people-panel">
+          <div class="panel-head">
+            <div class="panel-title"><i class="bi bi-people"></i> สถานะพนักงาน / หน่วยรถ <span class="small text-muted fw-normal">(ตามการปิดการนับ)</span></div>
+            <div class="small text-muted" id="people-total"></div>
+          </div>
+          <div class="panel-body" id="people-body"></div>
+        </div>
+
         <div class="row g-3 mt-1">
           <div class="col-12 col-xxl-8">
             <div class="card panel">
@@ -1277,7 +1296,7 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113024206";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113032038";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -2271,8 +2290,66 @@ function renderDashboard() {
   $id('kpi-all').innerHTML = kpiGroup('ภาพรวมทั้งหมด', 'bi-grid-3x3-gap', 'all', s.all, foot);
   $id('kpi-machine').innerHTML = kpiGroup(TYPES[0], 'bi-cpu', 'machine', s[TYPES[0]]);
   $id('kpi-media').innerHTML = kpiGroup(TYPES[1], 'bi-droplet-half', 'media', s[TYPES[1]]);
+  renderPeoplePanel();
   renderUnitTable();
   renderActivity();
+}
+
+/**
+ * สถานะพนักงาน / หน่วยรถ ตามการปิดการนับ (เฉพาะหน่วยที่มีรายการในไฟล์ Onhand)
+ *  - เข้ารับการตรวจนับ = คันที่ปิดแบบปกติ (ไม่ได้ระบุเหตุผลไม่ได้นับ)
+ *  - ไม่ได้นับ        = คันที่ปิดแบบ "ไม่ได้นับ" แยกตามเหตุผล (พนักงานลาออก / รถซ่อม / ...)
+ *  - ยังไม่ปิดการนับ   = คันที่ยังเปิดอยู่
+ *  พนักงาน 1 คนนับครั้งเดียว (ใช้รหัสพนักงาน ถ้าไม่มีใช้ชื่อ) — รถที่ใช้ร่วม 2 คนนับเป็น 2 คน 1 คัน
+ *  ถ้าพนักงานอยู่หลายหน่วย ใช้สถานะที่ดีที่สุด: ตรวจนับแล้ว > ไม่ได้นับ > ยังไม่ปิด
+ */
+function peopleStats() {
+  const RANK = { done: 3, skip: 2, open: 1 };
+  const emp = new Map();      // empId -> { cat, reason }
+  const car = { done: 0, open: 0, skip: new Map() };
+  let cars = 0, noPlate = 0;
+  App.units.forEach((u) => {
+    if (!u.rows.length) return;
+    const cat = !u.closed ? 'open' : u.skipReason ? 'skip' : 'done';
+    if (u.kind === 'CAR') cars++; else noPlate++;
+    if (cat === 'skip') car.skip.set(u.skipReason, (car.skip.get(u.skipReason) || 0) + 1); else car[cat]++;
+    const ids = new Set();
+    u.rows.forEach((r) => { const id = !blank(r[C.EMP]) ? 'E:' + String(r[C.EMP]).trim() : !blank(r[C.NAME]) ? 'N:' + String(r[C.NAME]).trim() : ''; if (id) ids.add(id); });
+    ids.forEach((id) => {
+      const cur = emp.get(id);
+      if (!cur || RANK[cat] > RANK[cur.cat]) emp.set(id, { cat, reason: u.skipReason });
+    });
+  });
+  const ppl = { done: 0, open: 0, skip: new Map() };
+  emp.forEach((e) => { if (e.cat === 'skip') ppl.skip.set(e.reason, (ppl.skip.get(e.reason) || 0) + 1); else ppl[e.cat]++; });
+  const reasons = SKIP_REASONS.slice();
+  [...ppl.skip.keys(), ...car.skip.keys()].forEach((r) => { if (reasons.indexOf(r) < 0) reasons.push(r); });
+  return { emps: emp.size, units: cars + noPlate, cars, noPlate, ppl, car, reasons };
+}
+
+function renderPeoplePanel() {
+  const p = peopleStats();
+  const skipP = [...p.ppl.skip.values()].reduce((a, b) => a + b, 0);
+  const skipC = [...p.car.skip.values()].reduce((a, b) => a + b, 0);
+  $id('people-total').innerHTML = `ทะเบียนรถ <b>${fmtN(p.cars)}</b> คัน${p.noPlate ? ` · ไม่ระบุทะเบียน <b>${fmtN(p.noPlate)}</b> คน` : ''} · SN <b>${fmtN(App.rows.length)}</b> เครื่อง`;
+  const tile = (cls, ico, label, n, cars, big) => `<div class="pp-tile ${cls}${big ? ' pp-big' : ''}">
+      <div class="pp-label"><i class="bi ${ico}"></i>${esc(label)}</div>
+      <div class="pp-val">${fmtN(n)}<small> คน</small></div>
+      <div class="pp-sub">${fmtN(cars)} หน่วยรถ${p.emps && !big ? ` · ${fmtPct(pct(n, p.emps))}` : ''}</div>
+    </div>`;
+  const seg = (cls, n, t) => (n ? `<div class="seg ${cls}" style="width:${pct(n, p.emps)}%" title="${esc(t)} ${fmtN(n)} คน"></div>` : '');
+  $id('people-body').innerHTML = `
+    <div class="pp-grid">
+      ${tile('base', 'bi-people-fill', 'พนักงานทั้งหมด', p.emps, p.units, true)}
+      ${tile('ok', 'bi-person-check-fill', 'เข้ารับการตรวจนับแล้ว', p.ppl.done, p.car.done)}
+      ${tile('idle', 'bi-hourglass-split', 'ยังไม่ปิดการนับ', p.ppl.open, p.car.open)}
+      ${p.reasons.map((r) => tile('skip', r === 'พนักงานลาออก' ? 'bi-person-x' : r === 'รถซ่อม' ? 'bi-wrench-adjustable' : r === 'พนักงานลางาน' ? 'bi-calendar-x' : r === 'โอนย้ายหน่วยงาน' ? 'bi-arrow-left-right' : 'bi-slash-circle',
+        r, p.ppl.skip.get(r) || 0, p.car.skip.get(r) || 0)).join('')}
+    </div>
+    <div class="progress-split mt-3" role="img" aria-label="สัดส่วนพนักงานตามสถานะ">
+      ${seg('ok', p.ppl.done, 'เข้ารับการตรวจนับแล้ว')}${seg('skip', skipP, 'ไม่ได้นับ')}
+    </div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>ตรวจนับแล้ว ${fmtN(p.ppl.done)} คน</span><span><i style="background:var(--skip)"></i>ไม่ได้นับ ${fmtN(skipP)} คน (${fmtN(skipC)} หน่วยรถ)</span><span><i style="background:#e9eef6"></i>ยังไม่ปิด ${fmtN(p.ppl.open)} คน</span></div>`;
 }
 
 /** ข้อมูลตารางความคืบหน้ารายคัน (แยกเครื่องกรอง / สารกรอง / อุปกรณ์ติดตั้ง) */
