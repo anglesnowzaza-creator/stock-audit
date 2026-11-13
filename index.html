@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261113054450">
+  <meta name="app-build" content="20261113055704">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%236d5ce8%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -1168,6 +1168,27 @@ body.role-viewer .viewer-only{display:flex!important}
 .role-auditor{background:#e4f1ff;color:#2563a8;border-color:#cfe3fb}
 .role-viewer{background:#fdeef6;color:#a3326b;border-color:#f6cfe2}
 #users-table tr.u-off td{color:var(--muted)}
+#users-table td.u-pin{white-space:nowrap}
+/* มือถือ: ตารางผู้ใช้ -> การ์ดทีละคน อ่านง่าย ไม่ล้นจอ */
+@media (max-width:767.98px){
+  #page-users .panel-body{padding:10px}
+  #page-users .table-responsive{overflow:visible}
+  #users-table,#users-table tbody{display:block;width:100%}
+  #users-table thead{display:none}
+  #users-table tr{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"user role" "name status" "pin pin" "act act";
+    gap:4px 10px;align-items:center;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:0 1px 3px rgba(70,58,150,.05)}
+  #users-table tr.u-off{background:var(--surface-2)}
+  #users-table td{display:block;border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;min-width:0}
+  #users-table td.u-user{grid-area:user;font-size:1rem;overflow-wrap:anywhere}
+  #users-table td.u-name{grid-area:name;color:var(--text-2);font-size:.88rem}
+  #users-table td.u-role{grid-area:role;justify-self:end}
+  #users-table td.u-status{grid-area:status;justify-self:end}
+  #users-table td.u-pin{grid-area:pin;padding-top:2px!important;color:var(--text-2)}
+  #users-table td.u-act{grid-area:act;margin-top:8px!important;padding-top:10px!important;border-top:1px dashed var(--border)!important;text-align:left}
+  #users-table td.u-act .btn-group{display:flex;width:100%;gap:8px}
+  #users-table td.u-act .btn{flex:1 1 0;border-radius:10px!important;padding:.4rem .5rem}
+  #users-table td[colspan]{grid-column:1/-1;text-align:center}
+}
 .role-choice{display:grid;gap:8px}
 .role-choice input{display:none}
 .role-choice label{margin:0!important;border:2px solid var(--border);border-radius:12px;padding:8px 12px!important;cursor:pointer;background:#fff;text-align:left}
@@ -2123,7 +2144,7 @@ body.role-viewer .viewer-only{display:flex!important}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113054450";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113055704";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -5451,13 +5472,13 @@ async function loadUsers() {
     const me = String(r.me || '').toLowerCase();
     tb.innerHTML = `<thead><tr><th>Username / Email</th><th>ชื่อ-สกุล</th><th>สิทธิ์</th><th>สถานะ</th><th>PIN</th><th class="text-end">จัดการ</th></tr></thead><tbody>` +
       r.users.map((u) => `<tr class="${u.active ? '' : 'u-off'}">
-        <td class="fw-bold">${esc(u.username)}${u.username.toLowerCase() === me ? ' <span class="badge text-bg-light">คุณ</span>' : ''}</td>
-        <td>${esc(u.name)}</td>
-        <td><span class="role-pill role-${u.role.toLowerCase()}">${esc(ROLE_LABEL[u.role] || u.role)}</span></td>
-        <td>${u.active ? '<span class="st st-ok"><i class="bi bi-check-circle-fill"></i>ใช้งาน</span>' : '<span class="st st-idle"><i class="bi bi-pause-circle"></i>ระงับ</span>'}</td>
-        <td class="small">${u.hasPin ? (u.hashed ? '<i class="bi bi-shield-lock text-success"></i> ตั้งแล้ว (เข้ารหัส)' : '<i class="bi bi-exclamation-triangle text-warning"></i> ยังไม่เข้ารหัส') : '<span class="text-danger">ไม่มี PIN</span>'}</td>
-        <td class="text-end"><div class="btn-group btn-group-sm">
-          <button class="btn btn-outline-primary" data-uact="edit" data-user="${esc(u.username)}" title="แก้ไข"><i class="bi bi-pencil"></i></button>
+        <td class="u-user fw-bold">${esc(u.username)}${u.username.toLowerCase() === me ? ' <span class="badge text-bg-light">คุณ</span>' : ''}</td>
+        <td class="u-name">${esc(u.name)}</td>
+        <td class="u-role"><span class="role-pill role-${u.role.toLowerCase()}">${esc(ROLE_LABEL[u.role] || u.role)}</span></td>
+        <td class="u-status">${u.active ? '<span class="st st-ok"><i class="bi bi-check-circle-fill"></i>ใช้งาน</span>' : '<span class="st st-idle"><i class="bi bi-pause-circle"></i>ระงับ</span>'}</td>
+        <td class="u-pin small">${u.hasPin ? (u.hashed ? '<i class="bi bi-shield-lock text-success"></i> PIN ตั้งแล้ว (เข้ารหัส)' : '<i class="bi bi-exclamation-triangle text-warning"></i> PIN ยังไม่เข้ารหัส') : '<span class="text-danger"><i class="bi bi-shield-exclamation"></i> ไม่มี PIN</span>'}</td>
+        <td class="u-act text-end"><div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-primary" data-uact="edit" data-user="${esc(u.username)}" title="แก้ไข"><i class="bi bi-pencil"></i> แก้ไข</button>
           <button class="btn btn-outline-secondary" data-uact="pin" data-user="${esc(u.username)}" title="รีเซ็ต PIN"><i class="bi bi-key"></i> PIN</button>
           ${u.username.toLowerCase() === me ? '' : `<button class="btn ${u.active ? 'btn-outline-danger' : 'btn-outline-success'}" data-uact="toggle" data-user="${esc(u.username)}">${u.active ? '<i class="bi bi-pause-circle"></i> ระงับ' : '<i class="bi bi-play-circle"></i> เปิดใช้'}</button>`}
         </div></td></tr>`).join('') + '</tbody>';
