@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261113041026">
+  <meta name="app-build" content="20261113041958">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%236d5ce8%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -971,6 +971,17 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
 .report-toolbar{border-bottom-color:var(--border)}
 .sign-card{border-radius:16px}
 
+/* ---------- v2.8: สิทธิ์ Viewer (ผู้บริหาร) — เห็นเฉพาะ Dashboard ---------- */
+body.role-viewer .side-link:not([data-page="dashboard"]),body.role-viewer .side-label:not(:first-child),
+body.role-viewer .bottom-nav,body.role-viewer .viewer-hide{display:none!important}
+body.role-viewer .viewer-only{display:flex!important}
+.viewer-banner{align-items:center;gap:12px;padding:10px 14px;border-radius:14px;border:1px solid #e3dcff;
+  background:linear-gradient(135deg,#f1edff,#fdeff6);color:var(--text-2);font-size:.88rem}
+.viewer-banner>i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;background:var(--grad-primary);color:#fff;font-size:1.05rem}
+.viewer-banner b{display:block;color:var(--primary-600)}
+.viewer-only{display:none}
+@media (max-width:991.98px){ body.role-viewer .main{padding-bottom:16px!important} }
+
 /* ==========================================================================
    v2.7 คู่มือการใช้งาน (อ่านบนจอ + พิมพ์ / PDF ขนาด A4)
    ========================================================================== */
@@ -991,6 +1002,7 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
 .mn-cover-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:.84rem;color:var(--text-2)}
 .mn-cover-meta i{color:var(--primary)}
 .mn-cover-roles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;text-align:left}
+.mn-cover-roles .mn-role:nth-child(3){grid-column:1/-1}
 .mn-role{display:flex;gap:10px;align-items:flex-start;background:rgba(255,255,255,.85);border:1px solid #ebe6fb;border-radius:14px;padding:12px 14px}
 .mn-role>i{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none;background:var(--primary-soft);color:var(--primary);font-size:1.1rem}
 .mn-role b{display:block;font-size:.92rem}
@@ -1271,6 +1283,11 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
             </div>
             <button class="btn btn-primary btn-sm" id="btn-sync-dash"><i class="bi bi-arrow-repeat"></i> Sync ทันที</button>
           </div>
+        </div>
+
+        <div class="viewer-only viewer-banner mb-3">
+          <i class="bi bi-eye"></i>
+          <div><b>โหมดผู้บริหาร (ดูอย่างเดียว)</b><span>ข้อมูลอัปเดตแบบ Real-time ทุก 10 วินาที · Export Excel / CSV ได้จากตารางรายคัน</span></div>
         </div>
 
         <div class="row g-3" id="kpi-wrap">
@@ -1676,6 +1693,7 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
             <div class="mn-cover-roles">
               <div class="mn-role"><i class="bi bi-person-badge"></i><div><b>Auditor (ผู้ตรวจนับ)</b><small>สแกนนับสต๊อก · ปิดการนับรายคัน · ดู Dashboard / รายการ · ให้พนักงานลงนาม</small></div></div>
               <div class="mn-role"><i class="bi bi-shield-check"></i><div><b>Admin (ผู้ดูแลระบบ)</b><small>ทำได้ทุกอย่าง + อัปโหลดไฟล์ Onhand · จัดการรอบการนับ · เปิดคันกลับมานับใหม่</small></div></div>
+              <div class="mn-role"><i class="bi bi-eye"></i><div><b>Viewer (ผู้บริหาร)</b><small>ดูหน้า Dashboard แบบ Real-time และ Export Excel / CSV ได้อย่างเดียว ไม่สามารถสแกนหรือแก้ไขข้อมูล</small></div></div>
             </div>
           </header>
 
@@ -1814,7 +1832,7 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
                 <small>ชื่อรอบตั้งให้อัตโนมัติ เช่น 2026-Q4 → 2027-Q1 (แก้ไขได้)</small>
               </div>
             </div>
-            <div class="mn-note tip"><i class="bi bi-person-plus"></i><div><b>เพิ่มผู้ใช้งาน</b> ที่ชีต <code>Users</code> ใน Google Sheets: Username/Email · ชื่อ-สกุล · Role (Admin / Auditor) · สถานะ (Active / Inactive) · PIN</div></div>
+            <div class="mn-note tip"><i class="bi bi-person-plus"></i><div><b>เพิ่มผู้ใช้งาน</b> ที่ชีต <code>Users</code> ใน Google Sheets: Username/Email · ชื่อ-สกุล · Role (Admin / Auditor / Viewer) · สถานะ (Active / Inactive) · PIN — ใช้ Role <b>Viewer</b> สำหรับผู้บริหารที่ต้องการดู Dashboard อย่างเดียว</div></div>
           </section>
 
           <!-- 9 -->
@@ -1885,7 +1903,7 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113041026";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113041958";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -1944,6 +1962,8 @@ const isTouch = () => window.matchMedia('(pointer:coarse)').matches;
 const pad = (n) => String(n).padStart(2, '0');
 const scannable = (st) => !st || st === S.UNSCANNED || st === S.MISSING || st === S.NOTCOUNTED;
 const isAdmin = () => App.user && App.user.role === 'Admin';
+const isViewer = () => App.user && App.user.role === 'Viewer';   // ผู้บริหาร: ดู Dashboard อย่างเดียว
+const ROLE_LABEL = { Admin: 'Admin', Auditor: 'Auditor', Viewer: 'Viewer · ผู้บริหาร' };
 function nowStr() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
 function hhmm(s) { const m = String(s || '').match(/(\d{1,2}):(\d{2})/); return m ? `${pad(m[1])}:${m[2]}` : '-'; }
 function dateTh(s) { const m = String(s || '').match(/(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; }
@@ -2275,8 +2295,9 @@ function startSession(token, res) {
 
   document.body.classList.toggle('role-admin', isAdmin());
   document.body.classList.toggle('role-auditor', !isAdmin());
+  document.body.classList.toggle('role-viewer', isViewer());
   $id('user-name').textContent = App.user.name;
-  $id('user-role').textContent = App.user.role;
+  $id('user-role').textContent = ROLE_LABEL[App.user.role] || App.user.role;
   $id('user-dd-name').textContent = `${App.user.name} (${App.user.username})`;
   $id('user-avatar').textContent = (App.user.name || '?').trim().charAt(0).toUpperCase();
 
@@ -2288,7 +2309,7 @@ function startSession(token, res) {
   $id('login-screen').classList.add('d-none');
   $id('app-shell').classList.remove('d-none');
   hideLoader();
-  navigate(isTouch() ? 'scan' : 'dashboard');
+  navigate(isTouch() && !isViewer() ? 'scan' : 'dashboard');
   renderRecent();
   updatePending();
   flushQueue();
@@ -2800,6 +2821,7 @@ function toggleSidebar() {
 
 function navigate(page) {
   if ((page === 'upload' || page === 'rounds') && !isAdmin()) page = 'dashboard';
+  if (isViewer()) page = 'dashboard';   // Viewer เข้าได้เฉพาะ Dashboard
   App.page = page;
   document.querySelectorAll('.page').forEach((p) => p.classList.toggle('d-none', p.id !== 'page-' + page));
   document.querySelectorAll('[data-page]').forEach((a) => a.classList.toggle('active', a.dataset.page === page));
@@ -3053,7 +3075,7 @@ function renderUnitTable() {
           } },
         { title: '', data: 'key', orderable: false, className: 'text-end no-export', responsivePriority: 2,
           render: (key, t, row) => {
-            if (t !== 'display') return '';
+            if (t !== 'display' || isViewer()) return '';   // Viewer: ดูอย่างเดียว ไม่มีปุ่มจัดการ
             const u = App.units.get(key);
             const canReopen = u && u.closed && (isAdmin() || (u.meta && u.meta[U.BY] === App.user.name));
             return `<div class="btn-group btn-group-sm">
@@ -3451,7 +3473,7 @@ function refocusInput() {
 /** หัวใจหลัก: ตรวจ SN ในหน่วยความจำทันที */
 function processScan(raw, source) {
   const sn = normSN(raw);
-  if (sn.length < 3 || App.modalOpen || !App.token) return;
+  if (sn.length < 3 || App.modalOpen || !App.token || isViewer()) return;
   const i = App.idx.get(sn);
   if (i === undefined) {
     const oi = App.overIdx.get(sn);
