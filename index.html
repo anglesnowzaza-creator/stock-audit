@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261113052955">
+  <meta name="app-build" content="20261113054450">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%236d5ce8%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -2123,7 +2123,7 @@ body.role-viewer .viewer-only{display:flex!important}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113052955";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113054450";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -2191,7 +2191,7 @@ const pad = (n) => String(n).padStart(2, '0');
 const scannable = (st) => !st || st === S.UNSCANNED || st === S.MISSING || st === S.NOTCOUNTED;
 const isAdmin = () => App.user && App.user.role === 'Admin';
 const isViewer = () => App.user && App.user.role === 'Viewer';   // ผู้บริหาร: ดู Dashboard อย่างเดียว
-const ROLE_LABEL = { Admin: 'Admin', Auditor: 'Auditor', Viewer: 'Viewer · ผู้บริหาร' };
+const ROLE_LABEL = { Admin: 'Admin', Auditor: 'Auditor', Viewer: 'Viewer' };
 function nowStr() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
 function hhmm(s) { const m = String(s || '').match(/(\d{1,2}):(\d{2})/); return m ? `${pad(m[1])}:${m[2]}` : '-'; }
 function dateTh(s) { const m = String(s || '').match(/(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; }
