@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261113060804">
+  <meta name="app-build" content="20261113063812">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%236d5ce8%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -503,7 +503,8 @@ body.report-open{overflow:hidden}
   html,body{background:#fff!important;height:auto!important;overflow:visible!important;margin:0!important;padding:0!important}
   body.report-open>*:not(.rp-print-root){display:none!important}
   .rp-print-root{position:static!important;left:auto!important;top:auto!important;width:auto!important}
-  .rp-print-root .rp-page{page:rp;width:210mm!important;height:296mm!important;break-after:page;page-break-after:always;
+  /* ความสูงหน้ากำหนดจาก JS (PRINT_PAGE_H = 280 มม.) ให้เตี้ยกว่า A4 เล็กน้อย -> 1 หน้ารายงาน = 1 แผ่นเสมอ */
+  .rp-print-root .rp-page{page:rp;width:210mm!important;break-inside:avoid;break-after:page;page-break-after:always;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
   .rp-print-root .rp-page:last-child{break-after:auto;page-break-after:auto}
 }
@@ -2149,7 +2150,7 @@ table.dataTable>tbody>tr.child .cell-clip{max-width:none!important;white-space:n
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113060804";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113063812";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -4719,17 +4720,24 @@ function reportHtml(rep, sig, img) {
 
 /* ----- หน้า A4 แบบแบ่งหน้าเอง: หัวคอลัมน์ซ้ำทุกหน้า, ส่วนลงชื่อไม่ถูกตัด, เลขหน้า ----- */
 const PAGE = { w: 794, h: 1123, mt: 45, mb: 40, mx: 53, foot: 26 };   // px ที่ 96 dpi (A4 = 210 x 297 มม.)
-function paginateReport(rep, sig, img) {
+/**
+ * opts.h = ความสูงหน้า (px) — PDF ใช้ A4 เต็ม (1123px)
+ * ตอนพิมพ์ผ่านเครื่องพิมพ์ใช้หน้าที่เตี้ยลงเล็กน้อย เพื่อให้ 1 หน้ารายงาน = 1 แผ่นกระดาษเสมอ
+ * แม้เครื่องพิมพ์ (เช่น Microsoft Print to PDF / เครื่องพิมพ์จริง) จะบังคับขอบกระดาษเพิ่ม
+ */
+function paginateReport(rep, sig, img, opts) {
+  const pageH = (opts && opts.h) || PAGE.h;
   const host = document.createElement('div');
   host.className = 'rp-print-host';
   document.body.appendChild(host);
   const pages = [];
-  const avail = PAGE.h - PAGE.mt - PAGE.mb - PAGE.foot;
+  const avail = pageH - PAGE.mt - PAGE.mb - PAGE.foot;
   let body = null;
   const fits = () => body.offsetHeight <= avail;
   const newPage = (first) => {
     const page = document.createElement('div');
     page.className = 'rp-page report-doc' + (rep.u.closed ? '' : ' draft');
+    if (pageH !== PAGE.h) page.style.setProperty('height', pageH + 'px', 'important');
     addSkipWatermark(page, rep);
     body = document.createElement('div');
     body.className = 'rp-page-body';
@@ -5025,19 +5033,24 @@ function reportFileBase(rep) {
 
 /* ----- พิมพ์ด้วยเบราว์เซอร์ (ปุ่มพิมพ์บนคอม / Ctrl+P): พิมพ์หน้า A4 ที่จัดเอง ไม่ใช่หน้าจอ ----- */
 let printRoot = null, printPrevTitle = null;
+// ความสูงหน้าตอนพิมพ์: 280 มม. (A4 = 297 มม.) เผื่อขอบที่เครื่องพิมพ์บังคับได้ถึง ~8 มม. บน/ล่าง -> ไม่มีหน้าว่าง/หน้าล้น
+const PRINT_PAGE_H = Math.round(280 / 25.4 * 96);
 function buildPrintRoot() {
   removePrintRoot();
   if (!Report.key || !Report.rep) return;
   const sig = App.sigs.get(Report.key) || null;
   const img = sig ? App.sigImg.get(Report.key) || '' : '';
-  const { host } = paginateReport(Report.rep, sig, img);
+  const { host } = paginateReport(Report.rep, sig, img, { h: PRINT_PAGE_H });
   host.classList.add('rp-print-root');
   printRoot = host;
+  // บังคับขอบกระดาษ 0 ระหว่างพิมพ์รายงาน (ขอบอยู่ในตัวหน้าแล้ว) — ถ้าเครื่องพิมพ์บังคับขอบ หน้าก็ยังพอดีเพราะเตี้ยกว่า A4
+  if (!$id('rp-page-style')) document.head.insertAdjacentHTML('beforeend', '<style id="rp-page-style">@page{size:A4;margin:0}</style>');
   printPrevTitle = document.title;
   document.title = reportFileBase(Report.rep);      // ชื่อไฟล์ตอน "บันทึกเป็น PDF"
 }
 function removePrintRoot() {
   if (printRoot) { printRoot.remove(); printRoot = null; }
+  const st = $id('rp-page-style'); if (st) st.remove();
   if (printPrevTitle !== null) { document.title = printPrevTitle; printPrevTitle = null; }
 }
 window.addEventListener('beforeprint', () => { if (Report.key && !printRoot) buildPrintRoot(); });
