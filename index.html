@@ -3,11 +3,11 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261113032038">
+  <meta name="app-build" content="20261113034006">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%234f6bed%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
-  <meta name="theme-color" content="#4f6bed">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%236d5ce8%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#6d5ce8">
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -715,6 +715,261 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
   .result-sn{font-size:1.05rem}
   .brand-title{font-size:.88rem}
 }
+
+/* ==========================================================================
+   v2.6 Pastel refresh — โทนพาสเทล (ลาเวนเดอร์ / ชมพู / มิ้นต์ / ฟ้า) คม ชัด อ่านง่าย
+   (ไม่แตะสไตล์รายงาน A4 / PDF ซึ่งต้องเป็นขาวดำสำหรับพิมพ์)
+   ========================================================================== */
+:root{
+  --bg:#f6f5fc;
+  --surface:#ffffff;
+  --surface-2:#faf9ff;
+  --border:#e8e5f6;
+  --text:#1f1d3d;
+  --text-2:#4a4770;
+  --muted:#76739a;
+
+  --primary:#6d5ce8;
+  --primary-600:#5846d6;
+  --primary-soft:#efecff;
+  --accent-pink:#f6a6c9;
+  --grad-primary:linear-gradient(135deg,#7b6cf0 0%,#9a7cf2 55%,#c58be8 100%);
+  --grad-soft:linear-gradient(135deg,#f1edff 0%,#fdeef6 100%);
+
+  --tone-all:#efeaff;     --tone-all-ink:#5846d6;
+  --tone-machine:#e4f1ff; --tone-machine-ink:#2563a8;
+  --tone-media:#e2f7ec;   --tone-media-ink:#1e7a52;
+
+  /* สถานะ: พื้นพาสเทล + ตัวอักษรเข้ม (อ่านชัดกลางแจ้ง) */
+  --ok:#17794b;    --ok-soft:#e4f7ec;   --ok-line:#a6e2c1;
+  --warn:#c0570e;  --warn-soft:#fff0e2; --warn-line:#f8c99c;
+  --bad:#c0283b;   --bad-soft:#ffe9ed;  --bad-line:#f5b4c0;
+  --over:#7046d6;  --over-soft:#f2ecff; --over-line:#cfbef9;
+  --skip:#0b7488;  --skip-soft:#e0f5f9; --skip-line:#9ed9e5;
+  --idle:#5b6081;  --idle-soft:#f1f2f9;
+  --equip:#0f7a6e; --equip-soft:#dcf6f0; --equip-line:#93dccd;
+
+  --radius:14px; --radius-sm:10px;
+  --shadow:0 1px 2px rgba(70,58,150,.05), 0 6px 22px rgba(70,58,150,.07);
+  --shadow-lg:0 12px 36px rgba(70,58,150,.14);
+
+  /* Bootstrap 5.3 */
+  --bs-primary:#6d5ce8; --bs-primary-rgb:109,92,232;
+  --bs-link-color:#5846d6; --bs-link-color-rgb:88,70,214; --bs-link-hover-color:#4636b8;
+  --bs-body-color:#1f1d3d; --bs-border-color:#e8e5f6; --bs-secondary-color:#76739a;
+}
+html{text-rendering:optimizeLegibility}
+body{
+  background:
+    radial-gradient(900px 480px at 0% -8%, rgba(203,190,255,.35) 0, transparent 60%),
+    radial-gradient(800px 420px at 100% 0%, rgba(253,206,228,.30) 0, transparent 58%),
+    radial-gradient(900px 520px at 60% 110%, rgba(190,236,216,.30) 0, transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+  color:var(--text);
+}
+::selection{background:#ddd6ff;color:var(--text)}
+*{scrollbar-width:thin;scrollbar-color:#d6d0f3 transparent}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#d9d3f5;border-radius:99px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-track{background:transparent}
+.text-primary{color:var(--primary)!important}
+.text-success{color:var(--ok)!important}
+.text-danger{color:var(--bad)!important}
+.text-warning{color:var(--warn)!important}
+.text-muted{color:var(--muted)!important}
+
+/* ---------- Buttons / Forms ---------- */
+.btn{border-radius:var(--radius-sm);transition:background .15s,box-shadow .15s,transform .05s,color .15s,border-color .15s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--grad-primary);border:0;color:#fff;box-shadow:0 4px 14px rgba(109,92,232,.28)}
+.btn-primary:hover,.btn-primary:focus,.btn-primary:active{background:linear-gradient(135deg,#6a5ae6 0%,#8a6cec 55%,#b77be0 100%)!important;color:#fff;box-shadow:0 6px 18px rgba(109,92,232,.36)}
+.btn-primary:disabled{background:#c4bdf3;box-shadow:none}
+.btn-outline-primary{--bs-btn-color:#5846d6;--bs-btn-border-color:#d3cbfb;--bs-btn-hover-color:#4636b8;--bs-btn-hover-bg:#efecff;--bs-btn-hover-border-color:#b9adf8;
+  --bs-btn-active-color:#fff;--bs-btn-active-bg:#6d5ce8;--bs-btn-active-border-color:#6d5ce8;background:#fff}
+.btn-outline-secondary{--bs-btn-color:#4a4770;--bs-btn-border-color:#dedbef;--bs-btn-hover-color:#1f1d3d;--bs-btn-hover-bg:#f3f1fb;--bs-btn-hover-border-color:#cfcae6;
+  --bs-btn-active-color:#1f1d3d;--bs-btn-active-bg:#e9e6f7;--bs-btn-active-border-color:#cfcae6;background:#fff}
+.btn-outline-danger{--bs-btn-color:#c0283b;--bs-btn-border-color:#f5c2cb;--bs-btn-hover-color:#a01f30;--bs-btn-hover-bg:#ffe9ed;--bs-btn-hover-border-color:#f0a3b1;
+  --bs-btn-active-color:#fff;--bs-btn-active-bg:#c0283b;background:#fff}
+.btn-outline-success{--bs-btn-color:#17794b;--bs-btn-border-color:#bfe8d1;--bs-btn-hover-color:#125e3a;--bs-btn-hover-bg:#e4f7ec;--bs-btn-hover-border-color:#a6e2c1;background:#fff}
+.btn-success{--bs-btn-bg:#22a06b;--bs-btn-border-color:#22a06b;--bs-btn-hover-bg:#1b8a5b;--bs-btn-hover-border-color:#1b8a5b}
+.btn-danger{--bs-btn-bg:#d23c50;--bs-btn-border-color:#d23c50;--bs-btn-hover-bg:#b92f42;--bs-btn-hover-border-color:#b92f42}
+.btn-light{--bs-btn-bg:#f3f1fb;--bs-btn-border-color:#e8e5f6;--bs-btn-hover-bg:#ebe8f8}
+.form-control,.form-select,.ts-wrapper .ts-control{border-color:#e2def4;background-color:#fff}
+.form-control:focus,.form-select:focus,.ts-wrapper.focus .ts-control{border-color:#b8adf7;box-shadow:0 0 0 .22rem rgba(109,92,232,.15)}
+.form-check-input:checked{background-color:var(--primary);border-color:var(--primary)}
+.form-check-input:focus{border-color:#b8adf7;box-shadow:0 0 0 .22rem rgba(109,92,232,.15)}
+.input-group-text{background:#f6f4ff;border-color:#e2def4;color:var(--text-2)}
+.badge.text-bg-warning{background:#fff0d4!important;color:#8a5200!important;border:1px solid #f8d9a0}
+.badge.text-bg-success{background:var(--ok-soft)!important;color:var(--ok)!important;border:1px solid var(--ok-line)}
+.badge.text-bg-light{background:#efecff!important;color:var(--primary-600)!important}
+.progress{background:#ebe8f7}
+.progress-bar.bg-success{background:linear-gradient(90deg,#5ccf98,#22a06b)!important}
+.dropdown-menu{border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);padding:6px}
+.dropdown-item{border-radius:9px;padding:.45rem .7rem}
+.dropdown-item:hover,.dropdown-item:focus{background:#f3f0ff;color:var(--primary-600)}
+.alert{border-radius:12px}
+.alert-info{background:#eef4ff;border-color:#d4e2ff;color:#284a8a}
+.alert-warning{background:#fff4e4;border-color:#fbdcae;color:#7a4a05}
+
+/* ---------- Brand / Topbar / Sidebar ---------- */
+.brand-icon,.loader-logo{background:var(--grad-primary);box-shadow:0 6px 16px rgba(109,92,232,.30)}
+.brand-icon.lg{box-shadow:0 12px 30px rgba(109,92,232,.32)}
+.brand-title{color:var(--text)}
+.topbar{background:rgba(255,255,255,.82);backdrop-filter:saturate(1.6) blur(12px);border-bottom:1px solid transparent}
+.topbar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
+  background:linear-gradient(90deg,#c9bfff,#f7b8d4 35%,#a9e5cb 70%,#a8d8ff);opacity:.9}
+.icon-btn:hover{background:var(--primary-soft);color:var(--primary)}
+.net-status{background:#fff;border-color:var(--border)}
+.net-status.online{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+.round-chip{background:linear-gradient(135deg,#efecff,#fde9f3);color:var(--primary-600);border:1px solid #e3dcff}
+.user-chip{border-color:var(--border);box-shadow:0 1px 2px rgba(70,58,150,.05)}
+.avatar{background:var(--grad-soft);color:var(--primary-600);border:1px solid #e3dcff}
+.sidebar{background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-right:1px solid var(--border)}
+.side-label{color:#9a97b8}
+.side-link{position:relative;color:var(--text-2)}
+.side-link i{color:#8f8bb3;transition:color .15s}
+.side-link:hover{background:#f5f3ff;color:var(--text)}
+.side-link:hover i{color:var(--primary)}
+.side-link.active{background:linear-gradient(90deg,#ece8ff 0%,#f8efff 100%);color:var(--primary-600)}
+.side-link.active i{color:var(--primary)}
+.side-link.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:4px;border-radius:0 4px 4px 0;background:var(--grad-primary)}
+.side-progress{background:var(--grad-soft);border-color:#e6dfff}
+
+/* ---------- Page / Panels ---------- */
+.page-title{color:var(--text);letter-spacing:-.005em}
+.page-title i{width:34px;height:34px;border-radius:11px;display:inline-grid;place-items:center;background:var(--grad-soft);color:var(--primary);font-size:1rem;border:1px solid #e6dfff}
+.panel{border-color:var(--border);border-radius:16px;box-shadow:var(--shadow)}
+.panel-head{border-bottom-color:#efedf8}
+.panel-title{color:var(--text)}
+.panel-title i{width:28px;height:28px;border-radius:9px;display:inline-grid;place-items:center;background:var(--primary-soft);color:var(--primary);font-size:.95rem}
+.app-footer{border-top-color:var(--border);color:var(--muted)}
+
+/* ---------- KPI ---------- */
+.kpi-group{border-radius:16px;border-color:var(--border);box-shadow:var(--shadow)}
+.kpi-group.tone-all .kpi-head{background:linear-gradient(135deg,#ece7ff 0%,#fbe9f4 100%);color:var(--tone-all-ink)}
+.kpi-group.tone-machine .kpi-head{background:linear-gradient(135deg,#e1efff 0%,#ece8ff 100%);color:var(--tone-machine-ink)}
+.kpi-group.tone-media .kpi-head{background:linear-gradient(135deg,#ddf6e9 0%,#e3f3ff 100%);color:var(--tone-media-ink)}
+.kpi-head{border-bottom:1px solid rgba(255,255,255,.7)}
+.kpi-head .kpi-pct{font-weight:800;letter-spacing:-.01em}
+.kpi-tile{border-radius:11px;border:1px solid transparent;background:var(--surface-2)}
+.kpi-tile.base{background:#f3f1ff;border-color:#e4dffd}
+.kpi-tile.ok{background:var(--ok-soft);border-color:#ccefdc}   .kpi-tile.ok .kpi-value{color:var(--ok)}
+.kpi-tile.warn{background:var(--warn-soft);border-color:#fbe0c6} .kpi-tile.warn .kpi-value{color:var(--warn)}
+.kpi-tile.bad{background:var(--bad-soft);border-color:#fad3da}  .kpi-tile.bad .kpi-value{color:var(--bad)}
+.kpi-tile.skip{background:var(--skip-soft);border-color:#c5e9f0} .kpi-tile.skip .kpi-value{color:var(--skip)}
+.kpi-tile.over{background:var(--over-soft);border-color:#e2d7fc} .kpi-tile.over .kpi-value{color:var(--over)}
+.kpi-tile.idle{background:var(--idle-soft);border-color:#e6e7f2}
+.kpi-tile.base .kpi-value{color:var(--primary-600)}
+.kpi-label{color:var(--text-2)}
+.kpi-value{font-weight:800;letter-spacing:-.01em}
+.kpi-tile .dot{border-radius:50%}
+.kpi-tile.idle .dot{background:#a3a7c2}
+.kpi-foot{border-top-color:#ece9f7;color:var(--text-2)}
+.progress-split{background:#ecebf6;gap:2px}
+.progress-split .seg.ok{background:linear-gradient(90deg,#4fc58c,#22a06b)}
+.progress-split .seg.warn{background:linear-gradient(90deg,#fbb36b,#ec8a35)}
+.progress-split .seg.bad{background:linear-gradient(90deg,#f58b9c,#de4a5f)}
+.progress-split .seg.skip{background:linear-gradient(90deg,#6fcfdf,#1b97ad)}
+.legend i{border-radius:50%}
+
+/* สถานะพนักงาน / หน่วยรถ */
+.pp-tile{border:1px solid transparent;border-top:0;border-radius:12px;background:var(--idle-soft);position:relative;overflow:hidden}
+.pp-tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#b9bcd3}
+.pp-tile.base{background:linear-gradient(135deg,#f1edff,#fcf0f7);border-color:#e6dfff} .pp-tile.base::before{background:var(--grad-primary)}
+.pp-tile.ok{background:var(--ok-soft);border-color:#ccefdc}   .pp-tile.ok::before{background:#34b27a}
+.pp-tile.skip{background:var(--skip-soft);border-color:#c5e9f0} .pp-tile.skip::before{background:#2fa7bd}
+.pp-tile.idle{border-color:#e6e7f2}
+.pp-tile.base .pp-val{color:var(--primary-600)} .pp-tile.ok .pp-val{color:var(--ok)} .pp-tile.skip .pp-val{color:var(--skip)}
+.pp-label i{width:22px;height:22px;border-radius:7px;display:inline-grid;place-items:center;background:rgba(255,255,255,.75);font-size:.8rem}
+.pp-val{font-weight:800;letter-spacing:-.01em}
+
+/* ---------- Status pills ---------- */
+.st{border-width:1px;font-weight:600}
+.st-idle{border-color:#e3e5f0}
+.u-closed{background:#eeedf6;color:#45426a;border-color:#dcdaea}
+.type-machine{background:#e4f1ff;color:#2563a8;border:1px solid #cfe3fb}
+.type-media{background:#e2f7ec;color:#1e7a52;border:1px solid #c6ecd8}
+.type-equip{border:1px solid var(--equip-line)}
+.type-other{background:#f1f2f9;color:#5b6081;border:1px solid #e3e5f0}
+.mini-bar .track{background:#ecebf6}
+
+/* ---------- Tables ---------- */
+table.dataTable thead th{background:#f6f4ff;color:#514d7a;border-bottom:1px solid #e6e2f8!important}
+table.dataTable>tbody>tr>td{border-color:#f0eef8}
+table.dataTable.table-hover>tbody>tr:hover>*{--bs-table-bg-state:#faf8ff;box-shadow:inset 0 0 0 9999px #faf8ff}
+.page-item.active .page-link{background:var(--grad-primary);border-color:transparent;color:#fff}
+.page-link{color:var(--primary-600);border-color:#e8e5f6;border-radius:8px!important;margin:0 2px}
+.page-link:hover{background:#f3f0ff;color:var(--primary-600)}
+div.dataTables_wrapper .dt-buttons .btn{background:#fff;border:1px solid #d9d3f8;color:var(--primary-600);box-shadow:none}
+div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
+.nav-pills .nav-link{background:#fff;border-color:var(--border);color:var(--text-2)}
+.nav-pills .nav-link:hover{background:#f6f4ff;color:var(--primary-600)}
+.nav-pills .nav-link.active{background:var(--grad-primary);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(109,92,232,.25)}
+.nav-pills .nav-link.active .badge{background:rgba(255,255,255,.25)!important;color:#fff!important}
+.stat-box{background:var(--surface-2);border-color:var(--border);border-radius:12px}
+
+/* ---------- Feed ---------- */
+.feed li{border-bottom-color:#f1eff9;transition:background .15s}
+.feed li:hover{background:#fbfaff}
+.feed .f-ico{border-radius:10px}
+
+/* ---------- Scanner ---------- */
+.scanner-box{background:linear-gradient(160deg,#2a2650,#1d1b3d);box-shadow:0 8px 24px rgba(31,29,61,.18)}
+.scanner-placeholder{color:#d8d4f4}
+.scanner-placeholder i{color:#b3aaf3}
+.scan-guide .scan-line{background:#f472b6;box-shadow:0 0 10px #f472b6}
+.result-card{border-radius:16px;border-width:1.5px}
+.result-card.ok .result-icon{background:linear-gradient(135deg,#3dbb83,#17794b)}
+.result-card.warn .result-icon{background:linear-gradient(135deg,#f6a159,#c0570e)}
+.result-card.bad .result-icon{background:linear-gradient(135deg,#ee7086,#c0283b)}
+.result-card.over .result-icon{background:linear-gradient(135deg,#a585f3,#7046d6)}
+.remaining-list{border-color:var(--border);background:#fff}
+.remaining-list .rm{border-bottom-color:#f1eff9}
+.target-stats .ts-item{background:var(--surface-2);border-color:var(--border)}
+.sound-row{border-color:#e2def4;background:#fcfbff}
+.dropzone{border-color:#cfc6fb;background:linear-gradient(135deg,#f3f0ff,#fdf1f7)}
+.dropzone.drag{background:#ebe6ff;border-color:var(--primary)}
+.ts-dropdown{border-color:var(--border);border-radius:12px;box-shadow:var(--shadow-lg)}
+.ts-dropdown .active{background:#f1eeff;color:var(--primary-600)}
+.ts-dropdown .optgroup-header{color:var(--primary-600);background:#f8f6ff}
+
+/* ---------- Login / gate / loader ---------- */
+.login-screen{background:
+    radial-gradient(700px 420px at 8% 0%, #e2dbff 0, transparent 60%),
+    radial-gradient(640px 420px at 100% 20%, #fde0ee 0, transparent 58%),
+    radial-gradient(720px 460px at 50% 110%, #d7f4e6 0, transparent 60%), var(--bg)}
+.login-card,.gate-card{border-radius:22px;border-color:#ebe7fa;box-shadow:0 18px 50px rgba(70,58,150,.14)}
+.app-loader{background:rgba(246,245,252,.9)}
+
+/* ---------- Bottom nav ---------- */
+@media (max-width:991.98px){
+  .bottom-nav{background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-top-color:var(--border);box-shadow:0 -4px 18px rgba(70,58,150,.06)}
+  .bottom-nav a.active{color:var(--primary-600)}
+  .bottom-nav a.bn-scan i{background:var(--grad-primary);box-shadow:0 8px 20px rgba(109,92,232,.38)}
+  .sidebar{background:#fff}
+}
+
+/* ---------- SweetAlert2 ---------- */
+.swal2-popup{border-radius:22px!important;box-shadow:0 24px 60px rgba(31,29,61,.22)!important;color:var(--text)!important}
+.swal2-title{color:var(--text)!important}
+.swal2-html-container{color:var(--text-2)!important}
+.swal2-styled.swal2-confirm{box-shadow:0 4px 14px rgba(70,58,150,.2)!important}
+.swal2-styled:focus{box-shadow:0 0 0 3px rgba(109,92,232,.25)!important}
+.swal2-icon.swal2-question{border-color:#c9bff8!important;color:#7b6cf0!important}
+.swal2-icon.swal2-info{border-color:#a9d3f5!important;color:#3b8bd0!important}
+.swal-sn{background:linear-gradient(135deg,#2f2a5e,#4a3f8f);border-radius:10px}
+.swal-info{background:var(--surface-2);border-color:var(--border)}
+.close-choice{background:var(--surface-2);border-color:var(--border);border-radius:12px}
+.close-choice .cc-chips .btn{border-radius:99px}
+.type-choice label{border-color:#e2def4;background:#fff}
+.type-choice input:checked+label{border-color:var(--primary);background:linear-gradient(135deg,#f1edff,#fcf0f7);color:var(--primary-600)}
+#font-size-group .btn.active{background:var(--grad-primary);border-color:transparent}
+
+/* ---------- Report viewer chrome (ตัวเอกสาร A4 คงเดิม) ---------- */
+.report-view{background:linear-gradient(160deg,#ece9f8,#f3eef7)}
+.report-toolbar{border-bottom-color:var(--border)}
+.sign-card{border-radius:16px}
 </style>
 
 </head>
@@ -1296,7 +1551,7 @@ div.dataTables_wrapper div.dataTables_filter input{font-size:.86rem}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113032038";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113034006";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -1414,7 +1669,7 @@ function statusBadge(st) {
 }
 
 /* ============================== SweetAlert2 ============================== */
-const Modal = Swal.mixin({ heightAuto: false, confirmButtonColor: '#4f6bed', cancelButtonColor: '#64748b', reverseButtons: true });
+const Modal = Swal.mixin({ heightAuto: false, confirmButtonColor: '#6d5ce8', cancelButtonColor: '#8b88a8', reverseButtons: true });
 const Toast = Swal.mixin({ toast: true, position: 'top', timer: 1800, timerProgressBar: true, showConfirmButton: false, heightAuto: false });
 
 async function modal(opts) {
@@ -1712,7 +1967,7 @@ async function doLogout() {
     icon: pending ? 'warning' : 'question',
     title: 'ออกจากระบบ?',
     html: pending ? `ยังมี <b>${pending}</b> รายการที่ยังไม่ได้ส่งขึ้นระบบ<br>รายการเหล่านี้จะถูกส่งเมื่อคุณเข้าสู่ระบบอีกครั้ง` : '',
-    showCancelButton: true, confirmButtonText: 'ออกจากระบบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#b91c1c'
+    showCancelButton: true, confirmButtonText: 'ออกจากระบบ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#d23c50'
   });
   if (!r.isConfirmed) return;
   gs('logout', App.token).catch(() => {});
@@ -2706,7 +2961,7 @@ async function closeUnit(key, auto) {
         <div class="remaining-list text-start">${left.slice(0, 20).map((r) => `<div class="rm"><span class="mono fw-bold">${esc(r[C.SN])}</span>${typePill(r[C.TYPE])}</div>`).join('')}${left.length > 20 ? `<div class="rm small text-muted">…และอีก ${left.length - 20} รายการ</div>` : ''}</div>` : ''}
       <div class="small text-muted mt-2">คันที่ปิดแล้วจะไม่แสดงในรายการให้เลือก (Admin เปิดใหม่ได้)</div>`,
     showCancelButton: true, confirmButtonText: '<i class="bi bi-lock-fill"></i> ปิดการนับคันนี้',
-    cancelButtonText: auto ? 'ยังไม่ปิด' : 'ยกเลิก', confirmButtonColor: '#b91c1c',
+    cancelButtonText: auto ? 'ยังไม่ปิด' : 'ยกเลิก', confirmButtonColor: '#d23c50',
     didOpen: () => bindCloseLeftChoice(),
     preConfirm: () => readCloseLeftChoice()
   });
@@ -2913,7 +3168,7 @@ async function onDuplicate(r) {
         ${r[C.NOTE] ? `<div><span>หมายเหตุ</span><span>${esc(r[C.NOTE])}</span></div>` : ''}
         <div><span>วันที่</span><span>${dateTh(r[C.AT])}</span></div>
       </div>`,
-    confirmButtonText: 'รับทราบ', confirmButtonColor: '#b91c1c', timer: 4000, timerProgressBar: true
+    confirmButtonText: 'รับทราบ', confirmButtonColor: '#d23c50', timer: 4000, timerProgressBar: true
   });
 }
 
@@ -2924,7 +3179,7 @@ async function onOverDuplicate(o) {
     icon: 'error', title: 'สแกนซ้ำ!',
     html: `<div class="swal-sn">${esc(o[O.SN])}</div><br>SN นี้ถูกบันทึกเป็น <b>สต๊อกเกิน (OverStock)</b> แล้ว เมื่อเวลา <b>${hhmm(o[O.TS])} น.</b>
       <div class="swal-info mt-2"><div><span>ผู้บันทึก</span><span>${esc(o[O.BY])}</span></div><div><span>พบที่</span><span>${esc(o[O.FOUND])}</span></div></div>`,
-    confirmButtonText: 'รับทราบ', confirmButtonColor: '#b91c1c', timer: 4000, timerProgressBar: true
+    confirmButtonText: 'รับทราบ', confirmButtonColor: '#d23c50', timer: 4000, timerProgressBar: true
   });
 }
 
@@ -3086,7 +3341,7 @@ async function onEquipDuplicate(e) {
     icon: 'error', title: 'สแกนซ้ำ!',
     html: `<div class="swal-sn">${esc(e[E.SN])}</div><br>SN นี้ถูกบันทึกเป็น <b>${EQUIP_LABEL} (${esc(e[E.NAME])})</b> แล้ว เมื่อเวลา <b>${hhmm(e[E.TS])} น.</b>
       <div class="swal-info mt-2"><div><span>ผู้บันทึก</span><span>${esc(e[E.BY])}</span></div><div><span>พบที่</span><span>${esc(e[E.FOUND])}</span></div></div>`,
-    confirmButtonText: 'รับทราบ', confirmButtonColor: '#b91c1c', timer: 4000, timerProgressBar: true
+    confirmButtonText: 'รับทราบ', confirmButtonColor: '#d23c50', timer: 4000, timerProgressBar: true
   });
 }
 
@@ -3126,7 +3381,7 @@ async function undoRecent(sn, kind) {
   }[kind === 'OVER' || kind === 'EQUIP' ? kind : 'SCAN'];
   const c = await modal({
     icon: 'question', title: K.title, html: `<div class="swal-sn">${esc(sn)}</div><br>${K.text}`,
-    showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ไม่', confirmButtonColor: '#b91c1c'
+    showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ไม่', confirmButtonColor: '#d23c50'
   });
   if (!c.isConfirmed) return;
   const qi = App.queue.findIndex((j) => j.fn === K.add && j.payload.sn === sn);
@@ -4188,7 +4443,7 @@ async function newRound() {
         <label for="nr-confirm" class="mt-3">พิมพ์ <b>ปิดรอบ</b> เพื่อยืนยัน</label>
         <input id="nr-confirm" class="form-control" placeholder="ปิดรอบ">
       </div>`,
-    showCancelButton: true, confirmButtonText: 'ปิดรอบและเริ่มรอบใหม่', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#b91c1c',
+    showCancelButton: true, confirmButtonText: 'ปิดรอบและเริ่มรอบใหม่', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#d23c50',
     preConfirm: () => {
       const name = document.getElementById('nr-name').value.trim();
       if (!name) { Swal.showValidationMessage('กรุณาระบุชื่อรอบใหม่'); return false; }
@@ -4348,7 +4603,7 @@ async function doResetAudit() {
     html: `ทุกรายการจะกลับเป็น "ยังไม่นับ" และทุกคันจะถูกเปิดนับใหม่ (ไม่บันทึกประวัติรอบ)<br><label class="mt-3 d-flex gap-2 justify-content-center align-items-center"><input type="checkbox" id="rs-over" class="form-check-input m-0"> ล้าง OverStock ด้วย</label>
       <div class="mt-3 small text-muted">พิมพ์คำว่า <b>RESET</b> เพื่อยืนยัน</div>`,
     input: 'text', inputPlaceholder: 'RESET',
-    showCancelButton: true, confirmButtonText: 'รีเซ็ต', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#b91c1c',
+    showCancelButton: true, confirmButtonText: 'รีเซ็ต', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#d23c50',
     preConfirm: (v) => {
       if (String(v).trim().toUpperCase() !== 'RESET') { Swal.showValidationMessage('กรุณาพิมพ์ RESET'); return false; }
       return { clearOver: document.getElementById('rs-over').checked };
