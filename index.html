@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261113034006">
+  <meta name="app-build" content="20261113040113">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%236d5ce8%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -970,6 +970,129 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
 .report-view{background:linear-gradient(160deg,#ece9f8,#f3eef7)}
 .report-toolbar{border-bottom-color:var(--border)}
 .sign-card{border-radius:16px}
+
+/* ==========================================================================
+   v2.7 คู่มือการใช้งาน (อ่านบนจอ + พิมพ์ / PDF ขนาด A4)
+   ========================================================================== */
+.manual-doc{max-width:900px;margin:0 auto;background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);
+  padding:32px 36px;color:var(--text);line-height:1.65}
+.manual-doc code{background:#f3f0ff;color:var(--primary-600);padding:1px 6px;border-radius:6px;font-size:.85em}
+.manual-doc small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+
+/* ปก */
+.mn-cover{text-align:center;padding:34px 20px 26px;border-radius:18px;margin-bottom:22px;position:relative;overflow:hidden;
+  background:radial-gradient(420px 220px at 0% 0%,#e4dcff 0,transparent 70%),radial-gradient(420px 240px at 100% 0%,#fde1ee 0,transparent 70%),
+             radial-gradient(520px 260px at 50% 120%,#d6f3e6 0,transparent 70%),#faf9ff;border:1px solid #ebe6fb}
+.mn-cover-icon{width:70px;height:70px;border-radius:20px;margin:0 auto 12px;display:grid;place-items:center;font-size:34px;color:#fff;
+  background:var(--grad-primary);box-shadow:0 12px 30px rgba(109,92,232,.32)}
+.mn-cover-kicker{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--primary-600);background:#fff;border:1px solid #e3dcff;border-radius:99px;padding:2px 12px}
+.mn-cover-title{font-size:1.85rem;font-weight:800;margin:10px 0 4px;color:var(--text);letter-spacing:-.01em}
+.mn-cover-sub{color:var(--text-2);font-size:.98rem}
+.mn-cover-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:.84rem;color:var(--text-2)}
+.mn-cover-meta i{color:var(--primary)}
+.mn-cover-roles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;text-align:left}
+.mn-role{display:flex;gap:10px;align-items:flex-start;background:rgba(255,255,255,.85);border:1px solid #ebe6fb;border-radius:14px;padding:12px 14px}
+.mn-role>i{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none;background:var(--primary-soft);color:var(--primary);font-size:1.1rem}
+.mn-role b{display:block;font-size:.92rem}
+
+/* สารบัญ */
+.mn-toc{border:1px dashed #d9d2fb;border-radius:14px;padding:14px 18px;margin-bottom:8px;background:#fcfbff}
+.mn-toc-title{font-weight:700;color:var(--primary-600);margin-bottom:6px}
+.mn-toc ol{columns:2;column-gap:28px;margin:0;padding-left:1.4em;font-size:.92rem}
+.mn-toc li{padding:2px 0;break-inside:avoid}
+.mn-toc li::marker{color:var(--primary);font-weight:700}
+
+/* หัวข้อ */
+.mn-section{padding-top:22px;margin-top:6px}
+.mn-section h2{display:flex;align-items:center;gap:10px;font-size:1.22rem;font-weight:800;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid #efecfb;color:var(--text)}
+.mn-num{width:32px;height:32px;border-radius:10px;display:inline-grid;place-items:center;flex:none;font-size:.95rem;color:#fff;background:var(--grad-primary);box-shadow:0 4px 10px rgba(109,92,232,.25)}
+.mn-section p{margin:0 0 10px}
+
+/* ขั้นตอน */
+.mn-steps{list-style:none;counter-reset:st;margin:0 0 12px;padding:0}
+.mn-steps>li{counter-increment:st;position:relative;padding:10px 14px 10px 52px;margin-bottom:8px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);break-inside:avoid}
+.mn-steps>li::before{content:counter(st);position:absolute;left:12px;top:10px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  font-weight:800;font-size:.85rem;color:var(--primary-600);background:#fff;border:2px solid #d9d2fb}
+.mn-link{margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;background:#fff;border:1px solid #e3dcff;border-radius:8px;padding:5px 9px;word-break:break-all;color:var(--primary-600)}
+
+/* กล่องหมายเหตุ */
+.mn-note{display:flex;gap:10px;align-items:flex-start;border-radius:12px;padding:10px 14px;margin:10px 0;font-size:.9rem;background:#eef4ff;border:1px solid #d6e3fb;color:#284a8a;break-inside:avoid}
+.mn-note>i{font-size:1.15rem;line-height:1.3}
+.mn-note.tip{background:#fff8ec;border-color:#f8dfb5;color:#7a4a05}
+.mn-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mn-grid2 .mn-note{margin:0}
+
+/* ตาราง */
+.mn-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:.9rem}
+.mn-table th{background:#f6f4ff;color:#514d7a;font-weight:700;padding:9px 12px;text-align:left;border-bottom:1px solid #e6e2f8}
+.mn-table td{padding:9px 12px;border-bottom:1px solid #f0eef8;vertical-align:top}
+.mn-table tr:last-child td{border-bottom:0}
+.mn-table tr{break-inside:avoid}
+
+/* ตัวเลือกตอนปิดคัน */
+.mn-choice{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+.mn-choice-card{border-radius:14px;padding:12px 14px;border:1px solid;break-inside:avoid}
+.mn-choice-card p{margin:4px 0;font-size:.9rem}
+.mn-choice-card.bad{background:var(--bad-soft);border-color:#f8cdd6}
+.mn-choice-card.skip{background:var(--skip-soft);border-color:#bfe6ee}
+.mn-choice-head{font-weight:800;display:flex;align-items:center;gap:6px}
+.mn-choice-card.bad .mn-choice-head{color:var(--bad)} .mn-choice-card.skip .mn-choice-head{color:var(--skip)}
+.mn-list{margin:6px 0 0;padding-left:1.3em}
+.mn-list li{margin-bottom:4px}
+.mn-list li::marker{color:var(--primary)}
+
+/* ฟีเจอร์ / การ์ด */
+.mn-feature{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mn-feature>div{border:1px solid var(--border);border-radius:14px;padding:12px;background:var(--surface-2);break-inside:avoid}
+.mn-feature i{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--grad-soft);color:var(--primary);font-size:1rem;margin-bottom:6px;border:1px solid #e6dfff}
+.mn-feature b{display:block;font-size:.92rem}
+.mn-card{border:1px solid var(--border);border-radius:14px;padding:12px 14px;background:var(--surface-2);break-inside:avoid}
+.mn-card-head{font-weight:800;color:var(--primary-600);margin-bottom:6px;display:flex;gap:6px;align-items:center}
+.mn-card ol{margin:0 0 6px;padding-left:1.3em;font-size:.9rem}
+
+/* สถานะ */
+.mn-status{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mn-status>div{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:#fff;break-inside:avoid}
+
+/* FAQ */
+.mn-faq{margin:0}
+.mn-faq dt{font-weight:700;display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--text)}
+.mn-faq dt i{color:var(--primary)}
+.mn-faq dd{margin:2px 0 0 26px;color:var(--text-2);font-size:.9rem;padding-bottom:10px;border-bottom:1px dashed #ece9f7}
+.mn-faq dd:last-child{border-bottom:0}
+.mn-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:22px;padding-top:12px;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted)}
+
+@media (max-width:767.98px){
+  .manual-doc{padding:16px 14px;border-radius:16px}
+  .mn-cover{padding:24px 14px 18px}
+  .mn-cover-title{font-size:1.4rem}
+  .mn-cover-roles,.mn-grid2,.mn-choice{grid-template-columns:1fr}
+  .mn-toc ol{columns:1}
+  .mn-feature,.mn-status{grid-template-columns:1fr 1fr}
+  .mn-table{font-size:.82rem}
+  .mn-table th,.mn-table td{padding:7px 8px}
+}
+
+/* พิมพ์ / PDF: เฉพาะคู่มือ ขนาด A4 สีพาสเทลคงเดิม */
+@media print{
+  body.print-manual{background:#fff!important;font-size:12.5px!important}
+  body.print-manual .topbar,body.print-manual .sidebar,body.print-manual .sidebar-backdrop,body.print-manual .bottom-nav,
+  body.print-manual .app-footer,body.print-manual .app-loader,body.print-manual .mn-toolbar,body.print-manual #login-screen,
+  body.print-manual .page:not(#page-manual),body.print-manual .swal2-container{display:none!important}
+  body.print-manual #page-manual{display:block!important}
+  body.print-manual .main{margin:0!important;padding:0!important;min-height:0!important;display:block!important}
+  body.print-manual .manual-doc{max-width:none;border:0;box-shadow:none;border-radius:0;padding:0;font-size:12.5px}
+  body.print-manual .manual-doc *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.print-manual .mn-cover{break-after:avoid}
+  body.print-manual .mn-toc{break-after:page}
+  body.print-manual .mn-section{break-inside:auto;padding-top:14px}
+  body.print-manual .mn-section h2{break-after:avoid}
+  body.print-manual .mn-section.mn-keep,body.print-manual .mn-status,body.print-manual .mn-feature,body.print-manual .mn-choice{break-inside:avoid}
+  body.print-manual .mn-feature{grid-template-columns:repeat(3,1fr)}
+  body.print-manual .mn-status{grid-template-columns:repeat(3,1fr)}
+  body.print-manual .mn-grid2,body.print-manual .mn-choice,body.print-manual .mn-cover-roles{grid-template-columns:1fr 1fr}
+  body.print-manual .mn-toc ol{columns:2}
+}
 </style>
 
 </head>
@@ -1110,6 +1233,7 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
         <a href="#" class="side-link" data-page="dashboard"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
         <a href="#" class="side-link" data-page="scan"><i class="bi bi-upc-scan"></i><span>สแกนนับสต๊อก</span></a>
         <a href="#" class="side-link" data-page="inventory"><i class="bi bi-table"></i><span>รายการสต๊อกทั้งหมด</span></a>
+        <a href="#" class="side-link" data-page="manual"><i class="bi bi-book"></i><span>คู่มือการใช้งาน</span></a>
         <div class="side-label admin-only mt-2">ผู้ดูแลระบบ</div>
         <a href="#" class="side-link admin-only" data-page="upload"><i class="bi bi-cloud-upload"></i><span>อัปโหลดไฟล์ Onhand</span></a>
         <a href="#" class="side-link admin-only" data-page="rounds"><i class="bi bi-calendar3"></i><span>รอบการตรวจนับ</span></a>
@@ -1520,6 +1644,210 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
         </div>
       </section>
 
+      <!-- ============ คู่มือการใช้งาน ============ -->
+      <section class="page d-none" id="page-manual">
+        <div class="page-head mn-toolbar">
+          <div>
+            <h2 class="page-title"><i class="bi bi-book"></i> คู่มือการใช้งาน</h2>
+            <div class="page-sub">อ่านบนจอ หรือพิมพ์ / บันทึกเป็น PDF เพื่อแจกทีมงาน</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary btn-sm" id="btn-print-manual"><i class="bi bi-printer"></i> พิมพ์ / บันทึก PDF</button>
+          </div>
+        </div>
+
+        <article class="manual-doc" id="manual-doc">
+          <!-- ปก -->
+          <header class="mn-cover">
+            <div class="mn-cover-icon"><i class="bi bi-upc-scan"></i></div>
+            <div class="mn-cover-kicker">คู่มือการใช้งาน</div>
+            <h1 class="mn-cover-title">ระบบตรวจนับสต๊อกหน่วยรถบริการ</h1>
+            <div class="mn-cover-sub">เครื่องกรองและสารกรอง · สแกนบาร์โค้ด / QR แบบ Real-time</div>
+            <div class="mn-cover-meta">
+              <span><i class="bi bi-calendar3"></i> รอบการนับ <b class="round-name-txt">-</b></span>
+              <span><i class="bi bi-printer"></i> พิมพ์เมื่อ <b id="mn-date">-</b></span>
+            </div>
+            <div class="mn-cover-roles">
+              <div class="mn-role"><i class="bi bi-person-badge"></i><div><b>Auditor (ผู้ตรวจนับ)</b><small>สแกนนับสต๊อก · ปิดการนับรายคัน · ดู Dashboard / รายการ · ให้พนักงานลงนาม</small></div></div>
+              <div class="mn-role"><i class="bi bi-shield-check"></i><div><b>Admin (ผู้ดูแลระบบ)</b><small>ทำได้ทุกอย่าง + อัปโหลดไฟล์ Onhand · จัดการรอบการนับ · เปิดคันกลับมานับใหม่</small></div></div>
+            </div>
+          </header>
+
+          <!-- สารบัญ -->
+          <nav class="mn-toc">
+            <div class="mn-toc-title"><i class="bi bi-list-ol"></i> สารบัญ</div>
+            <ol>
+              <li>เริ่มต้นใช้งาน</li><li>สแกนนับสต๊อก</li><li>ผลการสแกนและความหมาย</li><li>ปิดการนับรายคัน</li>
+              <li>รายงานการตรวจนับ / ลงนาม</li><li>Dashboard ภาพรวม</li><li>รายการสต๊อกทั้งหมด</li><li>สำหรับผู้ดูแลระบบ (Admin)</li>
+              <li>ความหมายของสถานะ</li><li>แก้ปัญหาที่พบบ่อย</li>
+            </ol>
+          </nav>
+
+          <!-- 1 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">1</span> เริ่มต้นใช้งาน</h2>
+            <ol class="mn-steps">
+              <li><b>เปิดลิงก์ระบบ</b> จากกลุ่ม LINE (ลิงก์ลงท้าย <code>?openExternalBrowser=1</code> จะเปิดใน Chrome / Safari อัตโนมัติ ใช้กล้องสดได้)
+                <div class="mn-link"><i class="bi bi-link-45deg"></i> <span id="mn-link">-</span></div></li>
+              <li><b>เข้าสู่ระบบ</b> ด้วย Username (หรืออีเมล) และ PIN ที่ได้รับจากผู้ดูแลระบบ</li>
+              <li><b>ปรับขนาดตัวอักษร</b> ได้ที่เมนูผู้ใช้มุมขวาบน → เล็ก / กลาง / ใหญ่ (จำแยกแต่ละเครื่อง)</li>
+              <li><b>ส่งลิงก์ให้ทีม</b> เมนูผู้ใช้มุมขวาบน → <i>คัดลอกลิงก์สำหรับส่ง LINE</i></li>
+            </ol>
+            <div class="mn-note tip"><i class="bi bi-lightbulb"></i><div>ใส่ PIN ผิด 5 ครั้ง ระบบจะล็อก 10 นาที · ไม่ได้ใช้งานเกิน 6 ชั่วโมงต้องเข้าสู่ระบบใหม่ (รายการที่รอส่งไม่หาย)</div></div>
+          </section>
+
+          <!-- 2 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">2</span> สแกนนับสต๊อก</h2>
+            <ol class="mn-steps">
+              <li><b>เลือกเป้าหมายการตรวจนับ</b> พิมพ์ค้นหาทะเบียนรถ / ชื่อ / รหัสพนักงาน แล้วเลือกคันที่จะนับ
+                <small>พนักงานที่ไม่มีทะเบียนรถ จะแสดงเป็นรหัสพนักงานแทน · ทะเบียนที่ไม่มีในระบบ พิมพ์แล้วเลือก <i>＋ เพิ่มทะเบียนรถใหม่</i></small></li>
+              <li><b>กด “เปิดกล้องสแกน”</b> แล้วอนุญาตการใช้กล้อง ส่องบาร์โค้ด / QR ให้อยู่ในกรอบ ห่างประมาณ 10–20 ซม. สแกนต่อเนื่องได้เลย (มีเสียงปี๊บ + สั่น)
+                <small><i class="bi bi-lightbulb"></i> ไฟฉาย สำหรับที่มืด (ถ้ามือถือรองรับ) · <i class="bi bi-camera-fill"></i> ถ่ายภาพ ใช้เมื่อเปิดกล้องสดไม่ได้ · ถือค้างที่ code เดิมจะไม่นับซ้ำ</small></li>
+              <li><b>ใช้ปืนยิงบาร์โค้ด (Bluetooth)</b> เปิด “โหมดปืนยิง” แล้วยิงได้ทันที หรือ <b>พิมพ์ SN เอง</b> ในช่องกรอกแล้วกดตรวจสอบ</li>
+              <li><b>ติดตามความคืบหน้า</b> ตัวเลข นับแล้ว / ทั้งหมด และรายการที่ยังไม่พบของคันนี้ แสดงใต้ช่องเลือกเป้าหมาย</li>
+              <li><b>บันทึกอุปกรณ์ติดตั้ง</b> (สว่าน ฯลฯ ที่ไม่มีในไฟล์ Onhand) กดปุ่ม “บันทึกอุปกรณ์ติดตั้ง” → ใส่ SN และชื่ออุปกรณ์</li>
+            </ol>
+            <div class="mn-grid2">
+              <div class="mn-note tip"><i class="bi bi-wifi-off"></i><div><b>สัญญาณหลุด?</b> สแกนต่อได้เลย ระบบเก็บรายการไว้ในเครื่อง (ป้ายสีเหลือง ☁️ ที่ Header) และส่งให้เองเมื่อกลับมาออนไลน์</div></div>
+              <div class="mn-note tip"><i class="bi bi-arrow-counterclockwise"></i><div><b>สแกนผิด?</b> ยกเลิกได้ที่ “ประวัติการสแกนของฉัน” ในหน้าสแกน (ยกเลิกได้เฉพาะรายการของตัวเอง / Admin ยกเลิกได้ทุกรายการ)</div></div>
+            </div>
+          </section>
+
+          <!-- 3 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">3</span> ผลการสแกนและความหมาย</h2>
+            <table class="mn-table">
+              <thead><tr><th style="width:26%">ผลที่เห็นบนจอ</th><th>ความหมาย</th><th style="width:30%">สิ่งที่ต้องทำ</th></tr></thead>
+              <tbody>
+                <tr><td><span class="st st-ok"><i class="bi bi-check-circle-fill"></i>นับแล้ว</span><small>การ์ดเขียว + เสียงปี๊บ</small></td><td>SN อยู่ในไฟล์ Onhand และตรงกับคันที่กำลังนับ</td><td>สแกนชิ้นต่อไปได้เลย</td></tr>
+                <tr><td><span class="st st-warn"><i class="bi bi-arrow-left-right"></i>พบต่างหน่วย (ยืม)</span><small>หน้าต่างสีส้ม</small></td><td>SN เป็นของคันอื่น แต่มาพบที่คันนี้ ระบบเขียนหมายเหตุ “คัน B ยืมจาก A” ให้อัตโนมัติ</td><td>ตรวจ / แก้หมายเหตุ แล้วกดยืนยัน (ไม่ถือว่าของหาย)</td></tr>
+                <tr><td><span class="st st-bad"><i class="bi bi-x-octagon-fill"></i>สแกนซ้ำ</span><small>เสียง ตื๊ด ตื๊ด</small></td><td>SN นี้ถูกนับไปแล้ว ระบบแจ้งเวลาและผู้สแกน</td><td>ไม่ต้องทำอะไร ระบบไม่บันทึกซ้ำ</td></tr>
+                <tr><td><span class="st st-over"><i class="bi bi-exclamation-diamond"></i>ไม่มีใน Onhand</span><small>ฟอร์มสีม่วง</small></td><td>SN ไม่อยู่ในไฟล์ Onhand</td><td>เลือก <b>สต๊อกเกิน</b> (เครื่องกรอง / สารกรอง) หรือ <b>อุปกรณ์ติดตั้ง</b> แล้วบันทึก</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <!-- 4 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">4</span> ปิดการนับรายคัน</h2>
+            <p>เมื่อนับคันใดเสร็จ ให้ <b>ปิดการนับ</b> เพื่อสรุปยอดของคันนั้น (นับครบทุกรายการ ระบบจะถามให้ปิดอัตโนมัติ) หรือกดปุ่ม <b>ปิดการนับคันนี้</b> ในหน้าสแกน / ปุ่ม <i class="bi bi-lock"></i> ใน Dashboard ได้ทุกเมื่อ</p>
+            <div class="mn-choice">
+              <div class="mn-choice-card bad">
+                <div class="mn-choice-head"><i class="bi bi-x-octagon"></i> ไม่พบ</div>
+                <p>ตรวจนับคันนี้แล้ว แต่หาของบางรายการไม่เจอ</p>
+                <small>นับรวมเป็น “ของหาย” ใน Dashboard</small>
+              </div>
+              <div class="mn-choice-card skip">
+                <div class="mn-choice-head"><i class="bi bi-slash-circle"></i> ไม่ได้นับ (ระบุเหตุผล)</div>
+                <p>ไม่ได้ตรวจนับคันนี้ เลือกเหตุผล: <b>พนักงานลาออก · รถซ่อม · พนักงานลางาน · โอนย้ายหน่วยงาน</b> หรือ <b>อื่นๆ (ระบุ)</b></p>
+                <small>ไม่นับเป็นของหาย · เหตุผลบันทึกลงหมายเหตุทุกรายการ</small>
+              </div>
+            </div>
+            <ul class="mn-list">
+              <li>คันที่ปิดแล้วจะไม่แสดงในช่องเลือกเป้าหมาย</li>
+              <li>ถ้าภายหลังเจอ SN ของคันที่ปิดแล้ว สแกนได้ตามปกติ (บันทึกเป็นการยืม / พบภายหลัง)</li>
+              <li>ต้องการนับใหม่ กด <b>เปิดใหม่</b> ที่ Dashboard (Admin หรือผู้ที่ปิดคันนั้น) — รายการ “ไม่พบ / ไม่ได้นับ” จะกลับเป็น “ยังไม่นับ”</li>
+            </ul>
+          </section>
+
+          <!-- 5 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">5</span> รายงานการตรวจนับ / ลงนาม</h2>
+            <ol class="mn-steps">
+              <li><b>เปิดรายงาน</b> หลังปิดการนับ ระบบถามให้เปิดรายงานทันที หรือกดปุ่ม <i class="bi bi-file-earmark-text"></i> ใน Dashboard / ปุ่ม “รายงาน / ลงนาม คันที่ปิดการนับแล้ว” ในหน้าสแกน</li>
+              <li><b>ให้พนักงานหน่วยรถลงนามรับทราบ</b> เซ็นชื่อบนจอ ติ๊กยืนยัน แล้วกดบันทึกลายเซ็น</li>
+              <li><b>พิมพ์ / ดาวน์โหลด PDF</b> จากแถบเครื่องมือด้านบนของรายงาน (ขนาด A4)</li>
+            </ol>
+            <div class="mn-note"><i class="bi bi-info-circle"></i><div>รายงานแสดง Onhand / จำนวนนับได้ / ผลต่าง แยกเครื่องกรอง–สารกรอง พร้อมหมายเหตุ (ยืม, สต๊อกเกิน, ไม่พบ, ไม่ได้นับ) · ถ้าเปิดคันกลับมานับใหม่ ลายเซ็นเดิมจะถูกล้าง</div></div>
+          </section>
+
+          <!-- 6 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">6</span> Dashboard ภาพรวม</h2>
+            <div class="mn-feature">
+              <div><i class="bi bi-grid-3x3-gap"></i><b>การ์ด KPI</b><small>ภาพรวม / เครื่องกรอง / สารกรอง: ยอด Onhand, นับพบ, ยืมข้ามคัน, ยังไม่นับ, ไม่พบ, ไม่ได้นับ, สต๊อกเกิน</small></div>
+              <div><i class="bi bi-people"></i><b>สถานะพนักงาน / หน่วยรถ</b><small>พนักงานทั้งหมด · เข้ารับการตรวจนับแล้ว · ยังไม่ปิด · แยกตามเหตุผลที่ไม่ได้นับ (คน / หน่วยรถ)</small></div>
+              <div><i class="bi bi-truck"></i><b>ความคืบหน้ารายคัน</b><small>กรองคันที่ยังไม่ปิด / ปิดแล้ว / รอลงนาม / มีของค้าง · ปุ่มค้าง, สแกน, ปิด, เปิดใหม่, รายงาน</small></div>
+              <div><i class="bi bi-file-earmark-excel"></i><b>Export Excel / CSV</b><small>ส่งออกตามตัวกรองที่เลือก แยกตัวเลขรายประเภทครบทุกคอลัมน์</small></div>
+              <div><i class="bi bi-activity"></i><b>การสแกนล่าสุด</b><small>ฟีดจากทุกเครื่องแบบ Real-time</small></div>
+              <div><i class="bi bi-arrow-repeat"></i><b>Auto-refresh 10 วินาที</b><small>หรือกด Sync ทันที เมื่อต้องการข้อมูลล่าสุด</small></div>
+            </div>
+          </section>
+
+          <!-- 7 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">7</span> รายการสต๊อกทั้งหมด</h2>
+            <ul class="mn-list">
+              <li>แท็บ <b>Onhand</b> · <b>OverStock</b> (สต๊อกเกิน) · <b>อุปกรณ์ติดตั้ง</b></li>
+              <li>กรองตามประเภท / สถานะ / แผนก / หน่วยรถ · ปุ่ม <b>ยังไม่พบ</b> แสดงเฉพาะรายการที่ยังไม่เจอ · ช่องค้นหา SN / ชื่อ / ทะเบียน</li>
+              <li>ปุ่ม <b>Export Excel / CSV</b> ส่งออกตามตัวกรองที่เลือก (เปิดใน Excel ภาษาไทยไม่เพี้ยน)</li>
+            </ul>
+          </section>
+
+          <!-- 8 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">8</span> สำหรับผู้ดูแลระบบ (Admin)</h2>
+            <div class="mn-grid2">
+              <div class="mn-card">
+                <div class="mn-card-head"><i class="bi bi-cloud-upload"></i> อัปโหลดไฟล์ Onhand</div>
+                <ol>
+                  <li>เมนู <b>อัปโหลดไฟล์ Onhand</b> → เลือกไฟล์ .xlsx (เลือกชีต “จัดไฟล์รวม” ให้อัตโนมัติ) หรือ .csv</li>
+                  <li>ตรวจตัวอย่างข้อมูลและจำนวน SN ซ้ำ</li>
+                  <li>กด <b>อัปโหลดเข้า Google Sheets</b></li>
+                </ol>
+                <small>ติ๊ก “คงสถานะการนับเดิม” เมื่ออัปโหลดไฟล์ปรับปรุงระหว่างรอบ ผลการนับจะไม่หาย</small>
+              </div>
+              <div class="mn-card">
+                <div class="mn-card-head"><i class="bi bi-calendar3"></i> รอบการตรวจนับ</div>
+                <ol>
+                  <li>เมนู <b>รอบการตรวจนับ</b> → <b>ปิดรอบนี้ &amp; เริ่มรอบใหม่</b></li>
+                  <li>ระบบสำรองข้อมูลรอบเดิมเป็นชีตซ่อน และบันทึกสรุปลงประวัติ</li>
+                  <li>เลือกล้าง Onhand เพื่ออัปโหลดไฟล์ใหม่ (แนะนำ) หรือใช้รายการเดิม</li>
+                </ol>
+                <small>ชื่อรอบตั้งให้อัตโนมัติ เช่น 2026-Q4 → 2027-Q1 (แก้ไขได้)</small>
+              </div>
+            </div>
+            <div class="mn-note tip"><i class="bi bi-person-plus"></i><div><b>เพิ่มผู้ใช้งาน</b> ที่ชีต <code>Users</code> ใน Google Sheets: Username/Email · ชื่อ-สกุล · Role (Admin / Auditor) · สถานะ (Active / Inactive) · PIN</div></div>
+          </section>
+
+          <!-- 9 -->
+          <section class="mn-section mn-keep">
+            <h2><span class="mn-num">9</span> ความหมายของสถานะ</h2>
+            <div class="mn-status">
+              <div><span class="st st-idle"><i class="bi bi-circle"></i>ยังไม่นับ</span><small>ยังไม่ได้สแกน และคันยังไม่ปิด</small></div>
+              <div><span class="st st-ok"><i class="bi bi-check-circle-fill"></i>นับแล้ว</span><small>พบที่คันเจ้าของ</small></div>
+              <div><span class="st st-warn"><i class="bi bi-arrow-left-right"></i>พบต่างหน่วย (ยืม)</span><small>พบที่คันอื่น — ไม่ถือว่าหาย</small></div>
+              <div><span class="st st-bad"><i class="bi bi-x-octagon-fill"></i>ไม่พบ</span><small>ปิดคันแล้วยังหาไม่เจอ — นับเป็นของหาย</small></div>
+              <div><span class="st st-skip"><i class="bi bi-slash-circle"></i>ไม่ได้นับ</span><small>ปิดคันโดยไม่ได้ตรวจนับ มีเหตุผลกำกับ</small></div>
+              <div><span class="st st-over"><i class="bi bi-exclamation-diamond"></i>สต๊อกเกิน</span><small>พบของที่ไม่มีในไฟล์ Onhand</small></div>
+            </div>
+          </section>
+
+          <!-- 10 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">10</span> แก้ปัญหาที่พบบ่อย</h2>
+            <dl class="mn-faq">
+              <dt><i class="bi bi-camera-video-off"></i> เปิดกล้องไม่ได้</dt>
+              <dd>มักเกิดจากเปิดลิงก์ในแอป LINE / Facebook → กด <b>เปิดใน Chrome / Safari</b> หรือใช้ปุ่ม <b>ถ่ายภาพ</b> สแกนแทน · ถ้าเคยกด “ไม่อนุญาต” ให้แตะไอคอนข้างช่องที่อยู่ → สิทธิ์ → กล้อง → อนุญาต แล้วรีเฟรช</dd>
+              <dt><i class="bi bi-volume-mute"></i> ไม่มีเสียงตอนสแกน</dt>
+              <dd>แตะหน้าจอ 1 ครั้งก่อน (มือถือบล็อกเสียงจนกว่าจะมีการแตะ) · เพิ่มเสียงสื่อของมือถือ · ตรวจว่าสวิตช์ “เสียงสแกน” ในหน้าสแกนเปิดอยู่</dd>
+              <dt><i class="bi bi-upc"></i> สแกนบาร์โค้ดยาก</dt>
+              <dd>เปิดไฟฉาย ถือให้บาร์โค้ดอยู่กลางกรอบแนวนอน ห่าง 10–20 ซม. หรือพิมพ์ SN เอง</dd>
+              <dt><i class="bi bi-arrow-repeat"></i> ข้อมูลบนจอไม่อัปเดต</dt>
+              <dd>กดปุ่ม <b>Sync</b> ที่มุมขวาบน หรือ Sync ทันที ใน Dashboard</dd>
+              <dt><i class="bi bi-hourglass-bottom"></i> ขึ้นข้อความ “Session หมดอายุ”</dt>
+              <dd>เข้าสู่ระบบใหม่ รายการที่สแกนไว้และรอส่งจะไม่หาย</dd>
+            </dl>
+          </section>
+
+          <footer class="mn-foot">
+            <span>ระบบตรวจนับสต๊อกหน่วยรถบริการ (เครื่องกรองและสารกรอง)</span>
+            <span>ติดต่อผู้ดูแลระบบเมื่อพบปัญหาการใช้งาน</span>
+          </footer>
+        </article>
+      </section>
+
       <footer class="app-footer">
         <span>© <span id="year"></span> ระบบตรวจนับสต๊อกหน่วยรถบริการ (เครื่องกรองและสารกรอง)</span>
         <span class="text-muted">Google Apps Script · Google Sheets · v2.0</span>
@@ -1551,7 +1879,7 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113034006";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113040113";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -2435,6 +2763,26 @@ function bindUI() {
   bindRoundsUI();
   bindReportUI();
   $id('unit-filter').addEventListener('change', () => { App.dirty.dash = true; renderDashboard(); });
+  $id('btn-print-manual').addEventListener('click', printManual);
+  // กด Ctrl+P ขณะเปิดหน้าคู่มือ -> พิมพ์เฉพาะคู่มือ
+  window.addEventListener('beforeprint', () => { if (App.page === 'manual') document.body.classList.add('print-manual'); });
+  window.addEventListener('afterprint', () => document.body.classList.remove('print-manual'));
+}
+
+/* ============================== คู่มือการใช้งาน ============================== */
+function renderManual() {
+  $id('mn-link').textContent = lineShareUrl();
+  $id('mn-date').textContent = thDateTime(nowStr()).replace(/ เวลา.*$/, '');
+}
+/** พิมพ์ / บันทึก PDF: ใช้หน้าต่างพิมพ์ของเบราว์เซอร์ (เลือกเครื่องพิมพ์ หรือ "บันทึกเป็น PDF") */
+function printManual() {
+  renderManual();
+  document.body.classList.add('print-manual');
+  setTimeout(() => {
+    try { window.print(); }
+    catch (e) { notify({ icon: 'info', title: 'พิมพ์จากหน้านี้ไม่ได้', text: 'กรุณาเปิดผ่าน Chrome / Safari แล้วลองใหม่' }); }
+    // คลาส print-manual มีผลเฉพาะตอนพิมพ์ (@media print) และถูกลบเมื่อพิมพ์เสร็จ (afterprint)
+  }, 60);
 }
 
 function toggleSidebar() {
@@ -2452,6 +2800,7 @@ function navigate(page) {
   document.body.classList.remove('sidebar-open');
   if (page !== 'scan') Scanner.stop();
   if (page === 'rounds') loadRounds();
+  if (page === 'manual') renderManual();
   renderCurrent();
   window.scrollTo(0, 0);
   if (page === 'scan') refocusInput();
