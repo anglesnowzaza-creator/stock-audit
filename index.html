@@ -3385,7 +3385,7 @@ function rpSignHtml(rep, sig, img) {
       <div class="rp-sigrow"><span>ลงชื่อ</span><span class="rp-sigline">${goodImg ? `<img src="${img}" alt="ลายเซ็นพนักงานหน่วยรถ">` : ''}</span></div>
       <div class="rp-signame">( ${esc(signer)} )</div>
       <div class="rp-sigrole">พนักงานหน่วยรถ (รับทราบ)</div>
-      <div class="rp-note">วันที่ตรวจรับ ${sig ? esc(thDateTime(sig[0])) : '..............................'}</div>
+      <div class="rp-note">วันที่ตรวจนับ ${sig ? esc(thDateTime(sig[0])) : '..............................'}</div>
     </div>
   </div>`;
 }
