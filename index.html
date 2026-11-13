@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="app-build" content="20261113063812">
+  <meta name="app-build" content="20261113100548">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ระบบตรวจนับสต๊อกหน่วยรถบริการ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%236d5ce8%22/%3E%3Cpath d=%22M8 9v14M11 9v14M14 9v14M18 9v14M21 9v14M24 9v14%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
@@ -987,7 +987,8 @@ div.dataTables_wrapper .dt-buttons .btn:hover{background:#f3f0ff}
 .api-banner.warn>i,.api-banner.warn b{color:#b45f06}
 
 /* ---------- v2.8: สิทธิ์ Viewer (ผู้บริหาร) — เห็นเฉพาะ Dashboard ---------- */
-body.role-viewer .side-link:not([data-page="dashboard"]),body.role-viewer .side-label:not(:first-child),
+body.role-viewer .side-link:not([data-page="dashboard"]):not([data-page="branch"]),body.role-viewer .side-label:not(:first-child),
+body.role-branch .side-link:not([data-page="branch"]),body.role-branch .side-label:not(:first-child),body.role-branch .bottom-nav,body.role-branch .side-progress,
 body.role-viewer .bottom-nav,body.role-viewer .viewer-hide{display:none!important}
 body.role-viewer .viewer-only{display:flex!important}
 .viewer-banner{align-items:center;gap:12px;padding:10px 14px;border-radius:14px;border:1px solid #e3dcff;
@@ -1163,11 +1164,19 @@ body.role-viewer .viewer-only{display:flex!important}
 .fu-choice label{margin:0!important;border:2px solid var(--border);border-radius:12px;padding:9px 6px!important;text-align:center;cursor:pointer;font-size:.88rem!important;font-weight:600;background:#fff}
 .fu-choice input:checked+label{background:var(--fu-soft);border-color:var(--fu);color:var(--fu)}
 
+/* ---------- v3.2 ตรวจนับสาขา (Reconcile) ---------- */
+.br-sel-wrap{min-width:260px;flex:0 1 360px}
+.br-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:767.98px){ .br-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.br-split{gap:6px 18px} .br-split b{color:var(--text)}
+.role-pill.role-branch{background:#e3f7f1;color:#0f7a6e;border-color:#b6e7da}   /* ระวัง: body.role-branch ใช้ชื่อคลาสเดียวกัน */
+@media (max-width:991.98px){ body.role-branch .main{padding-bottom:16px!important} }
+
 /* ---------- v3.1 จัดการผู้ใช้ / รูปถ่ายหลักฐาน ---------- */
 .role-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.76rem;font-weight:700;border:1px solid}
-.role-admin{background:#efecff;color:#5846d6;border-color:#d9d2fb}
-.role-auditor{background:#e4f1ff;color:#2563a8;border-color:#cfe3fb}
-.role-viewer{background:#fdeef6;color:#a3326b;border-color:#f6cfe2}
+.role-pill.role-admin{background:#efecff;color:#5846d6;border-color:#d9d2fb}
+.role-pill.role-auditor{background:#e4f1ff;color:#2563a8;border-color:#cfe3fb}
+.role-pill.role-viewer{background:#fdeef6;color:#a3326b;border-color:#f6cfe2}
 #users-table tr.u-off td{color:var(--muted)}
 #users-table td.u-pin{white-space:nowrap}
 /* ตารางรายการสต๊อก: ไม่ตัดบรรทัด ข้อความยาวตัดท้ายด้วย … คอลัมน์ไม่พอจอจะพับเข้าแถวย่อย (+) */
@@ -1405,6 +1414,7 @@ table.dataTable>tbody>tr.child .cell-clip{max-width:none!important;white-space:n
         <a href="#" class="side-link" data-page="dashboard"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
         <a href="#" class="side-link" data-page="scan"><i class="bi bi-upc-scan"></i><span>สแกนนับสต๊อก</span></a>
         <a href="#" class="side-link" data-page="inventory"><i class="bi bi-table"></i><span>รายการสต๊อกทั้งหมด</span></a>
+        <a href="#" class="side-link" data-page="branch"><i class="bi bi-shop"></i><span>ตรวจนับสาขา</span></a>
         <a href="#" class="side-link" data-page="manual"><i class="bi bi-book"></i><span>คู่มือการใช้งาน</span></a>
         <div class="side-label admin-only mt-2">ผู้ดูแลระบบ</div>
         <a href="#" class="side-link admin-only" data-page="upload"><i class="bi bi-cloud-upload"></i><span>อัปโหลดไฟล์ Onhand</span></a>
@@ -1850,6 +1860,64 @@ table.dataTable>tbody>tr.child .cell-clip{max-width:none!important;white-space:n
         </div>
       </section>
 
+      <!-- ============ ตรวจนับสาขา (Reconcile) ============ -->
+      <section class="page d-none" id="page-branch">
+        <div class="page-head">
+          <div>
+            <h2 class="page-title"><i class="bi bi-shop"></i> ตรวจนับสาขา (Reconcile)</h2>
+            <div class="page-sub">เทียบไฟล์ Onhand สาขา กับไฟล์นับที่สาขาส่งมา (จับคู่ด้วย SN + รหัสสินค้า) · <span id="br-meta">-</span></div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-outline-primary btn-sm" id="br-template"><i class="bi bi-file-earmark-arrow-down"></i> Template ไฟล์นับ</button>
+            <button class="btn btn-outline-primary btn-sm br-can-onhand d-none" id="br-up-onhand"><i class="bi bi-database-up"></i> อัปโหลด Onhand สาขา</button>
+            <button class="btn btn-primary btn-sm br-can-count d-none" id="br-up-count"><i class="bi bi-cloud-upload"></i> อัปโหลดไฟล์นับสาขา</button>
+            <button class="btn btn-outline-primary btn-sm" id="br-print"><i class="bi bi-printer"></i> รายงาน (PDF)</button>
+            <button class="btn btn-light btn-sm" id="br-sync" title="โหลดข้อมูลล่าสุด"><i class="bi bi-arrow-repeat"></i></button>
+          </div>
+        </div>
+
+        <div class="card panel mb-3">
+          <div class="panel-body d-flex flex-wrap gap-3 align-items-end">
+            <div class="br-sel-wrap">
+              <label class="form-label small mb-1" for="br-select">สาขา</label>
+              <select class="form-select" id="br-select"></select>
+            </div>
+            <div class="small text-muted flex-grow-1" id="br-sel-info"></div>
+          </div>
+        </div>
+
+        <div id="br-empty" class="card panel d-none"><div class="panel-body text-center text-muted py-5">
+          <i class="bi bi-inbox fs-1 d-block mb-2"></i><span id="br-empty-text">ยังไม่มีข้อมูล Onhand สาขา</span>
+        </div></div>
+
+        <div id="br-main">
+          <div id="br-kpis" class="mb-3"></div>
+
+          <div class="card panel mb-3">
+            <div class="panel-head"><div class="panel-title"><i class="bi bi-list-check"></i> สถานะรายสาขา</div>
+              <div class="small text-muted">สาขาที่ยังไม่ส่งไฟล์นับ จะไม่ถูกนับเป็นของขาด</div></div>
+            <div class="panel-body"><table id="brStatusTable" class="table table-hover align-middle w-100 nowrap"></table></div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 col-xxl-5">
+              <div class="card panel h-100">
+                <div class="panel-head"><div class="panel-title"><i class="bi bi-box-seam"></i> สรุปรายรหัสสินค้า</div>
+                  <label class="small d-flex gap-2 align-items-center m-0" for="br-item-diff"><input type="checkbox" class="form-check-input m-0" id="br-item-diff" checked> เฉพาะที่มีผลต่าง</label></div>
+                <div class="panel-body"><table id="brItemTable" class="table table-hover align-middle w-100 nowrap"></table></div>
+              </div>
+            </div>
+            <div class="col-12 col-xxl-7">
+              <div class="card panel h-100">
+                <div class="panel-head"><div class="panel-title"><i class="bi bi-exclamation-diamond"></i> รายการ SN ที่ต้องตรวจสอบ</div>
+                  <select class="form-select form-select-sm w-auto" id="br-diff-type"></select></div>
+                <div class="panel-body"><table id="brDiffTable" class="table table-hover align-middle w-100 nowrap"></table></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ============ จัดการผู้ใช้ (Admin) ============ -->
       <section class="page d-none" id="page-users">
         <div class="page-head">
@@ -1909,7 +1977,7 @@ table.dataTable>tbody>tr.child .cell-clip{max-width:none!important;white-space:n
             <ol>
               <li>เริ่มต้นใช้งาน</li><li>สแกนนับสต๊อก</li><li>ผลการสแกนและความหมาย</li><li>ปิดการนับรายคัน</li>
               <li>รายงานการตรวจนับ / ลงนาม</li><li>Dashboard ภาพรวม</li><li>รายการสต๊อกทั้งหมด</li><li>สำหรับผู้ดูแลระบบ (Admin)</li>
-              <li>ความหมายของสถานะ</li><li>แก้ปัญหาที่พบบ่อย</li>
+              <li>ความหมายของสถานะ</li><li>แก้ปัญหาที่พบบ่อย</li><li>ตรวจนับสาขา (Reconcile)</li>
             </ol>
           </nav>
 
@@ -2109,6 +2177,32 @@ table.dataTable>tbody>tr.child .cell-clip{max-width:none!important;white-space:n
             </dl>
           </section>
 
+          <!-- 11 -->
+          <section class="mn-section">
+            <h2><span class="mn-num">11</span> ตรวจนับสาขา (Reconcile)</h2>
+            <p>สาขานับสต๊อกเอง (คลังสาขา BR + หน่วยรถบริการ BRV) แล้วส่งไฟล์มาให้สำนักงานใหญ่ ระบบเทียบกับ Onhand สาขาด้วย <b>SN + รหัสสินค้า</b> และออกรายงานให้</p>
+            <ol class="mn-steps">
+              <li><b>อัปโหลด Onhand สาขา</b> (Admin) เมนู <b>ตรวจนับสาขา</b> → <b>อัปโหลด Onhand สาขา</b> → เลือกไฟล์จากระบบ (คอลัมน์ ItemCode · Description · SUBINVENTORY_CODE · LOCATOR · SERIAL_NUMBER · LOT_NUMBER · CODE · BRANCH CODE · BRANCH NAME)
+                <small>ติ๊ก “ล้างไฟล์นับของทุกสาขา” เมื่อเริ่มรอบตรวจนับใหม่</small></li>
+              <li><b>ส่ง Template ให้สาขา</b> กด <b>Template ไฟล์นับ</b> (เลือกสาขาก่อน ชื่อไฟล์จะมีรหัสสาขา) — คอลัมน์: รหัสสินค้า · ชื่อสินค้า · SN · จำนวน · หมายเหตุ (1 แถว = 1 ชิ้น)</li>
+              <li><b>อัปโหลดไฟล์นับของสาขา</b> (Admin / Auditor) กด <b>อัปโหลดไฟล์นับสาขา</b> หรือปุ่ม <i class="bi bi-cloud-upload"></i> ในตารางสถานะ → เลือกไฟล์ → ตรวจสาขาที่ระบบเลือกให้ → อัปโหลด
+                <small>อัปโหลดซ้ำ = แทนที่ไฟล์เดิมของสาขานั้น · สาขาที่ยังไม่ส่งไฟล์แสดง “รอไฟล์” และไม่ถูกนับเป็นของขาด</small></li>
+              <li><b>ดูผล / ส่งรายงาน</b> เลือกสาขา → ดู KPI, สรุปรายรหัสสินค้า, รายการ SN ที่ต้องตรวจสอบ → <b>Export Excel / CSV</b> หรือ <b>รายงาน (PDF)</b> พร้อมช่องลงนาม</li>
+            </ol>
+            <table class="mn-table">
+              <thead><tr><th style="width:30%">ผล</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><span class="st st-ok"><i class="bi bi-check-circle-fill"></i>ตรงกัน</span></td><td>SN อยู่ในไฟล์นับของสาขาเจ้าของ และรหัสสินค้าตรง</td></tr>
+                <tr><td><span class="st st-bad"><i class="bi bi-x-octagon-fill"></i>ขาด</span></td><td>มีใน Onhand ของสาขา แต่ไม่อยู่ในไฟล์นับ (และไม่พบที่สาขาอื่น)</td></tr>
+                <tr><td><span class="st st-over"><i class="bi bi-plus-circle"></i>เกิน</span></td><td>อยู่ในไฟล์นับ แต่ไม่มีใน Onhand เลย</td></tr>
+                <tr><td><span class="st st-warn"><i class="bi bi-arrow-left-right"></i>รหัสสินค้าไม่ตรง</span></td><td>SN ตรง แต่รหัสสินค้าในไฟล์นับต่างจาก Onhand</td></tr>
+                <tr><td><span class="st st-skip"><i class="bi bi-signpost-split"></i>อยู่ผิดสาขา</span></td><td>SN ของสาขา A ไปอยู่ในไฟล์นับของสาขา B (สาขา A ไม่ถูกนับว่าขาด)</td></tr>
+                <tr><td><span class="st fu-wait"><i class="bi bi-files"></i>SN ซ้ำ</span></td><td>ไฟล์นับมี SN เดียวกันหลายแถว (นับครั้งเดียว)</td></tr>
+              </tbody>
+            </table>
+            <div class="mn-note tip"><i class="bi bi-shield-lock"></i><div><b>สิทธิ์ Branch (ผู้ใช้สาขา)</b> — Admin เพิ่มผู้ใช้ที่เมนู จัดการผู้ใช้ → สิทธิ์ <b>Branch</b> → ใส่รหัสสาขา (เช่น CBI) ผู้ใช้สาขาเห็นเฉพาะผลตรวจนับ<b>ของสาขาตัวเอง</b> (ดูอย่างเดียว · ดาวน์โหลด Template · พิมพ์รายงาน) และไม่เห็นข้อมูลหน่วยรถหรือสาขาอื่น</div></div>
+          </section>
+
           <footer class="mn-foot">
             <span>ระบบตรวจนับสต๊อกหน่วยรถบริการ (เครื่องกรองและสารกรอง)</span>
             <span>ติดต่อผู้ดูแลระบบเมื่อพบปัญหาการใช้งาน</span>
@@ -2150,7 +2244,7 @@ table.dataTable>tbody>tr.child .cell-clip{max-width:none!important;white-space:n
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113063812";</script>
+  <script>window.API_URL = "https://script.google.com/macros/s/AKfycby8wmdlOzKsbPWEu_jCPR6sFg73eVLTET6KHrO7xfHC7ZzQl5jWX0zgxgGy6amvoqL_lA/exec"; window.APP_BUILD = "20261113100548";</script>
   <script>window.BOOT = {"appName":"ระบบตรวจนับสต๊อกหน่วยรถบริการ","appShort":"Stock Audit","status":{"UNSCANNED":"ยังไม่นับ","MATCHED":"นับแล้ว","MISPLACED":"พบต่างหน่วย","MISSING":"ไม่พบ","NOTCOUNTED":"ไม่ได้นับ"},"unitStatus":{"OPEN":"เปิด","CLOSED":"ปิดแล้ว"},"unitSrc":{"ONHAND":"Onhand","ADDED":"เพิ่มหน้างาน"},"types":["เครื่องกรอง","สารกรอง"],"skipReasons":["พนักงานลาออก","รถซ่อม","พนักงานลางาน","โอนย้ายหน่วยงาน"],"appUrl":"","hostedUrl":"","auto":null};</script>
   <script>
 /* ==========================================================================
@@ -2218,7 +2312,8 @@ const pad = (n) => String(n).padStart(2, '0');
 const scannable = (st) => !st || st === S.UNSCANNED || st === S.MISSING || st === S.NOTCOUNTED;
 const isAdmin = () => App.user && App.user.role === 'Admin';
 const isViewer = () => App.user && App.user.role === 'Viewer';   // ผู้บริหาร: ดู Dashboard อย่างเดียว
-const ROLE_LABEL = { Admin: 'Admin', Auditor: 'Auditor', Viewer: 'Viewer' };
+const isBranchUser = () => App.user && App.user.role === 'Branch';   // ผู้ใช้สาขา: เห็นเฉพาะผลตรวจนับของสาขาตัวเอง
+const ROLE_LABEL = { Admin: 'Admin', Auditor: 'Auditor', Viewer: 'Viewer', Branch: 'Branch' };
 function nowStr() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
 function hhmm(s) { const m = String(s || '').match(/(\d{1,2}):(\d{2})/); return m ? `${pad(m[1])}:${m[2]}` : '-'; }
 function dateTh(s) { const m = String(s || '').match(/(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; }
@@ -2551,6 +2646,7 @@ function startSession(token, res) {
   document.body.classList.toggle('role-admin', isAdmin());
   document.body.classList.toggle('role-auditor', !isAdmin());
   document.body.classList.toggle('role-viewer', isViewer());
+  document.body.classList.toggle('role-branch', isBranchUser());
   $id('user-name').textContent = App.user.name;
   $id('user-role').textContent = ROLE_LABEL[App.user.role] || App.user.role;
   $id('user-dd-name').textContent = `${App.user.name} (${App.user.username})`;
@@ -2564,7 +2660,7 @@ function startSession(token, res) {
   $id('login-screen').classList.add('d-none');
   $id('app-shell').classList.remove('d-none');
   hideLoader();
-  navigate(isTouch() && !isViewer() ? 'scan' : 'dashboard');
+  navigate(isBranchUser() ? 'branch' : isTouch() && !isViewer() ? 'scan' : 'dashboard');
   renderRecent();
   updatePending();
   flushQueue();
@@ -2601,7 +2697,7 @@ function forceLogout(manual) {
  *  - เซิร์ฟเวอร์เก่ากว่า  -> แถบแดง: ให้ Admin วาง Code.gs ใหม่แล้ว Deploy New version (และกันการปิดคันแบบ "ไม่ได้นับ")
  *  - หน้าเว็บเก่ากว่า     -> แถบเหลือง: ให้รีเฟรชหน้าเว็บ
  */
-const REQUIRED_API = 11;
+const REQUIRED_API = 12;
 function checkApi(api) {
   if (api === undefined && App.apiServer !== undefined) return;   // คำตอบบางแบบไม่มีเลขเวอร์ชัน
   const v = Number(api) || 0;
@@ -3092,6 +3188,15 @@ function bindUI() {
   $id('btn-follow-list').addEventListener('click', () => { setInvFilter({ type: '', status: S.MISSING, dept: '', unit: '' }); navigate('inventory'); });
   $id('btn-exec-report').addEventListener('click', printExecReport);
   $id('btn-change-pin').addEventListener('click', changeMyPin);
+  // ตรวจนับสาขา
+  $id('br-select').addEventListener('change', (e) => setBranchSel(e.target.value));
+  $id('br-sync').addEventListener('click', () => loadBranchData(true));
+  $id('br-template').addEventListener('click', downloadBranchTemplate);
+  $id('br-up-count').addEventListener('click', () => uploadBranchCountFlow(''));
+  $id('br-up-onhand').addEventListener('click', uploadBranchOnhandFlow);
+  $id('br-print').addEventListener('click', printBranchReport);
+  $id('br-item-diff').addEventListener('change', () => renderBranchItemTable(branchScope()));
+  $id('br-diff-type').addEventListener('change', () => renderBranchDiffTable(branchScope()));
   $id('btn-add-user').addEventListener('click', () => editUser(null));
   $id('users-table').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-uact]'); if (!b) return;
@@ -3130,7 +3235,8 @@ function toggleSidebar() {
 
 function navigate(page) {
   if ((page === 'upload' || page === 'rounds' || page === 'users') && !isAdmin()) page = 'dashboard';
-  if (isViewer()) page = 'dashboard';   // Viewer เข้าได้เฉพาะ Dashboard
+  if (isViewer() && page !== 'branch') page = 'dashboard';   // Viewer: Dashboard + ผลตรวจนับสาขา
+  if (isBranchUser()) page = 'branch';                       // Branch: เฉพาะผลตรวจนับของสาขาตัวเอง
   App.page = page;
   document.querySelectorAll('.page').forEach((p) => p.classList.toggle('d-none', p.id !== 'page-' + page));
   document.querySelectorAll('[data-page]').forEach((a) => a.classList.toggle('active', a.dataset.page === page));
@@ -3139,6 +3245,7 @@ function navigate(page) {
   if (page === 'rounds') loadRounds();
   if (page === 'manual') renderManual();
   if (page === 'users') loadUsers();
+  if (page === 'branch') loadBranchData(false);
   renderCurrent();
   window.scrollTo(0, 0);
   if (page === 'scan') refocusInput();
@@ -5486,8 +5593,458 @@ async function editFollowUp(sn) {
   }
 }
 
+/* ============================== ตรวจนับสาขา (Reconcile) ==============================
+ * ข้อมูลดิบจากเซิร์ฟเวอร์ (getBranchData): Onhand สาขา + ไฟล์นับของสาขา + สถานะรายสาขา
+ * เทียบผลในเบราว์เซอร์ทั้งหมด (5,000+ SN ใช้เวลาไม่ถึงวินาที)
+ */
+const Branch = { data: null, rec: null, codes: [], sel: 'ALL', tables: {}, loading: false };
+const B_SENT = 'ส่งแล้ว';
+const BR_TYPES = {
+  MATCH: { label: 'ตรงกัน', cls: 'st-ok', ico: 'bi-check-circle-fill' },
+  MISS: { label: 'ขาด (ไม่อยู่ในไฟล์นับ)', cls: 'st-bad', ico: 'bi-x-octagon-fill' },
+  OVER: { label: 'เกิน (ไม่มีใน Onhand)', cls: 'st-over', ico: 'bi-plus-circle' },
+  ITEM: { label: 'รหัสสินค้าไม่ตรง', cls: 'st-warn', ico: 'bi-arrow-left-right' },
+  WRONG: { label: 'ของสาขาอื่น (นับได้ที่สาขานี้)', cls: 'st-skip', ico: 'bi-signpost-split' },
+  ELSEWHERE: { label: 'ไปอยู่สาขาอื่น', cls: 'st-skip', ico: 'bi-geo-alt' },
+  DUP: { label: 'SN ซ้ำในไฟล์นับ', cls: 'fu-wait', ico: 'bi-files' }
+};
+const up = (s) => String(s == null ? '' : s).trim().toUpperCase();
+const normItem = (s) => up(s).replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
+const brTypeBadge = (t) => `<span class="st ${BR_TYPES[t].cls}"><i class="bi ${BR_TYPES[t].ico}"></i>${esc(BR_TYPES[t].label)}</span>`;
+
+async function loadBranchData(force) {
+  if (Branch.loading) return;
+  if (Branch.data && !force) return renderBranch();
+  Branch.loading = true;
+  $id('br-sync').classList.add('spinning');
+  try {
+    const r = await gs('getBranchData', App.token);
+    if (!r.ok) throw new Error(r.message || r.code);
+    Branch.data = r;
+    Branch.rec = branchReconcile(r);
+    Branch.codes = Branch.rec.list.map((b) => b.code);
+    if (Branch.sel !== 'ALL' && !Branch.codes.includes(Branch.sel)) Branch.sel = 'ALL';
+    if (isBranchUser() && Branch.codes.length === 1) Branch.sel = Branch.codes[0];
+    renderBranch();
+  } catch (e) {
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'โหลดข้อมูลตรวจนับสาขาไม่สำเร็จ', text: errMsg(e) });
+  } finally {
+    Branch.loading = false;
+    $id('br-sync').classList.remove('spinning');
+  }
+}
+
+/** เทียบ Onhand กับไฟล์นับ แยกผลรายสาขา */
+function branchReconcile(d) {
+  const on = d.onhand.map((r) => ({ item: String(r[0] || ''), desc: r[1] || '', sub: r[2] || '', loc: r[3] || '', sn: normSN(r[4]), lot: r[5] || '', code: up(r[6]) || '-', br: up(r[7]), brname: r[8] || '' }));
+  const cnt = d.counts.map((r) => ({ br: up(r[0]), item: String(r[1] || ''), desc: r[2] || '', sn: normSN(r[3]), qty: Number(r[4]) || 0, note: r[5] || '' }));
+  const onBySN = new Map(on.map((o) => [o.sn, o]));
+  const cntBySN = new Map();
+  cnt.forEach((c) => { if (c.sn) { if (!cntBySN.has(c.sn)) cntBySN.set(c.sn, []); cntBySN.get(c.sn).push(c); } });
+  const info = new Map();
+  d.branches.forEach((b) => info.set(up(b[0]), { code: up(b[0]), name: b[1] || '', status: b[2] || 'รอไฟล์', at: b[3] || '', by: b[4] || '', file: b[5] || '', rows: b[6] || '' }));
+  if (!isBranchUser()) on.forEach((o) => { if (!info.has(o.br)) info.set(o.br, { code: o.br, name: o.brname, status: 'รอไฟล์' }); });
+  on.forEach((o) => { const b = info.get(o.br); if (b && !b.name && o.brname) b.name = o.brname; });
+  const sent = (code) => !!(info.get(code) && info.get(code).status === B_SENT);
+
+  const list = [...info.values()].sort((a, b) => a.code.localeCompare(b.code)).map((b) => {
+    const res = Object.assign({}, b, { sent: sent(b.code), rows: [], items: new Map(), split: {},
+      k: { on: 0, counted: 0, match: 0, miss: 0, over: 0, item: 0, wrong: 0, elsewhere: 0, dup: 0, noSnQty: 0 } });
+    const item = (code, desc) => { const key = normItem(code) || '(ไม่ระบุ)'; if (!res.items.has(key)) res.items.set(key, { item: code || '(ไม่ระบุ)', desc: desc || '', on: 0, cnt: 0 }); const it = res.items.get(key); if (!it.desc && desc) it.desc = desc; return it; };
+    const split = (c) => (res.split[c] = res.split[c] || { on: 0, match: 0 });
+    const push = (type, o, c, other) => res.rows.push({ type, sn: (o || c).sn, item: o ? o.item : c.item, desc: o ? o.desc : c.desc, code: o ? o.code : '', sub: o ? o.sub : '', loc: o ? o.loc : '', onBr: o ? o.br : '', other: other || '', note: c ? c.note : '' });
+    const myOn = on.filter((o) => o.br === b.code);
+    myOn.forEach((o) => { res.k.on++; item(o.item, o.desc).on++; split(o.code).on++; });
+    if (!res.sent) return res;
+    const seen = new Map();
+    cnt.filter((c) => c.br === b.code).forEach((c) => {
+      if (!c.sn) { item(c.item, c.desc).cnt += c.qty; res.k.counted += c.qty; res.k.noSnQty += c.qty; return; }
+      const n = (seen.get(c.sn) || 0) + 1; seen.set(c.sn, n);
+      if (n > 1) { res.k.dup++; push('DUP', onBySN.get(c.sn), c, `ซ้ำครั้งที่ ${n}`); return; }
+      res.k.counted++;
+      const o = onBySN.get(c.sn);
+      if (!o) { res.k.over++; item(c.item, c.desc).cnt++; push('OVER', null, c); }
+      else if (o.br !== b.code) { res.k.wrong++; item(o.item, o.desc).cnt++; push('WRONG', o, c, `ของสาขา ${o.br}`); }
+      else if (c.item && normItem(c.item) !== normItem(o.item)) { res.k.item++; item(o.item, o.desc).cnt++; push('ITEM', o, c, `ไฟล์นับ: ${c.item}`); }
+      else { res.k.match++; item(o.item, o.desc).cnt++; split(o.code).match++; push('MATCH', o, c); }
+    });
+    myOn.forEach((o) => {
+      if (seen.has(o.sn)) return;
+      const els = (cntBySN.get(o.sn) || []).find((c) => c.br !== b.code && sent(c.br));
+      if (els) { res.k.elsewhere++; push('ELSEWHERE', o, null, `พบที่สาขา ${els.br}`); }
+      else { res.k.miss++; push('MISS', o, null); }
+    });
+    return res;
+  });
+  return { list, byCode: new Map(list.map((b) => [b.code, b])), onCount: on.length };
+}
+
+function branchScope() {
+  const r = Branch.rec;
+  if (!r) return [];
+  return Branch.sel === 'ALL' ? r.list : r.list.filter((b) => b.code === Branch.sel);
+}
+function sumK(list) {
+  const k = { on: 0, counted: 0, match: 0, miss: 0, over: 0, item: 0, wrong: 0, elsewhere: 0, dup: 0, onSent: 0, sent: 0, total: list.length };
+  list.forEach((b) => { Object.keys(b.k).forEach((x) => { if (x in k) k[x] += b.k[x]; }); if (b.sent) { k.sent++; k.onSent += b.k.on; } });
+  return k;
+}
+const branchLabel = (b) => `${b.code}${b.name ? ' · ' + b.name : ''}`;
+
+function renderBranch() {
+  const d = Branch.data, r = Branch.rec;
+  if (!d || !r) return;
+  $id('br-up-count').parentElement && document.querySelectorAll('.br-can-count').forEach((el) => el.classList.toggle('d-none', !d.canCount));
+  document.querySelectorAll('.br-can-onhand').forEach((el) => el.classList.toggle('d-none', !d.canOnhand));
+  $id('br-meta').textContent = `Onhand ${fmtN(r.onCount)} SN · ${fmtN(r.list.length)} สาขา · ส่งไฟล์นับแล้ว ${fmtN(r.list.filter((b) => b.sent).length)} สาขา · ข้อมูล ณ ${hhmm(d.serverTime)} น.`;
+  const sel = $id('br-select');
+  sel.innerHTML = (isBranchUser() && r.list.length === 1 ? '' : `<option value="ALL">ทุกสาขา (${fmtN(r.list.length)})</option>`) +
+    r.list.map((b) => `<option value="${esc(b.code)}">${esc(branchLabel(b))}${b.sent ? '' : ' — รอไฟล์'}</option>`).join('');
+  sel.value = Branch.sel;
+  const empty = !r.list.length;
+  $id('br-empty').classList.toggle('d-none', !empty);
+  $id('br-main').classList.toggle('d-none', empty);
+  $id('br-empty-text').textContent = isBranchUser() ? 'ยังไม่มีข้อมูลของสาขาคุณ — ติดต่อสำนักงานใหญ่' : (d.canOnhand ? 'ยังไม่มีข้อมูล Onhand สาขา — กด "อัปโหลด Onhand สาขา" เพื่อเริ่ม' : 'ยังไม่มีข้อมูล Onhand สาขา');
+  if (empty) return;
+  const scope = branchScope();
+  const k = sumK(scope);
+  const one = Branch.sel !== 'ALL' ? scope[0] : null;
+  $id('br-sel-info').innerHTML = one
+    ? (one.sent ? `<span class="st st-ok"><i class="bi bi-check-circle-fill"></i>ส่งไฟล์นับแล้ว</span> ${esc(one.at)} · ${esc(one.by)}${one.file ? ' · ' + esc(one.file) : ''} · ${fmtN(Number(one.rows) || 0)} แถว`
+                : '<span class="st st-idle"><i class="bi bi-hourglass-split"></i>รอไฟล์นับจากสาขา</span>')
+    : `ส่งไฟล์นับแล้ว <b>${fmtN(k.sent)}</b> / ${fmtN(k.total)} สาขา`;
+
+  // KPI (คิดเฉพาะสาขาที่ส่งไฟล์แล้ว)
+  const pctMatch = k.onSent ? pct(k.match, k.onSent) : 0;
+  const tile = (cls, label, val, sub) => `<div class="kpi-tile ${cls}"><div class="kpi-label"><span class="dot"></span>${label}</div><div class="kpi-value">${val}</div>${sub ? `<div class="kpi-sub">${sub}</div>` : ''}</div>`;
+  const splitHtml = one ? Object.entries(one.split).sort().map(([c, s]) => `<span><b>${esc(c === 'BR' ? 'BR คลังสาขา' : c === 'BRV' ? 'BRV หน่วยรถบริการ' : c)}</b> ตรงกัน ${fmtN(s.match)} / ${fmtN(s.on)}${one.sent ? ` (${fmtPct(pct(s.match, s.on))})` : ''}</span>`).join('') : '';
+  $id('br-kpis').innerHTML = `<div class="kpi-group tone-all"><div class="kpi-head"><span class="kpi-name"><i class="bi bi-shop"></i> ${esc(one ? branchLabel(one) : 'ทุกสาขา')}</span>
+      <span class="kpi-pct">${k.onSent ? fmtPct(pctMatch) : '-'}<small>ตรงกัน</small></span></div>
+    <div class="kpi-body"><div class="br-kpi-grid">
+      ${tile('base', 'Onhand (สาขาที่ส่งไฟล์แล้ว)', fmtN(k.onSent), one ? '' : `ทั้งหมด ${fmtN(k.on)} SN`)}
+      ${tile('base', 'นับได้ (ไฟล์สาขา)', fmtN(k.counted))}
+      ${tile('ok', 'ตรงกัน', fmtN(k.match))}
+      ${tile('bad', 'ขาด', fmtN(k.miss))}
+      ${tile('over', 'เกิน', fmtN(k.over))}
+      ${tile('warn', 'รหัสสินค้าไม่ตรง', fmtN(k.item))}
+      ${tile('skip', 'อยู่ผิดสาขา', fmtN(k.wrong + k.elsewhere), `นับได้ที่นี่ ${fmtN(k.wrong)} · ไปอยู่ที่อื่น ${fmtN(k.elsewhere)}`)}
+      ${tile('idle', 'SN ซ้ำในไฟล์นับ', fmtN(k.dup))}
+    </div>${splitHtml ? `<div class="kpi-foot br-split">${splitHtml}</div>` : ''}</div></div>`;
+
+  renderBranchStatusTable(scope);
+  renderBranchItemTable(scope);
+  renderBranchDiffTable(scope);
+}
+
+function renderBranchStatusTable(scope) {
+  const data = scope.map((b) => ({ b, code: b.code, name: b.name || '-', st: b.sent ? 1 : 0, at: b.at || '', on: b.k.on,
+    br: (b.split.BR || { on: 0 }).on, brv: (b.split.BRV || { on: 0 }).on, counted: b.k.counted, match: b.k.match, miss: b.k.miss, over: b.k.over,
+    other: b.k.item + b.k.wrong + b.k.elsewhere + b.k.dup, pct: b.sent && b.k.on ? pct(b.k.match, b.k.on) : -1 }));
+  if (Branch.tables.status) { Branch.tables.status.clear().rows.add(data).draw(false); return; }
+  Branch.tables.status = $('#brStatusTable').DataTable({
+    data, responsive: true, pageLength: 10, lengthMenu: [10, 25, 50, 100], order: [[0, 'asc']], language: dtLang(), autoWidth: false,
+    dom: "<'dt-top'Bf>rt<'dt-bottom'lip>", buttons: exportBtns('สถานะตรวจนับรายสาขา', 'branch-status'),
+    columns: [
+      { title: 'รหัสสาขา', data: 'code', className: 'fw-bold', responsivePriority: 1 },
+      { title: 'ชื่อสาขา', data: 'name', responsivePriority: 6, render: clipRender(160) },
+      { title: 'ไฟล์นับ', data: 'st', responsivePriority: 2, render: (d, t, r) => (t === 'display' ? (d ? `<span class="st st-ok"><i class="bi bi-check-circle-fill"></i>ส่งแล้ว</span><div class="small text-muted">${esc(r.at)}</div>` : '<span class="st st-idle"><i class="bi bi-hourglass-split"></i>รอไฟล์</span>') : t === 'export' ? (d ? 'ส่งแล้ว ' + r.at : 'รอไฟล์') : d) },
+      { title: 'Onhand', data: 'on', className: 'text-end', responsivePriority: 3 },
+      { title: 'BR', data: 'br', className: 'text-end', responsivePriority: 9 },
+      { title: 'BRV', data: 'brv', className: 'text-end', responsivePriority: 9 },
+      { title: 'นับได้', data: 'counted', className: 'text-end', responsivePriority: 7 },
+      { title: 'ตรงกัน', data: 'match', className: 'text-end text-success', responsivePriority: 5 },
+      { title: 'ขาด', data: 'miss', className: 'text-end fw-bold', responsivePriority: 4, render: (d, t) => (t === 'display' ? `<span class="${d ? 'text-danger' : ''}">${fmtN(d)}</span>` : d) },
+      { title: 'เกิน', data: 'over', className: 'text-end', responsivePriority: 8 },
+      { title: 'อื่น ๆ', data: 'other', className: 'text-end', responsivePriority: 10 },
+      { title: '% ตรงกัน', data: 'pct', className: 'text-end', responsivePriority: 4, render: (d, t) => (t === 'display' || t === 'export' ? (d < 0 ? '-' : fmtPct(d)) : d) },
+      { title: '', data: 'code', orderable: false, className: 'text-end no-export', responsivePriority: 2,
+        render: (code, t, r) => (t !== 'display' ? '' : `<div class="btn-group btn-group-sm"><button class="btn btn-outline-primary" data-br-view="${esc(code)}"><i class="bi bi-eye"></i> ดู</button>${Branch.data && Branch.data.canCount ? `<button class="btn btn-outline-secondary" data-br-up="${esc(code)}" title="อัปโหลดไฟล์นับของสาขานี้"><i class="bi bi-cloud-upload"></i></button>` : ''}</div>`) }
+    ]
+  });
+  $('#brStatusTable').on('click', 'button[data-br-view]', function () { setBranchSel(this.dataset.brView); });
+  $('#brStatusTable').on('click', 'button[data-br-up]', function () { uploadBranchCountFlow(this.dataset.brUp); });
+}
+
+function renderBranchItemTable(scope) {
+  const only = $id('br-item-diff').checked;
+  const agg = new Map();
+  scope.forEach((b) => b.items.forEach((it, key) => {
+    if (!b.sent) return;
+    const a = agg.get(key) || { item: it.item, desc: it.desc, on: 0, cnt: 0 };
+    a.on += it.on; a.cnt += it.cnt; if (!a.desc) a.desc = it.desc; agg.set(key, a);
+  }));
+  const data = [...agg.values()].map((a) => Object.assign(a, { diff: a.cnt - a.on })).filter((a) => !only || a.diff !== 0);
+  if (Branch.tables.item) { Branch.tables.item.clear().rows.add(data).draw(false); return; }
+  Branch.tables.item = $('#brItemTable').DataTable({
+    data, responsive: true, pageLength: 10, lengthMenu: [10, 25, 50, 100], order: [[4, 'asc']], language: dtLang(), autoWidth: false,
+    dom: "<'dt-top'Bf>rt<'dt-bottom'lip>", buttons: exportBtns('สรุปรายรหัสสินค้า (ตรวจนับสาขา)', 'branch-items'),
+    columns: [
+      { title: 'รหัสสินค้า', data: 'item', className: 'mono', responsivePriority: 1 },
+      { title: 'ชื่อสินค้า', data: 'desc', responsivePriority: 5, render: clipRender(230) },
+      { title: 'Onhand', data: 'on', className: 'text-end', responsivePriority: 3 },
+      { title: 'นับได้', data: 'cnt', className: 'text-end', responsivePriority: 3 },
+      { title: 'ผลต่าง', data: 'diff', className: 'text-end fw-bold', responsivePriority: 2,
+        render: (d, t) => (t === 'display' ? `<span class="${d < 0 ? 'text-danger' : d > 0 ? 'text-primary' : 'text-success'}">${d > 0 ? '+' : ''}${fmtN(d)}</span>` : d) }
+    ]
+  });
+}
+
+function renderBranchDiffTable(scope) {
+  const sel = $id('br-diff-type');
+  const counts = {};
+  scope.forEach((b) => b.rows.forEach((r) => (counts[r.type] = (counts[r.type] || 0) + 1)));
+  const problems = Object.keys(BR_TYPES).filter((t) => t !== 'MATCH').reduce((s, t) => s + (counts[t] || 0), 0);
+  const cur = sel.value || 'PROBLEM';
+  sel.innerHTML = `<option value="PROBLEM">ทุกปัญหา (${fmtN(problems)})</option>` +
+    Object.keys(BR_TYPES).map((t) => `<option value="${t}">${esc(BR_TYPES[t].label)} (${fmtN(counts[t] || 0)})</option>`).join('');
+  sel.value = cur;
+  const f = sel.value;
+  const multi = Branch.sel === 'ALL';
+  const data = [];
+  scope.forEach((b) => b.rows.forEach((r) => { if (f === 'PROBLEM' ? r.type !== 'MATCH' : r.type === f) data.push(Object.assign({ at: b.code }, r)); }));
+  if (Branch.tables.diff) { Branch.tables.diff.clear().rows.add(data).draw(false); Branch.tables.diff.column(1).visible(multi, false); return; }
+  Branch.tables.diff = $('#brDiffTable').DataTable({
+    data, deferRender: true, responsive: true, pageLength: 25, lengthMenu: [10, 25, 50, 100, 500], order: [[0, 'asc'], [1, 'asc']], language: dtLang(), autoWidth: false,
+    dom: "<'dt-top'Bf>rt<'dt-bottom'lip>", buttons: exportBtns('รายการ SN ที่ต้องตรวจสอบ (ตรวจนับสาขา)', 'branch-diff'),
+    columns: [
+      { title: 'ผล', data: 'type', responsivePriority: 1, render: (d, t) => (t === 'display' ? brTypeBadge(d) : t === 'export' || t === 'filter' ? BR_TYPES[d].label : d) },
+      { title: 'สาขาที่ตรวจ', data: 'at', className: 'fw-bold', responsivePriority: 3, visible: multi },
+      { title: 'SN', data: 'sn', className: 'mono fw-bold', responsivePriority: 1 },
+      { title: 'รหัสสินค้า', data: 'item', className: 'mono', responsivePriority: 4 },
+      { title: 'ชื่อสินค้า', data: 'desc', responsivePriority: 7, render: clipRender(200) },
+      { title: 'BR/BRV', data: 'code', responsivePriority: 8 },
+      { title: 'คลัง / Locator', data: (r) => [r.sub, r.loc].filter(Boolean).join(' · '), responsivePriority: 9, render: clipRender(170) },
+      { title: 'รายละเอียด', data: (r) => [r.other, r.note].filter(Boolean).join(' · '), responsivePriority: 5, render: clipRender(200) }
+    ]
+  });
+}
+
+function setBranchSel(code) {
+  Branch.sel = code || 'ALL';
+  renderBranch();
+  $id('page-branch').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ----- Template ไฟล์นับ (Excel) ----- */
+function downloadBranchTemplate() {
+  const code = Branch.sel !== 'ALL' ? Branch.sel : (isBranchUser() && Branch.codes[0]) || '';
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([['รหัสสินค้า', 'ชื่อสินค้า', 'SN', 'จำนวน', 'หมายเหตุ']]);
+  ws['!cols'] = [{ wch: 14 }, { wch: 42 }, { wch: 20 }, { wch: 8 }, { wch: 30 }];
+  for (let r = 1; r <= 3000; r++) ['A', 'C'].forEach((c) => (ws[c + (r + 1)] = { t: 's', v: '', z: '@' }));
+  ws['!ref'] = 'A1:E3001';
+  XLSX.utils.book_append_sheet(wb, ws, 'นับสต๊อก' + (code ? '_' + code : ''));
+  const help = XLSX.utils.aoa_to_sheet([
+    ['วิธีกรอกไฟล์นับสต๊อกสาขา' + (code ? ' — สาขา ' + code : '')],
+    [''],
+    ['1. กรอกในชีตแรก 1 แถว = สินค้า 1 ชิ้น (ตาม SN ที่นับได้จริง) ทั้งคลังสาขา (BR) และหน่วยรถบริการ (BRV)'],
+    ['2. รหัสสินค้า / SN ให้พิมพ์ตามฉลากจริง (ระบบไม่สนตัวพิมพ์เล็ก-ใหญ่ และช่องว่าง)'],
+    ['3. จำนวน: สินค้าที่มี SN ใส่ 1 (หรือเว้นว่าง) · สินค้าที่ไม่มี SN ให้เว้น SN และใส่จำนวนรวม'],
+    ['4. หมายเหตุ: เช่น สภาพชำรุด / อยู่ที่รถทะเบียน ...'],
+    ['5. ห้ามเปลี่ยนหัวคอลัมน์ · ตั้งชื่อไฟล์ให้มีรหัสสาขา เช่น นับสต๊อก_' + (code || 'CBI') + '.xlsx'],
+    [''],
+    ['ตัวอย่าง', '', '', '', ''],
+    ['รหัสสินค้า', 'ชื่อสินค้า', 'SN', 'จำนวน', 'หมายเหตุ'],
+    ['10100171', 'SAFE เครื่องกรองน้ำ รุ่น ROMA Plus V1', 'RF09620568', 1, ''],
+    ['10200054', 'SAFE ชุดไส้กรอง รุ่น UF Alkaline', 'S2615317001', 1, 'อยู่ที่รถ V007']
+  ]);
+  help['!cols'] = [{ wch: 70 }, { wch: 40 }, { wch: 18 }, { wch: 8 }, { wch: 24 }];
+  XLSX.utils.book_append_sheet(wb, help, 'วิธีกรอก');
+  XLSX.writeFile(wb, `Template_นับสต๊อกสาขา${code ? '_' + code : ''}.xlsx`);
+}
+
+/* ----- อ่านไฟล์ Excel / CSV ----- */
+function pickSheetFile() {
+  return new Promise((resolve) => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.xlsx,.xls,.csv';
+    inp.onchange = () => resolve(inp.files[0] || null);
+    inp.click();
+  });
+}
+async function readSheetAoa(file) {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array', raw: false, cellDates: false });
+  const sheets = wb.SheetNames.map((n) => ({ name: n, aoa: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' }) }));
+  return sheets.filter((s) => s.aoa.length && !/วิธีกรอก/.test(s.name));
+}
+/** หาแถวหัวตาราง + ตำแหน่งคอลัมน์ตามชื่อ */
+function mapColumns(aoa, spec) {
+  for (let h = 0; h < Math.min(15, aoa.length); h++) {
+    const row = aoa[h].map((x) => String(x).trim().toLowerCase().replace(/\s+/g, ' '));
+    const idx = {};
+    Object.entries(spec).forEach(([k, re]) => { const i = row.findIndex((c) => re.test(c)); if (i > -1) idx[k] = i; });
+    if (idx.sn !== undefined) return { header: h, idx };
+  }
+  return null;
+}
+
+async function uploadBranchCountFlow(presetCode) {
+  if (!Branch.data || !Branch.data.canCount) return;
+  const file = await pickSheetFile();
+  if (!file) return;
+  let parsed;
+  try {
+    const sheets = await readSheetAoa(file);
+    const spec = { item: /^(รหัสสินค้า|itemcode|item code|item|รหัส)/, desc: /^(ชื่อสินค้า|description|desc|รายละเอียด)/, sn: /^(sn|serial|serial_number|serial number|serial no|เลขเครื่อง|หมายเลขเครื่อง)/, qty: /^(จำนวน|qty|quantity)/, note: /^(หมายเหตุ|note|remark)/ };
+    let sheet = null, map = null;
+    for (const s of sheets) { const m = mapColumns(s.aoa, spec); if (m) { sheet = s; map = m; break; } }
+    if (!sheet) { sheet = sheets[0]; map = { header: 0, idx: { item: 0, desc: 1, sn: 2, qty: 3, note: 4 } }; }
+    const get = (r, k) => (map.idx[k] === undefined ? '' : String(r[map.idx[k]] == null ? '' : r[map.idx[k]]).trim());
+    const rows = sheet.aoa.slice(map.header + 1).map((r) => [get(r, 'item'), get(r, 'desc'), get(r, 'sn'), get(r, 'qty'), get(r, 'note')]).filter((r) => r[0] || r[2]);
+    parsed = { rows, sheet: sheet.name };
+  } catch (e) { return notify({ icon: 'error', title: 'อ่านไฟล์ไม่สำเร็จ', text: errMsg(e) }); }
+  if (!parsed.rows.length) return notify({ icon: 'warning', title: 'ไม่พบข้อมูลในไฟล์', text: 'ตรวจว่ามีคอลัมน์ SN และมีรายการอย่างน้อย 1 แถว' });
+  const guess = presetCode || (Branch.sel !== 'ALL' ? Branch.sel : '') ||
+    Branch.codes.find((c) => new RegExp('(^|[^A-Z])' + c + '([^A-Z]|$)').test(up(file.name + ' ' + parsed.sheet))) || '';
+  const sns = parsed.rows.map((r) => normSN(r[2])).filter(Boolean);
+  const dup = sns.length - new Set(sns).size;
+  const res = await modal({
+    title: 'อัปโหลดไฟล์นับสาขา',
+    html: `<div class="small text-muted mb-2"><i class="bi bi-file-earmark-excel"></i> ${esc(file.name)} · ชีต ${esc(parsed.sheet)}</div>
+      <div class="swal-info"><div><span>แถวทั้งหมด</span><span>${fmtN(parsed.rows.length)}</span></div><div><span>มี SN</span><span>${fmtN(sns.length)}</span></div>
+      <div><span>ไม่มี SN (นับเป็นจำนวน)</span><span>${fmtN(parsed.rows.length - sns.length)}</span></div><div><span>SN ซ้ำในไฟล์</span><span class="${dup ? 'text-danger' : ''}">${fmtN(dup)}</span></div></div>
+      <div class="swal-form"><label for="bu-branch">เป็นไฟล์นับของสาขา</label>
+      <select id="bu-branch" class="form-select"><option value="">— เลือกสาขา —</option>${Branch.rec.list.map((b) => `<option value="${esc(b.code)}" ${b.code === guess ? 'selected' : ''}>${esc(branchLabel(b))}${b.sent ? ' (มีไฟล์แล้ว — จะแทนที่)' : ''}</option>`).join('')}</select></div>`,
+    showCancelButton: true, confirmButtonText: '<i class="bi bi-cloud-upload"></i> อัปโหลดและเทียบผล', cancelButtonText: 'ยกเลิก',
+    preConfirm: () => { const v = $id('bu-branch').value; if (!v) { Swal.showValidationMessage('กรุณาเลือกสาขา'); return false; } return v; }
+  });
+  if (!res.isConfirmed) return;
+  showLoader('กำลังอัปโหลดไฟล์นับสาขา ' + res.value + '…');
+  try {
+    if (App.apiOld) throw new Error('เซิร์ฟเวอร์ยังเป็นเวอร์ชันเก่า — แจ้ง Admin ให้ Deploy Code.gs เวอร์ชันใหม่ก่อน');
+    const r = await gs('uploadBranchCount', App.token, res.value, parsed.rows, file.name);
+    if (!r.ok) throw new Error(r.message || r.code);
+    Branch.sel = res.value;
+    await loadBranchData(true);
+    hideLoader();
+    const b = Branch.rec.byCode.get(res.value);
+    notify({ icon: 'success', title: `เทียบผลสาขา ${res.value} แล้ว`, html: b ? `ตรงกัน <b>${fmtN(b.k.match)}</b> / ${fmtN(b.k.on)} · ขาด <b class="text-danger">${fmtN(b.k.miss)}</b> · เกิน <b>${fmtN(b.k.over)}</b>` : '' });
+  } catch (e) {
+    hideLoader();
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'อัปโหลดไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+
+async function uploadBranchOnhandFlow() {
+  if (!Branch.data || !Branch.data.canOnhand) return;
+  const file = await pickSheetFile();
+  if (!file) return;
+  let rows, sheetName;
+  try {
+    const sheets = await readSheetAoa(file);
+    const spec = { item: /^(itemcode|item code|รหัสสินค้า)/, desc: /^(description|ชื่อสินค้า)/, sub: /^(subinventory_code|subinventory|คลัง)/, loc: /^(locator)/,
+      sn: /^(serial_number|serial number|sn|serial)/, lot: /^(lot_number|lot)/, code: /^(code)$/, br: /^(branch code|branch_code|รหัสสาขา)/, brname: /^(branch name|branch_name|ชื่อสาขา)/ };
+    let sheet = null, map = null;
+    for (const s of sheets) { const m = mapColumns(s.aoa, spec); if (m && m.idx.br !== undefined) { sheet = s; map = m; break; } }
+    if (!sheet) throw new Error('ไม่พบหัวคอลัมน์ SERIAL_NUMBER และ BRANCH CODE ในไฟล์');
+    const keys = ['item', 'desc', 'sub', 'loc', 'sn', 'lot', 'code', 'br', 'brname'];
+    rows = sheet.aoa.slice(map.header + 1).map((r) => keys.map((k) => (map.idx[k] === undefined ? '' : String(r[map.idx[k]] == null ? '' : r[map.idx[k]]).trim()))).filter((r) => r[4]);
+    sheetName = sheet.name;
+  } catch (e) { return notify({ icon: 'error', title: 'อ่านไฟล์ไม่สำเร็จ', text: errMsg(e) }); }
+  const brs = new Set(rows.map((r) => up(r[7])).filter(Boolean));
+  const sns = rows.map((r) => normSN(r[4]));
+  const dup = sns.length - new Set(sns).size;
+  const res = await modal({
+    title: 'อัปโหลด Onhand สาขา',
+    html: `<div class="small text-muted mb-2"><i class="bi bi-file-earmark-excel"></i> ${esc(file.name)} · ชีต ${esc(sheetName)}</div>
+      <div class="swal-info"><div><span>รายการ (SN)</span><span>${fmtN(rows.length)}</span></div><div><span>สาขา</span><span>${fmtN(brs.size)}</span></div>
+      <div><span>SN ซ้ำ (จะตัดออก)</span><span class="${dup ? 'text-danger' : ''}">${fmtN(dup)}</span></div></div>
+      <label class="d-flex gap-2 align-items-start mt-3 text-start small" for="bo-clear"><input type="checkbox" class="form-check-input mt-1" id="bo-clear">
+      <span><b>ล้างไฟล์นับของทุกสาขา</b> (เริ่มรอบตรวจนับใหม่)<br><span class="text-muted">ไม่ติ๊ก = เก็บไฟล์นับเดิมไว้ แล้วเทียบกับ Onhand ใหม่</span></span></label>
+      <div class="small text-danger mt-2">ข้อมูล Onhand สาขาเดิมทั้งหมดจะถูกแทนที่ด้วยไฟล์นี้</div>`,
+    showCancelButton: true, confirmButtonText: '<i class="bi bi-database-up"></i> อัปโหลด', cancelButtonText: 'ยกเลิก',
+    preConfirm: () => ({ clearCounts: $id('bo-clear').checked })
+  });
+  if (!res.isConfirmed) return;
+  showLoader(`กำลังอัปโหลด Onhand สาขา ${fmtN(rows.length)} รายการ…`);
+  try {
+    if (App.apiOld) throw new Error('เซิร์ฟเวอร์ยังเป็นเวอร์ชันเก่า — Deploy Code.gs เวอร์ชันใหม่ก่อน');
+    const r = await gs('uploadBranchOnhand', App.token, rows, { clearCounts: res.value.clearCounts, fileName: file.name });
+    if (!r.ok) throw new Error(r.message || r.code);
+    await loadBranchData(true);
+    hideLoader();
+    toast('success', 'อัปโหลด Onhand สาขาแล้ว', `${fmtN(r.count)} SN · ${fmtN(r.branches)} สาขา`);
+  } catch (e) {
+    hideLoader();
+    if (isAuthErr(e)) return forceLogout(false);
+    notify({ icon: 'error', title: 'อัปโหลดไม่สำเร็จ', text: errMsg(e) });
+  }
+}
+
+/* ----- รายงานตรวจนับสาขา (พิมพ์ / PDF) — ใช้โครงเดียวกับรายงานสรุปผู้บริหาร ----- */
+function buildBranchReport() {
+  const scope = branchScope();
+  const k = sumK(scope);
+  const one = Branch.sel !== 'ALL' ? scope[0] : null;
+  const n = fmtN, today = thDateTime(nowStr());
+  const kpi = (cls, label, val, sub) => `<div class="ex-kpi ${cls}"><span>${label}</span><b>${val}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
+  const items = [];
+  scope.forEach((b) => b.sent && b.items.forEach((it) => { if (it.cnt !== it.on) items.push(Object.assign({ br: b.code, diff: it.cnt - it.on }, it)); }));
+  items.sort((a, b) => a.diff - b.diff);
+  const diffs = [];
+  scope.forEach((b) => b.rows.forEach((r) => { if (r.type !== 'MATCH') diffs.push(Object.assign({ at: b.code }, r)); }));
+  const order = ['MISS', 'ELSEWHERE', 'WRONG', 'ITEM', 'OVER', 'DUP'];
+  diffs.sort((a, b) => a.at.localeCompare(b.at) || order.indexOf(a.type) - order.indexOf(b.type) || a.sn.localeCompare(b.sn));
+  return `
+  <header class="ex-head">
+    <div class="ex-logo"><i class="bi bi-shop"></i></div>
+    <div class="flex-grow-1">
+      <div class="ex-kicker">รายงานผลตรวจนับสต๊อกสาขา (Reconcile)</div>
+      <h1>${one ? esc(branchLabel(one)) : 'สรุปทุกสาขา'}</h1>
+      <div class="ex-sub">รอบการนับ <b>${esc(App.round.name)}</b> · ข้อมูล ณ ${esc(today)}${one && one.sent ? ` · ไฟล์นับ ${esc(one.file || '-')} (ส่ง ${esc(one.at)})` : ''}</div>
+    </div>
+  </header>
+  ${one && !one.sent ? '<div class="ex-note" style="font-size:12px;color:#c0283b;margin-top:8px">สาขานี้ยังไม่ส่งไฟล์นับ — รายงานนี้แสดงเฉพาะยอด Onhand</div>' : ''}
+  <section class="ex-hero">
+    <div class="ex-big"><b>${k.onSent ? fmtPct(pct(k.match, k.onSent)) : '-'}</b><span>ตรงกัน<br><small>${n(k.match)} / ${n(k.onSent)} SN</small></span></div>
+    <div class="ex-kpis">
+      ${kpi('base', 'Onhand', n(one ? k.on : k.onSent), one ? '' : `${n(k.sent)}/${n(k.total)} สาขาที่ส่งไฟล์`)}
+      ${kpi('base', 'นับได้ (ไฟล์สาขา)', n(k.counted))}
+      ${kpi('ok', 'ตรงกัน', n(k.match))}
+      ${kpi('bad', 'ขาด', n(k.miss))}
+      ${kpi('over', 'เกิน', n(k.over))}
+      ${kpi('warn', 'รหัสสินค้าไม่ตรง', n(k.item))}
+      ${kpi('skip', 'อยู่ผิดสาขา', n(k.wrong + k.elsewhere))}
+      ${kpi('base', 'SN ซ้ำในไฟล์นับ', n(k.dup))}
+    </div>
+  </section>
+  ${one ? `<h2><span>1</span> แยกตามจุดเก็บ</h2>
+  <table class="ex-table num"><thead><tr><th>จุดเก็บ</th><th>Onhand</th><th>ตรงกัน</th><th>% ตรงกัน</th></tr></thead><tbody>
+    ${Object.entries(one.split).sort().map(([c, s]) => `<tr><td>${esc(c === 'BR' ? 'BR — คลังสาขา' : c === 'BRV' ? 'BRV — หน่วยรถบริการ' : c)}</td><td>${n(s.on)}</td><td>${n(s.match)}</td><td>${one.sent ? fmtPct(pct(s.match, s.on)) : '-'}</td></tr>`).join('')}
+  </tbody></table>` : `<h2><span>1</span> สถานะรายสาขา</h2>
+  <table class="ex-table num"><thead><tr><th>สาขา</th><th>ไฟล์นับ</th><th>Onhand</th><th>นับได้</th><th>ตรงกัน</th><th>ขาด</th><th>เกิน</th><th>อื่น ๆ</th><th>% ตรงกัน</th></tr></thead><tbody>
+    ${scope.map((b) => `<tr><td>${esc(branchLabel(b))}</td><td style="text-align:center">${b.sent ? 'ส่งแล้ว' : 'รอไฟล์'}</td><td>${n(b.k.on)}</td><td>${b.sent ? n(b.k.counted) : '-'}</td><td>${b.sent ? n(b.k.match) : '-'}</td><td class="bad">${b.sent ? n(b.k.miss) : '-'}</td><td>${b.sent ? n(b.k.over) : '-'}</td><td>${b.sent ? n(b.k.item + b.k.wrong + b.k.elsewhere + b.k.dup) : '-'}</td><td><b>${b.sent && b.k.on ? fmtPct(pct(b.k.match, b.k.on)) : '-'}</b></td></tr>`).join('')}
+  </tbody></table>`}
+  <h2><span>2</span> รหัสสินค้าที่มีผลต่าง (${n(items.length)})</h2>
+  ${items.length ? `<table class="ex-table num"><thead><tr>${one ? '' : '<th>สาขา</th>'}<th>รหัสสินค้า</th><th>ชื่อสินค้า</th><th>Onhand</th><th>นับได้</th><th>ผลต่าง</th></tr></thead><tbody>
+    ${items.map((it) => `<tr>${one ? '' : `<td>${esc(it.br)}</td>`}<td class="mono" style="text-align:left">${esc(it.item)}</td><td style="text-align:left">${esc(it.desc)}</td><td>${n(it.on)}</td><td>${n(it.cnt)}</td><td class="${it.diff < 0 ? 'bad' : ''}"><b>${it.diff > 0 ? '+' : ''}${n(it.diff)}</b></td></tr>`).join('')}
+  </tbody></table>` : '<div class="ex-note">ไม่มีรหัสสินค้าที่มีผลต่าง</div>'}
+  <div class="ex-sign">
+    <div><span class="line"></span><b>ผู้ตรวจสอบ (สำนักงานใหญ่)</b><small>( ${esc(App.user ? App.user.name : '')} )</small></div>
+    <div><span class="line"></span><b>ผู้จัดการสาขา / ผู้รับผิดชอบสต๊อก</b><small>( ........................................ )</small></div>
+  </div>
+  ${diffs.length ? `<section class="ex-appendix">
+    <h2><span>ก</span> ภาคผนวก: รายการ SN ที่ต้องตรวจสอบ (${n(diffs.length)} รายการ)</h2>
+    <table class="ex-table"><thead><tr><th>ลำดับ</th>${one ? '' : '<th>สาขา</th>'}<th>ผล</th><th>SN</th><th>รหัสสินค้า</th><th>ชื่อสินค้า</th><th>BR/BRV · Locator</th><th>รายละเอียด</th></tr></thead><tbody>
+      ${diffs.map((d, i) => `<tr><td class="c">${i + 1}</td>${one ? '' : `<td>${esc(d.at)}</td>`}<td>${esc(BR_TYPES[d.type].label)}</td><td class="mono">${esc(d.sn)}</td><td class="mono">${esc(d.item)}</td><td>${esc(d.desc)}</td><td>${esc([d.code, d.loc || d.sub].filter(Boolean).join(' · '))}</td><td>${esc([d.other, d.note].filter(Boolean).join(' · '))}</td></tr>`).join('')}
+    </tbody></table></section>` : ''}
+  <footer class="ex-foot"><span>${esc(BOOT.appName)} · ตรวจนับสาขา</span><span>พิมพ์โดย ${esc(App.user ? App.user.name : '-')} · ${esc(today)}</span></footer>`;
+}
+function printBranchReport() {
+  if (!Branch.rec || !Branch.rec.list.length) return notify({ icon: 'info', title: 'ยังไม่มีข้อมูลตรวจนับสาขา' });
+  $id('exec-print').innerHTML = buildBranchReport();
+  document.body.classList.add('print-exec');
+  const done = () => { document.body.classList.remove('print-exec'); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(() => { try { window.print(); } catch (e) { done(); } }, 60);
+}
+
 /* ============================== จัดการผู้ใช้ (Admin) + เปลี่ยน PIN ============================== */
-const ROLE_DESC = { Admin: 'ผู้ดูแลระบบ — ทุกเมนู', Auditor: 'ผู้ตรวจนับ — สแกน / ปิดการนับ / รายงาน', Viewer: 'ผู้บริหาร — ดู Dashboard อย่างเดียว' };
+const ROLE_DESC = { Admin: 'ผู้ดูแลระบบ — ทุกเมนู', Auditor: 'ผู้ตรวจนับ — สแกน / ปิดการนับ / รายงาน / อัปโหลดไฟล์นับสาขา',
+  Viewer: 'ผู้บริหาร — ดู Dashboard และผลตรวจนับสาขาอย่างเดียว', Branch: 'ผู้ใช้สาขา — ดูผลตรวจนับเฉพาะสาขาของตัวเอง' };
 
 async function loadUsers() {
   const tb = $id('users-table');
@@ -5501,7 +6058,7 @@ async function loadUsers() {
       r.users.map((u) => `<tr class="${u.active ? '' : 'u-off'}">
         <td class="u-user fw-bold">${esc(u.username)}${u.username.toLowerCase() === me ? ' <span class="badge text-bg-light">คุณ</span>' : ''}</td>
         <td class="u-name">${esc(u.name)}</td>
-        <td class="u-role"><span class="role-pill role-${u.role.toLowerCase()}">${esc(ROLE_LABEL[u.role] || u.role)}</span></td>
+        <td class="u-role"><span class="role-pill role-${u.role.toLowerCase()}">${esc(ROLE_LABEL[u.role] || u.role)}</span>${u.role === 'Branch' && u.branches && u.branches.length ? `<div class="small text-muted">${esc(u.branches.join(', '))}</div>` : ''}</td>
         <td class="u-status">${u.active ? '<span class="st st-ok"><i class="bi bi-check-circle-fill"></i>ใช้งาน</span>' : '<span class="st st-idle"><i class="bi bi-pause-circle"></i>ระงับ</span>'}</td>
         <td class="u-pin small">${u.hasPin ? (u.hashed ? '<i class="bi bi-shield-lock text-success"></i> PIN ตั้งแล้ว (เข้ารหัส)' : '<i class="bi bi-exclamation-triangle text-warning"></i> PIN ยังไม่เข้ารหัส') : '<span class="text-danger"><i class="bi bi-shield-exclamation"></i> ไม่มี PIN</span>'}</td>
         <td class="u-act text-end"><div class="btn-group btn-group-sm">
@@ -5525,22 +6082,31 @@ async function editUser(u) {
       <label for="us-name">ชื่อ-สกุล</label>
       <input id="us-name" class="form-control" maxlength="150" value="${esc(u ? u.name : '')}">
       <label>สิทธิ์</label>
-      <div class="role-choice">${['Auditor', 'Viewer', 'Admin'].map((r) => `<input type="radio" name="us-role" id="us-r-${r}" value="${r}" ${(u ? u.role : 'Auditor') === r ? 'checked' : ''}><label for="us-r-${r}"><b>${esc(ROLE_LABEL[r])}</b><small>${esc(ROLE_DESC[r])}</small></label>`).join('')}</div>
+      <div class="role-choice">${['Auditor', 'Viewer', 'Branch', 'Admin'].map((r) => `<input type="radio" name="us-role" id="us-r-${r}" value="${r}" ${(u ? u.role : 'Auditor') === r ? 'checked' : ''}><label for="us-r-${r}"><b>${esc(ROLE_LABEL[r])}</b><small>${esc(ROLE_DESC[r])}</small></label>`).join('')}</div>
+      <div id="us-br-box" class="${(u ? u.role : '') === 'Branch' ? '' : 'd-none'}">
+        <label for="us-branches">รหัสสาขา (BRANCH CODE) — หลายสาขาคั่นด้วยจุลภาค</label>
+        <input id="us-branches" class="form-control" maxlength="200" value="${esc(u && u.branches ? u.branches.join(', ') : '')}" placeholder="เช่น CBI หรือ CBI, NSN" list="us-br-list">
+        <datalist id="us-br-list">${(Branch.codes || []).map((c) => `<option value="${esc(c)}">`).join('')}</datalist>
+      </div>
       ${isNew ? `<label for="us-pin">PIN (ตัวเลข 4–8 หลัก · เว้นว่าง = สุ่มให้ 6 หลัก)</label><input id="us-pin" class="form-control" inputmode="numeric" maxlength="8">` : ''}
       <label class="d-flex align-items-center gap-2 mt-3" for="us-active"><input type="checkbox" class="form-check-input m-0" id="us-active" ${!u || u.active ? 'checked' : ''}> เปิดใช้งาน (Active)</label>
     </div>`,
     showCancelButton: true, confirmButtonText: '<i class="bi bi-save"></i> บันทึก', cancelButtonText: 'ยกเลิก',
+    didOpen: () => document.querySelectorAll('input[name="us-role"]').forEach((el) => el.addEventListener('change', () =>
+      $id('us-br-box').classList.toggle('d-none', document.querySelector('input[name="us-role"]:checked').value !== 'Branch'))),
     preConfirm: () => {
       const v = { isNew, username: $id('us-user').value.trim(), name: $id('us-name').value.trim(),
-        role: document.querySelector('input[name="us-role"]:checked').value, active: $id('us-active').checked, pin: isNew ? $id('us-pin').value.trim() : '' };
+        role: document.querySelector('input[name="us-role"]:checked').value, active: $id('us-active').checked, pin: isNew ? $id('us-pin').value.trim() : '',
+        branches: $id('us-branches').value.trim().toUpperCase() };
       if (!v.username || /\s/.test(v.username)) { Swal.showValidationMessage('Username ต้องไม่ว่างและไม่มีช่องว่าง'); return false; }
+      if (v.role === 'Branch' && !v.branches) { Swal.showValidationMessage('สิทธิ์ Branch ต้องระบุรหัสสาขา'); return false; }
       if (v.pin && !/^\d{4,8}$/.test(v.pin)) { Swal.showValidationMessage('PIN ต้องเป็นตัวเลข 4–8 หลัก'); return false; }
       return v;
     }
   });
   if (res.isConfirmed) await submitUser(res.value);
 }
-function saveUserQuick(u, patch) { return submitUser(Object.assign({ isNew: false, username: u.username, name: u.name, role: u.role, active: u.active }, patch)); }
+function saveUserQuick(u, patch) { return submitUser(Object.assign({ isNew: false, username: u.username, name: u.name, role: u.role, active: u.active, branches: (u.branches || []).join(', ') }, patch)); }
 async function submitUser(v) {
   try {
     const r = await gs('saveUser', App.token, v);
